@@ -1,0 +1,17 @@
+node_modules/
+out/
+dist/
+build/
+.cache/
+.remotion/
+public/generated/
+*.mp4
+*.mov
+*.wav
+*.m4a
+*.webm
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.DS_Store
