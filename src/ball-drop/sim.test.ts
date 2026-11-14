@@ -28,6 +28,14 @@ test("the same seed reproduces every frame and sound cue", () => {
   assert.notDeepEqual(simulate("pinball-bumper-matrix", 1).events, traces.get("pinball-bumper-matrix")!.events);
 });
 
+for (const style of ["pinball-bumper-matrix", "pendulum-cascade"] as const) {
+  test(style + ": falling scenes retain visible motion through their closing approach", () => {
+    const trace = traces.get(style)!;
+    assert.ok(trace.frames[630].balls.length > 0, "the scene must not drain into an empty final beat");
+    assert.ok(trace.frames[690].balls.length > 0, "the last half-second still contains falling discs");
+  });
+}
+
 test("equal-tier merges conserve mass, disc area and both momentum components", () => {
   const a = { id: 1, x: 10, y: 20, vx: 20, vy: 40, r: BASE_RADIUS, tier: 1, mass: 1 };
   const b = { ...a, id: 2, x: 30, vx: -10, vy: 20 };

@@ -77,6 +77,7 @@ export function simulate(style: Style, seed?: number): Trace {
   const cooldown = new Map<string, number>();
   const isBowl = style === "vortex-spiral-bowl" || style === "split-lane-funnel-merge";
   const isMerge = style === "split-lane-funnel-merge";
+  const spawnUntil = isBowl ? VIDEO.fps * 6 : SCENE_FRAMES - Math.round(VIDEO.fps * 0.4);
   let id = 0, spawned = 0, collected = 0, maxTravel = 0;
   const dt = 1 / (VIDEO.fps * SUBSTEPS);
   const snapshot = (frame: number) =>
@@ -90,7 +91,7 @@ export function simulate(style: Style, seed?: number): Trace {
   };
   snapshot(0);
   for (let frame = 1; frame < SCENE_FRAMES; frame++) {
-    if (frame < VIDEO.fps * 6 && (frame - 1) % 10 === 0) {
+    if (frame < spawnUntil && (frame - 1) % 10 === 0) {
       const x = isMerge ? (spawned % 2 ? 820 : 260) + (random() - 0.5) * 24 : 230 + random() * 620;
       const ball: Ball = { id: id++, x, y: 565, vx: (random() - 0.5) * 100, vy: 40, r: BASE_RADIUS, mass: 1, tier: 1 };
       if (balls.every((other) => Math.hypot(ball.x - other.x, ball.y - other.y) > ball.r + other.r + 1)) {
