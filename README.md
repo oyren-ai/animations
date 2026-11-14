@@ -40,7 +40,7 @@ pnpm render SplitLaneFunnelMerge out/funnel.mp4
 pnpm render PendulumWave out/wave.mp4
 ~~~
 
-The render command uses H.264, yuv420p, and one render worker. Extra Remotion CLI flags follow the filename:
+The render command uses H.264, limited-range BT.709, yuv420p, and one render worker. PNG source frames preserve the intended palette through color conversion. Extra Remotion CLI flags follow the filename:
 
 ~~~sh
 pnpm render VortexSpiralBowl out/vortex-preview.mp4 --scale=0.5
@@ -90,6 +90,7 @@ The pendulum wave uses an analytic trajectory. Each successive oscillator comple
 | `src/ball-drop/paint.ts` | The canvas frame renderer and procedural geometric emblems |
 | `src/pendulum-wave/wave.ts` | The closed-form oscillator |
 | `src/audio.ts` | Event-to-tone mapping and PCM synthesis |
+| `src/encoding.ts` | Explicit PNG-to-BT.709 conversion for the pinned renderer |
 | `src/components/GetTheCodeEndCard.tsx` | Shared closing copy and repository link |
 
 ## Verify a remix
