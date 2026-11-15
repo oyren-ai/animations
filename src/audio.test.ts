@@ -1,6 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { SAMPLE_RATE, SAMPLES_PER_FRAME, synthesize, tonesFor, waveTones } from "./audio.ts";
+import {
+  countryMapTones,
+  SAMPLE_RATE,
+  SAMPLES_PER_FRAME,
+  synthesize,
+  synthesizeCountryMapWav,
+  tonesFor,
+  waveTones,
+} from "./audio.ts";
+import { COUNTRY_MAPS } from "./country-maps/fourier.ts";
 import { SCENE_FRAMES, TOTAL_FRAMES } from "./settings.ts";
 
 test("procedural audio is deterministic PCM16 with exact frame-aligned duration", () => {
@@ -20,6 +29,16 @@ test("procedural audio is deterministic PCM16 with exact frame-aligned duration"
 
 test("every composition has closing cues and invalid cue positions are rejected", () => {
   for (const tones of [tonesFor([]), waveTones()]) assert.ok(tones.some((tone) => tone.frame === SCENE_FRAMES));
+  for (const map of COUNTRY_MAPS) {
+    const tones = countryMapTones(map.slug);
+    assert.ok(tones.some((tone) => tone.frame === SCENE_FRAMES));
+    const wav = synthesizeCountryMapWav(map.slug);
+    assert.equal(wav.length, 44 + TOTAL_FRAMES * SAMPLES_PER_FRAME * 2);
+    assert.deepEqual(wav, synthesizeCountryMapWav(map.slug));
+    let peak = 0;
+    for (let i = 44; i < wav.length; i += 2) peak = Math.max(peak, Math.abs(wav.readInt16LE(i)) / 32767);
+    assert.ok(peak > 0.25 && peak <= 0.75);
+  }
   assert.throws(() => synthesize([{ frame: TOTAL_FRAMES, frequency: 440, amplitude: 1, length: 1 }]), /cue/);
   assert.throws(() => synthesize([{ frame: -1, frequency: 440, amplitude: 1, length: 1 }]), /cue/);
 });
