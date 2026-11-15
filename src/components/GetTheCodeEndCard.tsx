@@ -32,7 +32,7 @@ export function GetTheCodeEndCard({
     <AbsoluteFill style={{ background: C.background, fontFamily: theme.fontFamily, color: C.ink, justifyContent: "center", alignItems: "center" }}>
       <AbsoluteFill style={{ background: "radial-gradient(ellipse at 45% 45%, " + C.mesh + ", " + C.transparent + " 65%)" }} />
       <div style={{ position: "relative", width: 900, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 44 }}>
-        <div style={{ ...enter(0), fontSize: 54, fontWeight: 700, lineHeight: 1.24, maxWidth: 860 }}>{heading}</div>
+        <div style={{ ...enter(0), fontSize: 54, fontWeight: 700, lineHeight: 1.24, maxWidth: heading === END_CARD_COPY.mapHeading ? 560 : 860 }}>{heading}</div>
         <a href={END_CARD_COPY.repositoryUrl} style={{ ...enter(0.08), fontSize: 44, fontWeight: 750, letterSpacing: -0.8, color: C.primary, textDecoration: "none", whiteSpace: "nowrap", padding: "18px 36px", borderRadius: 999, background: C.surface, border: "1.5px solid " + C.line }}>{END_CARD_COPY.repository}</a>
         <div style={{ ...enter(0.16), fontSize: 32, color: C.muted, fontWeight: 500 }}>{END_CARD_COPY.attribution}</div>
       </div>

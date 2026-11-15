@@ -1,6 +1,7 @@
 import { Composition } from "remotion";
 import { STYLES } from "./ball-drop/sim.ts";
 import { AnimationShell } from "./components/AnimationShell.tsx";
+import { COUNTRY_MAPS } from "./country-maps/fourier.ts";
 import { TOTAL_FRAMES, VIDEO } from "./settings.ts";
 
 export function Root() {
@@ -10,5 +11,8 @@ export function Root() {
       defaultProps={{ style: style.slug }} />)}
     <Composition id="PendulumWave" component={AnimationShell} width={VIDEO.width} height={VIDEO.height}
       fps={VIDEO.fps} durationInFrames={TOTAL_FRAMES} defaultProps={{}} />
+    {COUNTRY_MAPS.map((map) => <Composition key={map.id} id={map.id} component={AnimationShell}
+      width={VIDEO.width} height={VIDEO.height} fps={VIDEO.fps} durationInFrames={TOTAL_FRAMES}
+      defaultProps={{ countryMap: map.slug }} />)}
   </>;
 }
