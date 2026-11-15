@@ -1,6 +1,10 @@
-# animations
+<p align="center">
+  <a href="https://oyren.ai/workspaces?product=development">
+    <img src="docs/oyren-button.svg" alt="Open this in Oyren" width="280" />
+  </a>
+</p>
 
-<a href="https://oyren.ai/workspaces?product=development"><img src="docs/open-with-oyren.svg" alt="Open with Oyren" height="40"></a>
+# animations
 
 Five animations built from TypeScript, a canvas, and a clock. Change the physics, scrub to any frame, and render the result as a 60 fps video.
 
@@ -67,7 +71,11 @@ An existing compatible browser can be selected with `REMOTION_BROWSER_EXECUTABLE
 
 ## Run & remix in an Oyren Codespace
 
-<a href="https://oyren.ai/workspaces?product=development"><img src="docs/open-with-oyren.svg" alt="Open with Oyren" height="40"></a>
+<p align="center">
+  <a href="https://oyren.ai/workspaces?product=development">
+    <img src="docs/oyren-button.svg" alt="Open this in Oyren" width="280" />
+  </a>
+</p>
 
 [Open an Oyren Codespace](https://oyren.ai/codespaces) to work on the animations in a cloud Linux environment with a terminal and browser preview.
 
