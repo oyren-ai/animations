@@ -4,6 +4,20 @@ Five animations built from TypeScript, a canvas, and a clock. Change the physics
 
 Every composition is 1080 × 1920 and runs for 15 seconds: twelve seconds of motion, followed by a three-second code end card. Shapes and emblems are drawn procedurally. Sound is synthesized locally from simulation events. No stock footage, logo files, or music downloads are needed.
 
+## A few frames
+
+| Bumper matrix | Pendulum cascade |
+| --- | --- |
+| <img src="docs/previews/PinballBumperMatrix.png" width="270" alt="Discs bouncing through a field of circular bumpers"> | <img src="docs/previews/PendulumCascade.png" width="270" alt="Falling discs meeting a cascade of swinging paddles"> |
+
+| Vortex bowl | Funnel merge |
+| --- | --- |
+| <img src="docs/previews/VortexSpiralBowl.png" width="270" alt="A spiral flow field above a curved glass bowl"> | <img src="docs/previews/SplitLaneFunnelMerge.png" width="270" alt="Two inlets feeding geometric discs into a merging bowl"> |
+
+| Pendulum wave | Shared closing beat |
+| --- | --- |
+| <img src="docs/previews/PendulumWave.png" width="270" alt="Twelve pendulums forming a changing wave"> | <img src="docs/previews/code-end-card.png" width="270" alt="Get the code for this animation at github.com/oyren-ai/animations"> |
+
 ## The compositions
 
 | Composition ID | What happens | Good first remix |
@@ -101,7 +115,7 @@ pnpm test
 pnpm assets
 ~~~
 
-Tests cover seeded replay, mass and disc-area conservation, moving contacts, curved boundaries, safe text bounds, exact oscillator derivatives, deterministic audio duration and peak levels, and the rendered end-card link. CI runs these same checks on Node.js 24.
+Tests cover seeded replay, mass and disc-area conservation, moving contacts, curved boundaries, safe text bounds, exact oscillator derivatives, deterministic audio duration and peak levels, and the rendered end-card link. Run these checks locally on Node.js 24 before sharing a remix.
 
 Render and inspect frames after changing the layout or motion. A passing typecheck does not inspect pixels.
 
