@@ -14,6 +14,8 @@ import {
   DROP_STYLES,
   simulateDropArena,
 } from "../src/drop-arenas/sim.ts";
+import { PATATE_COMPOSITIONS, simulatePatate } from "../src/patate/sim.ts";
+import { synthesizePatateWav } from "../src/patate/audio.ts";
 import {
   synthesize,
   synthesizeCountryMapWav,
@@ -128,6 +130,24 @@ results.push({
   audioDigest: createHash("sha256").update(combinedDropsWav).digest("hex"),
 });
 console.log(`BallDropCombined: ${combinedDrops.totalFrames} frames (${(combinedDrops.totalFrames / VIDEO.fps).toFixed(2)}s)`);
+
+for (const patate of PATATE_COMPOSITIONS) {
+  const trace = simulatePatate(patate.slug);
+  const wav = synthesizePatateWav(trace);
+  writeFileSync(
+    new URL("../public/generated/" + patate.slug + ".wav", import.meta.url),
+    wav,
+  );
+  results.push({
+    id: patate.id,
+    seed: trace.seed,
+    frames: trace.totalFrames,
+    audioDigest: createHash("sha256").update(wav).digest("hex"),
+  });
+  console.log(
+    `${patate.id}: ${trace.events.length} events; bossFrame=${trace.bossMergeFrame}; ${trace.totalFrames} frames (${(trace.totalFrames / VIDEO.fps).toFixed(2)}s)`,
+  );
+}
 
 writeFileSync(new URL("../public/generated/manifest.json", import.meta.url), JSON.stringify({ fps: VIDEO.fps, results }, null, 2) + "\n");
 console.log("Generated audio and manifest for " + results.length + " compositions.");

@@ -1,9 +1,11 @@
 import { Composition } from "remotion";
 import { STYLES } from "./ball-drop/sim.ts";
 import { AnimationShell } from "./components/AnimationShell.tsx";
+import { PatateShell } from "./components/PatateShell.tsx";
 import { getReelArenaTiming, ReelArenaShell } from "./components/ReelArenaShell.tsx";
 import { COUNTRY_MAPS } from "./country-maps/fourier.ts";
 import { DROP_STYLES } from "./drop-arenas/sim.ts";
+import { PATATE_COMPOSITIONS, PATATE_TOTAL_FRAMES } from "./patate/themes.ts";
 import { STRING_ROUNDS } from "./string-arena/sim.ts";
 import { TOTAL_FRAMES, VIDEO } from "./settings.ts";
 
@@ -70,5 +72,18 @@ export function Root() {
       durationInFrames={dropCombinedTiming.totalFrames}
       defaultProps={{ mode: { kind: "drop-combined" } }}
     />
+
+    {PATATE_COMPOSITIONS.map((patate) => (
+      <Composition
+        key={patate.id}
+        id={patate.id}
+        component={PatateShell}
+        width={VIDEO.width}
+        height={VIDEO.height}
+        fps={VIDEO.fps}
+        durationInFrames={PATATE_TOTAL_FRAMES}
+        defaultProps={{ slug: patate.slug }}
+      />
+    ))}
   </>;
 }

@@ -131,7 +131,7 @@ export const PATATE_COMPOSITIONS: readonly PatateCompositionSpec[] = [
     slug: "patate-merge-coding-agents",
     badge: "PATATE MERGE #1",
     hook: "WHICH AI AGENT CODES BEST ?",
-    seed: 1101,
+    seed: 1002,
     closingRootHz: 261.625565, // C4
     tiers: makeTiers([
       {
@@ -205,7 +205,7 @@ export const PATATE_COMPOSITIONS: readonly PatateCompositionSpec[] = [
     slug: "patate-merge-world-to-code",
     badge: "PATATE MERGE #2",
     hook: "WAIT FOR THE MERGE...",
-    seed: 2202,
+    seed: 1007,
     closingRootHz: 293.664768, // D4
     tiers: makeTiers([
       {
@@ -279,7 +279,7 @@ export const PATATE_COMPOSITIONS: readonly PatateCompositionSpec[] = [
     slug: "patate-merge-languages",
     badge: "PATATE MERGE #3",
     hook: "WHICH LANGUAGE WINS ?",
-    seed: 3303,
+    seed: 1183,
     closingRootHz: 329.627557, // E4
     tiers: makeTiers([
       {
