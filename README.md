@@ -6,9 +6,9 @@
 
 # animations
 
-Ten animations built from TypeScript, a canvas, and a clock: five deterministic physics scenes and five complex-Fourier country-border reconstructions. Change the equations or physics, scrub to any frame, and render the result as a 60 fps video.
+Nineteen animations built from TypeScript, a canvas, and a clock: five foundational physics scenes, five complex-Fourier country-border reconstructions, four zero-gravity wall-bounce string-arena compositions, and five bouncy arcade ball-drop and funnel-merge compositions. Change the equations or physics, scrub to any frame, and render the result as a 60 fps video.
 
-Every composition is 1080 × 1920 and runs for 15 seconds: twelve seconds of motion, followed by a three-second code end card. Shapes, sovereign map contours, and emblems are drawn procedurally. Sound is synthesized locally from simulation and harmonic events. No stock footage, logo files, or music downloads are needed.
+Every composition renders at 1080 × 1920 and 60 fps, closing with a code end card pointing to `github.com/oyren-ai/animations`. Shapes, sovereign map contours, and geometric vector emblems are drawn procedurally. Sound is synthesized locally from simulation and harmonic events. No stock footage, third-party logo files, or music downloads are needed.
 
 ## A few frames
 
@@ -32,9 +32,13 @@ Every composition is 1080 × 1920 and runs for 15 seconds: twelve seconds of mot
 | --- | --- |
 | <img src="docs/previews/MapOfItaly.png" width="270" alt="Peninsular Italy, Sardinia, and Sicily reconstructed with complex Fourier harmonics"> | <img src="docs/previews/MapOfJapan.png" width="270" alt="Honshu, Kyushu, Hokkaido, and Shikoku reconstructed with complex Fourier harmonics"> |
 
-| Shared closing beat | |
+| Zero-G string arenas (combined) | Bouncy 8-tier funnel merge |
 | --- | --- |
-| <img src="docs/previews/code-end-card.png" width="270" alt="Get the code for this animation at github.com/oyren-ai/animations"> | |
+| <img src="docs/previews/StringArenasCombined.png" width="270" alt="Five zero-gravity contenders gaining anchored strings on rim bounces and cutting rival lines"> | <img src="docs/previews/DropLogoFunnelMerge.png" width="270" alt="Jewel-toned orbs squishing, bouncing, and merging up an eight-tier parabolic funnel"> |
+
+| Four-stage arcade ball drop | Shared closing beat |
+| --- | --- |
+| <img src="docs/previews/BallDropCombined.png" width="270" alt="Combined four-stage arcade ball drop showcase inside reel-safe bounds"> | <img src="docs/previews/code-end-card.png" width="270" alt="Get the code for this animation at github.com/oyren-ai/animations"> |
 
 ## The compositions
 
@@ -50,6 +54,15 @@ Every composition is 1080 × 1920 and runs for 15 seconds: twelve seconds of mot
 | `MapOfIndia` | Complete India border converges from an `N = 1` ellipse to `N = 240` harmonic pairs. | Inspect individual frequency modes or grid spacing. |
 | `MapOfItaly` | Peninsular Italy, Sardinia, and Sicily reconstruct simultaneously as separate closed Fourier loops. | Compare island convergence rates across low orders. |
 | `MapOfJapan` | Honshu, Kyushu, Hokkaido, and Shikoku sharpen from four ellipses into archipelago coastlines. | Tune the harmonic bell chord voicings in `src/audio.ts`. |
+| `StringArenasCombined` | Three back-to-back zero-gravity string-arena rounds (`Coding CLIs`, `Languages`, `Frameworks`) where rim bounces add `+1` anchored line and rival crossings cut lines. | Change `initialStrings`, arena radius, or round seeds in `src/string-arena/sim.ts`. |
+| `StringArenaCodingClis` | Standalone Round 1 zero-gravity string arena (`Seed #1120`). | Adjust bounce speed floors or contender palette. |
+| `StringArenaLanguages` | Standalone Round 2 zero-gravity string arena (`Seed #2213`). | Experiment with 6 contenders or wider starting fans. |
+| `StringArenaFrameworks` | Standalone Round 3 zero-gravity string arena (`Seed #3274`). | Customize elimination burst particle density. |
+| `DropPlinkoGates` | Peg-matrix cascade through `+2` and `x2` laser gates shattering five stacked energy shields. | Add new gate operators or shield thresholds. |
+| `DropBreakableRings` | Six rotating segmented neon rings crack on impact until an orb enters the core and escapes to the goal. | Change ring rotation speeds or segment hit points. |
+| `DropLogoFunnelMerge` | Bouncy, squishy jewel-toned orbs merge up an eight-tier progression ladder with a live 3.5 s Tier-8 celebration. | Tune spring-damped squash stiffness, restitution, or tier radii. |
+| `DropPinballBumpers` | Five `+15` bumpers and twin `x2` rotors charge falling orbs to fill a wave-rippled neon score tank. | Reposition rotors or raise the tank target. |
+| `BallDropCombined` | Four-stage combined arcade showcase chaining Plinko gates, breakable rings, bouncy 8-tier funnel merge, and pinball bumpers. | Reorder stages or tune compact stage seeds. |
 
 ## Run locally
 
@@ -125,6 +138,10 @@ The pendulum wave uses an analytic trajectory. Each successive oscillator comple
 
 The country-map scenes project Natural Earth `10m` closed sovereign rings with spherical Mercator coordinates so east-west distances match cosine-latitude aspect ratios. Each closed loop is decomposed by exact complex discrete Fourier transform across modes `k = -240 .. 240`, then reconstructed through eight progressive harmonic orders (`N = 1, 2, 4, 8, 18, 42, 96, 240`) with smooth order morphing, rotating epicycle vectors, and live normalized `L2` contour precision.
 
+The zero-gravity string arenas integrate 16 substeps per video frame (`960 Hz`) and solve exact swept polynomial contacts between moving contender discs and anchored chords. Each contender opens with 12 rim-anchored lines, gains `+1` line anchored at the exact rim impact point on wall bounces (never on ball-ball collisions), cuts rival lines on contact, and bursts across a centre-filled Fermat disc when its line count reaches zero.
+
+The four-stage arcade ball-drop scenes pair 480 Hz fixed-step collision resolution with an underdamped squash-and-stretch spring (`scaleNormal = 1 - s`, `scaleTangent = 1 / (1 - s)`) aligned to each impact normal while keeping emblems upright, plus live post-climax physics across the celebration window.
+
 ## Where to change things
 
 | File | Responsibility |
@@ -138,7 +155,12 @@ The country-map scenes project Natural Earth `10m` closed sovereign rings with s
 | `src/data/countryContours.ts` | Arc-length resampled WGS84 sovereign border loops for the five countries |
 | `src/country-maps/fourier.ts` | Spherical Mercator projection, complex DFT, harmonic tiers, and epicycle evaluation |
 | `src/country-maps/paint.ts` | Canvas map renderer, coordinate grid, formula telemetry, and harmonic spectrum |
-| `src/audio.ts` | Event-to-tone mapping, harmonic map chords, and PCM synthesis |
+| `src/string-arena/sim.ts` | Zero-gravity 960 Hz swept-contact string solver, rim-gain rules, and three-round timeline |
+| `src/string-arena/paint.ts` | Reel-safe (`x: 60..900`, `y: 220..1560`) string-arena HUD, chords, and full-disc bursts |
+| `src/drop-arenas/sim.ts` | Plinko gates, breakable rings, bouncy 8-tier funnel merge, pinball bumpers, and squash springs |
+| `src/drop-arenas/paint.ts` | High-contrast jewel-toned orb renderer, 8-tier progression strip, and arcade obstacles |
+| `src/shared/reelUtils.ts` | Reel safe-zone bounds assertions and procedural geometric emblem renderer |
+| `src/audio.ts` | Event-to-tone mapping, harmonic map chords, arena soundtracks, and PCM synthesis |
 | `src/encoding.ts` | Explicit PNG-to-BT.709 conversion for the pinned renderer |
 | `src/components/GetTheCodeEndCard.tsx` | Shared closing copy and repository link |
 
