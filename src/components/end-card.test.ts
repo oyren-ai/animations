@@ -22,3 +22,19 @@ test("the code end card supports the country-map repository headline", () => {
   assert.ok(html.includes("github.com/oyren-ai/animations"));
   assert.ok(html.includes("Built with Oyren · oyren.ai"));
 });
+
+test("the code end card constrains stage geometry inside reel safeBounds", () => {
+  const html = renderToStaticMarkup(
+    createElement(GetTheCodeEndCard, {
+      frame: 45,
+      heading: END_CARD_COPY.mapHeading,
+      durationSeconds: 2.5,
+      safeBounds: { left: 60, right: 900, top: 220, bottom: 1560 },
+    }),
+  );
+  assert.ok(html.includes("left:60px"));
+  assert.ok(html.includes("top:220px"));
+  assert.ok(html.includes("width:840px"));
+  assert.ok(html.includes("height:1340px"));
+  assert.ok(html.includes("Find the code in oyren-ai/animations"));
+});
