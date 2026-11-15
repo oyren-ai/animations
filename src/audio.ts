@@ -2,6 +2,8 @@ import { SCENE_FRAMES, TOTAL_FRAMES, VIDEO } from "./settings.ts";
 import type { Cue } from "./ball-drop/sim.ts";
 import { HARMONIC_TIERS, prepareCountryMap, type CountryMapSlug } from "./country-maps/fourier.ts";
 import { WAVE } from "./pendulum-wave/wave.ts";
+import type { StringArenaTrace } from "./string-arena/sim.ts";
+import type { DropTrace } from "./drop-arenas/sim.ts";
 
 export const SAMPLE_RATE = 48000;
 export const SAMPLES_PER_FRAME = SAMPLE_RATE / VIDEO.fps;
@@ -185,3 +187,252 @@ export function synthesizeCountryMapWav(slug: CountryMapSlug, frameCount = TOTAL
   }
   return encodeMonoPcm16Wav(samples);
 }
+
+const REEL_PENTATONIC = [
+  261.625565, // C4
+  293.664768, // D4
+  329.627557, // E4
+  391.995436, // G4
+  440.0,      // A4
+  523.251131, // C5
+  659.255114, // E5
+  783.990872, // G5
+] as const;
+
+function closingTonesAt(sceneFrames: number, totalFrames: number): Tone[] {
+  return [261.625565, 329.627557, 391.995436, 523.251131]
+    .map((frequency, index) => ({
+      frame: Math.min(totalFrames - 2, sceneFrames + Math.round(index * 0.07 * VIDEO.fps)),
+      frequency,
+      amplitude: 0.21,
+      length: 0.95,
+    }))
+    .filter((t) => t.frame >= 0 && t.frame < totalFrames);
+}
+
+function renderCalibratedReelWav(
+  tones: Tone[],
+  rootHzBySecond: (sec: number) => number,
+  frameCount: number,
+): Buffer {
+  const sampleCount = frameCount * SAMPLES_PER_FRAME;
+  const durationSec = sampleCount / SAMPLE_RATE;
+  const samples = new Float32Array(sampleCount);
+
+  // Continuous warm ambient pad so audio never drops out between hits or during the end card
+  let phase1 = 0;
+  let phase2 = 0;
+  let phase3 = 0;
+  for (let i = 0; i < sampleCount; i++) {
+    const sec = i / SAMPLE_RATE;
+    const root = rootHzBySecond(sec);
+    phase1 += (2 * Math.PI * root) / SAMPLE_RATE;
+    phase2 += (2 * Math.PI * root * 1.5) / SAMPLE_RATE;
+    phase3 += (2 * Math.PI * root * 2.002) / SAMPLE_RATE;
+    const envIn = Math.min(1, sec / 0.16);
+    const envOut = Math.min(1, (durationSec - sec) / 0.16);
+    const pulse = 0.82 + 0.18 * Math.sin((2 * Math.PI * sec) / 2.5 - Math.PI / 2);
+    samples[i] =
+      envIn *
+      envOut *
+      pulse *
+      (Math.sin(phase1) + Math.sin(phase2) * 0.55 + Math.sin(phase3) * 0.24) *
+      0.082;
+  }
+
+  for (const tone of tones) {
+    if (
+      !Number.isInteger(tone.frame) ||
+      tone.frame < 0 ||
+      tone.frame >= frameCount ||
+      !(tone.frequency > 0) ||
+      !(tone.length > 0) ||
+      !(tone.amplitude >= 0)
+    ) {
+      continue;
+    }
+    const start = tone.frame * SAMPLES_PER_FRAME;
+    const count = Math.round(tone.length * SAMPLE_RATE);
+    const decayRate = tone.length > 0.6 ? 3.2 : 9.5;
+    for (let i = 0; i < count && start + i < sampleCount; i++) {
+      const t = i / SAMPLE_RATE;
+      const attack = Math.min(1, t / 0.005);
+      const decay = Math.exp(-t * decayRate);
+      const tail = 1 - i / count;
+      const wave =
+        Math.sin(2 * Math.PI * tone.frequency * t) +
+        Math.sin(4 * Math.PI * tone.frequency * t) * 0.24 +
+        Math.sin(6 * Math.PI * tone.frequency * t) * 0.08;
+      samples[start + i] += tone.amplitude * attack * decay * tail * wave * 0.52;
+    }
+  }
+
+  let sumSq = 0;
+  for (let i = 0; i < sampleCount; i++) sumSq += samples[i] * samples[i];
+  const rms = Math.sqrt(sumSq / sampleCount);
+  const targetMonoRms = 0.182; // ~ -16.0 LUFS integrated stereo loudness
+  const rmsGain = rms > 0 ? targetMonoRms / rms : 1;
+  const ceiling = 0.72; // <= -2.8 dBTP true-peak ceiling
+  for (let i = 0; i < sampleCount; i++) {
+    samples[i] = ceiling * Math.tanh((samples[i] * rmsGain) / ceiling);
+  }
+  return encodeMonoPcm16Wav(samples);
+}
+
+export function synthesizeStringArenaWav(
+  rounds: readonly { startFrame: number; trace: StringArenaTrace }[],
+  sceneFrames: number,
+  totalFrames: number,
+): Buffer {
+  const tones: Tone[] = [];
+  const roundRoots = [146.832384, 164.813778, 195.997718]; // D3 -> E3 -> G3
+
+  for (let rIdx = 0; rIdx < rounds.length; rIdx++) {
+    const { startFrame, trace } = rounds[rIdx];
+    let lastCutFrame = -99;
+    // Round start bell
+    tones.push({
+      frame: startFrame,
+      frequency: roundRoots[rIdx % roundRoots.length] * 2,
+      amplitude: 0.2,
+      length: 0.45,
+    });
+
+    for (const ev of trace.events) {
+      const f = Math.min(totalFrames - 2, startFrame + ev.frame);
+      if (ev.kind === "gain") {
+        // Bright upward pluck on wall-bounce +1 string anchor
+        tones.push({
+          frame: f,
+          frequency: REEL_PENTATONIC[ev.owner % 5] * 1.5,
+          amplitude: 0.17,
+          length: 0.18,
+        });
+      } else if (ev.kind === "cut") {
+        if (f - lastCutFrame >= 2) {
+          lastCutFrame = f;
+          tones.push({
+            frame: f,
+            frequency: REEL_PENTATONIC[(ev.owner + 2) % 6],
+            amplitude: 0.11,
+            length: 0.09,
+          });
+        }
+      } else if (ev.kind === "body") {
+        tones.push({
+          frame: f,
+          frequency: 195.997718,
+          amplitude: 0.1,
+          length: 0.08,
+        });
+      } else if (ev.kind === "out") {
+        tones.push({
+          frame: f,
+          frequency: REEL_PENTATONIC[ev.owner % 5] * 0.75,
+          amplitude: 0.22,
+          length: 0.42,
+        });
+      } else if (ev.kind === "finish") {
+        for (const [df, ratio] of [
+          [0, 1],
+          [3, 5 / 4],
+          [6, 3 / 2],
+          [9, 2],
+        ] as const) {
+          tones.push({
+            frame: Math.min(totalFrames - 2, f + df),
+            frequency: 261.625565 * ratio,
+            amplitude: 0.2,
+            length: 0.78,
+          });
+        }
+      }
+    }
+  }
+
+  tones.push(...closingTonesAt(sceneFrames, totalFrames));
+  return renderCalibratedReelWav(
+    tones,
+    (sec) => {
+      const f = sec * VIDEO.fps;
+      const idx = rounds.findIndex(
+        (r) => f >= r.startFrame && f < r.startFrame + r.trace.totalRoundFrames,
+      );
+      return roundRoots[(idx >= 0 ? idx : rounds.length - 1) % roundRoots.length];
+    },
+    totalFrames,
+  );
+}
+
+export function synthesizeDropArenaWav(
+  stages: readonly { startFrame: number; trace: DropTrace }[],
+  sceneFrames: number,
+  totalFrames: number,
+): Buffer {
+  const tones: Tone[] = [];
+  const stageRoots = [130.812783, 146.832384, 164.813778, 174.614116]; // C3, D3, E3, F3
+
+  for (let sIdx = 0; sIdx < stages.length; sIdx++) {
+    const { startFrame, trace } = stages[sIdx];
+    let lastMinorCue = -99;
+    tones.push({
+      frame: startFrame,
+      frequency: stageRoots[sIdx % stageRoots.length] * 2,
+      amplitude: 0.19,
+      length: 0.42,
+    });
+
+    for (let i = 0; i < trace.events.length; i++) {
+      const ev = trace.events[i];
+      if (ev.type === "spawn") continue;
+      const f = Math.min(totalFrames - 2, startFrame + ev.frame);
+
+      if (ev.type === "merge") {
+        const tierIdx = Math.max(0, Math.min(7, (ev.tier ?? 2) - 1));
+        tones.push({
+          frame: f,
+          frequency: REEL_PENTATONIC[tierIdx],
+          amplitude: (ev.tier ?? 2) >= 6 ? 0.24 : 0.16,
+          length: (ev.tier ?? 2) >= 6 ? 0.34 : 0.18,
+        });
+      } else if (ev.type === "climax") {
+        for (const [df, freq] of [
+          [0, 261.625565],
+          [3, 329.627557],
+          [6, 391.995436],
+          [9, 523.251131],
+          [12, 659.255114],
+        ] as const) {
+          tones.push({
+            frame: Math.min(totalFrames - 2, f + df),
+            frequency: freq,
+            amplitude: 0.23,
+            length: 1.05,
+          });
+        }
+      } else if (f - lastMinorCue >= 3) {
+        lastMinorCue = f;
+        tones.push({
+          frame: f,
+          frequency: REEL_PENTATONIC[(i + sIdx) % 6],
+          amplitude: ev.type === "bounce" ? 0.08 : 0.12,
+          length: 0.11,
+        });
+      }
+    }
+  }
+
+  tones.push(...closingTonesAt(sceneFrames, totalFrames));
+  return renderCalibratedReelWav(
+    tones,
+    (sec) => {
+      const f = sec * VIDEO.fps;
+      const idx = stages.findIndex(
+        (s) => f >= s.startFrame && f < s.startFrame + (s.trace.frames.length - 1),
+      );
+      return stageRoots[(idx >= 0 ? idx : stages.length - 1) % stageRoots.length];
+    },
+    totalFrames,
+  );
+}
+
