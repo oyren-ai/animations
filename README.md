@@ -104,7 +104,7 @@ An existing compatible browser can be selected with `REMOTION_BROWSER_EXECUTABLE
 
 <p align="center">
   <a href="https://oyren.ai/workspaces?product=development">
-    <img src="docs/oyren-button.svg" alt="Open this in Oyren" width="280" />
+    <img src="docs/oyren-button-mark.svg" alt="Open this in Oyren" width="192" />
   </a>
 </p>
 
