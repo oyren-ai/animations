@@ -6,9 +6,9 @@
 
 # animations
 
-Five animations built from TypeScript, a canvas, and a clock. Change the physics, scrub to any frame, and render the result as a 60 fps video.
+Ten animations built from TypeScript, a canvas, and a clock: five deterministic physics scenes and five complex-Fourier country-border reconstructions. Change the equations or physics, scrub to any frame, and render the result as a 60 fps video.
 
-Every composition is 1080 × 1920 and runs for 15 seconds: twelve seconds of motion, followed by a three-second code end card. Shapes and emblems are drawn procedurally. Sound is synthesized locally from simulation events. No stock footage, logo files, or music downloads are needed.
+Every composition is 1080 × 1920 and runs for 15 seconds: twelve seconds of motion, followed by a three-second code end card. Shapes, sovereign map contours, and emblems are drawn procedurally. Sound is synthesized locally from simulation and harmonic events. No stock footage, logo files, or music downloads are needed.
 
 ## A few frames
 
@@ -20,9 +20,21 @@ Every composition is 1080 × 1920 and runs for 15 seconds: twelve seconds of mot
 | --- | --- |
 | <img src="docs/previews/VortexSpiralBowl.png" width="270" alt="A spiral flow field above a curved glass bowl"> | <img src="docs/previews/SplitLaneFunnelMerge.png" width="270" alt="Two inlets feeding geometric discs into a merging bowl"> |
 
-| Pendulum wave | Shared closing beat |
+| Pendulum wave | Azerbaijan (Fourier map) |
 | --- | --- |
-| <img src="docs/previews/PendulumWave.png" width="270" alt="Twelve pendulums forming a changing wave"> | <img src="docs/previews/code-end-card.png" width="270" alt="Get the code for this animation at github.com/oyren-ai/animations"> |
+| <img src="docs/previews/PendulumWave.png" width="270" alt="Twelve pendulums forming a changing wave"> | <img src="docs/previews/MapOfAzerbaijan.png" width="270" alt="Sovereign borders of Azerbaijan reconstructed with complex Fourier harmonics"> |
+
+| Turkey (Fourier map) | India (Fourier map) |
+| --- | --- |
+| <img src="docs/previews/MapOfTurkey.png" width="270" alt="Anatolia and Eastern Thrace reconstructed with complex Fourier harmonics"> | <img src="docs/previews/MapOfIndia.png" width="270" alt="India border reconstructed with complex Fourier harmonics"> |
+
+| Italy (Fourier map) | Japan (Fourier map) |
+| --- | --- |
+| <img src="docs/previews/MapOfItaly.png" width="270" alt="Peninsular Italy, Sardinia, and Sicily reconstructed with complex Fourier harmonics"> | <img src="docs/previews/MapOfJapan.png" width="270" alt="Honshu, Kyushu, Hokkaido, and Shikoku reconstructed with complex Fourier harmonics"> |
+
+| Shared closing beat | |
+| --- | --- |
+| <img src="docs/previews/code-end-card.png" width="270" alt="Get the code for this animation at github.com/oyren-ai/animations"> | |
 
 ## The compositions
 
@@ -33,6 +45,11 @@ Every composition is 1080 × 1920 and runs for 15 seconds: twelve seconds of mot
 | `VortexSpiralBowl` | An art-directed vortex field pushes discs around a curved glass bowl. | Tune the swirl, drag, and bowl curvature. |
 | `SplitLaneFunnelMerge` | Two inlets feed a bowl. Equal tiers merge, carrying their mass, area, and momentum forward. | Change the inlet spacing or maximum tier. |
 | `PendulumWave` | Twelve closed-form oscillators drift out of alignment, then return after one loop. | Change the cycle counts or string lengths. |
+| `MapOfAzerbaijan` | Sovereign mainland Azerbaijan and Nakhchivan sharpen across eight complex Fourier orders (`N = 1` to `240`). | Add another country polygon or change the harmonic schedule. |
+| `MapOfTurkey` | Anatolia and Eastern Thrace emerge across eight harmonic orders with live epicycles and spectrum bars. | Adjust epicycle chain count or morph duration. |
+| `MapOfIndia` | Complete India border converges from an `N = 1` ellipse to `N = 240` harmonic pairs. | Inspect individual frequency modes or grid spacing. |
+| `MapOfItaly` | Peninsular Italy, Sardinia, and Sicily reconstruct simultaneously as separate closed Fourier loops. | Compare island convergence rates across low orders. |
+| `MapOfJapan` | Honshu, Kyushu, Hokkaido, and Shikoku sharpen from four ellipses into archipelago coastlines. | Tune the harmonic bell chord voicings in `src/audio.ts`. |
 
 ## Run locally
 
@@ -58,6 +75,7 @@ Choose a composition and output filename:
 ~~~sh
 pnpm render SplitLaneFunnelMerge out/funnel.mp4
 pnpm render PendulumWave out/wave.mp4
+pnpm render MapOfAzerbaijan out/map-of-azerbaijan.mp4
 ~~~
 
 The render command uses H.264, limited-range BT.709, yuv420p, and one render worker. PNG source frames preserve the intended palette through color conversion. Extra Remotion CLI flags follow the filename:
@@ -105,6 +123,8 @@ Matching funnel discs combine by mass-weighted position and velocity. The new ra
 
 The pendulum wave uses an analytic trajectory. Each successive oscillator completes one extra cycle in the same twelve-second interval, so all return to their opening positions together.
 
+The country-map scenes project Natural Earth `10m` closed sovereign rings with spherical Mercator coordinates so east-west distances match cosine-latitude aspect ratios. Each closed loop is decomposed by exact complex discrete Fourier transform across modes `k = -240 .. 240`, then reconstructed through eight progressive harmonic orders (`N = 1, 2, 4, 8, 18, 42, 96, 240`) with smooth order morphing, rotating epicycle vectors, and live normalized `L2` contour precision.
+
 ## Where to change things
 
 | File | Responsibility |
@@ -115,7 +135,10 @@ The pendulum wave uses an analytic trajectory. Each successive oscillator comple
 | `src/ball-drop/bounds.ts` | Disc, segment, world, bowl, and measured text bounds |
 | `src/ball-drop/paint.ts` | The canvas frame renderer and procedural geometric emblems |
 | `src/pendulum-wave/wave.ts` | The closed-form oscillator |
-| `src/audio.ts` | Event-to-tone mapping and PCM synthesis |
+| `src/data/countryContours.ts` | Arc-length resampled WGS84 sovereign border loops for the five countries |
+| `src/country-maps/fourier.ts` | Spherical Mercator projection, complex DFT, harmonic tiers, and epicycle evaluation |
+| `src/country-maps/paint.ts` | Canvas map renderer, coordinate grid, formula telemetry, and harmonic spectrum |
+| `src/audio.ts` | Event-to-tone mapping, harmonic map chords, and PCM synthesis |
 | `src/encoding.ts` | Explicit PNG-to-BT.709 conversion for the pinned renderer |
 | `src/components/GetTheCodeEndCard.tsx` | Shared closing copy and repository link |
 
@@ -127,7 +150,7 @@ pnpm test
 pnpm assets
 ~~~
 
-Tests cover seeded replay, mass and disc-area conservation, moving contacts, curved boundaries, safe text bounds, exact oscillator derivatives, deterministic audio duration and peak levels, and the rendered end-card link. Run these checks locally on Node.js 24 before sharing a remix.
+Tests cover seeded replay, mass and disc-area conservation, moving contacts, curved boundaries, safe text bounds, exact oscillator derivatives, monotonic Fourier contour convergence and Mercator bounds, deterministic audio duration and peak levels, and the rendered end-card link. Run these checks locally on Node.js 24 before sharing a remix.
 
 Render and inspect frames after changing the layout or motion. A passing typecheck does not inspect pixels.
 
