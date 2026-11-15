@@ -1,5 +1,7 @@
 # animations
 
+<a href="https://oyren.ai/workspaces?product=development"><img src="docs/open-with-oyren.svg" alt="Open with Oyren" height="40"></a>
+
 Five animations built from TypeScript, a canvas, and a clock. Change the physics, scrub to any frame, and render the result as a 60 fps video.
 
 Every composition is 1080 × 1920 and runs for 15 seconds: twelve seconds of motion, followed by a three-second code end card. Shapes and emblems are drawn procedurally. Sound is synthesized locally from simulation events. No stock footage, logo files, or music downloads are needed.
@@ -64,6 +66,8 @@ pnpm still PinballBumperMatrix out/pinball.png --frame=240
 An existing compatible browser can be selected with `REMOTION_BROWSER_EXECUTABLE`. Output goes in `out/`; generated WAV files and the deterministic asset manifest go in `public/generated/`. Both directories are ignored by Git.
 
 ## Run & remix in an Oyren Codespace
+
+<a href="https://oyren.ai/workspaces?product=development"><img src="docs/open-with-oyren.svg" alt="Open with Oyren" height="40"></a>
 
 [Open an Oyren Codespace](https://oyren.ai/codespaces) to work on the animations in a cloud Linux environment with a terminal and browser preview.
 
