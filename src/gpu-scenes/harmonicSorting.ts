@@ -308,7 +308,8 @@ function sampleStepsToTimeline(
 }
 
 let cachedSortTrace: HarmonicSortingTrace | null = null;
-let cachedSortAudio: { buffer: StereoBuffer; wav: Buffer; features: FrameAudioFeatures[] } | null = null;
+let cachedSortFeatures: { buffer: StereoBuffer; features: FrameAudioFeatures[] } | null = null;
+let cachedSortAudio: { buffer: StereoBuffer; wav: Uint8Array; features: FrameAudioFeatures[] } | null = null;
 
 export function simulateHarmonicSorting(seed = 20261117): HarmonicSortingTrace {
   if (cachedSortTrace && cachedSortTrace.seed === seed) return cachedSortTrace;
@@ -368,10 +369,10 @@ function valueToScaleHz(val: number): number {
   return LYDIAN_SCALE_HZ[idx];
 }
 
-export function buildHarmonicSortingAudio(
+export function buildHarmonicSortingFeatures(
   trace = simulateHarmonicSorting(),
-): { buffer: StereoBuffer; wav: Buffer; features: FrameAudioFeatures[] } {
-  if (cachedSortAudio && trace === cachedSortTrace) return cachedSortAudio;
+): { buffer: StereoBuffer; features: FrameAudioFeatures[] } {
+  if (cachedSortFeatures && trace === cachedSortTrace) return cachedSortFeatures;
 
   const buf = createStereoBuffer(SORT_TOTAL_FRAMES, VIDEO.fps);
   const totalSec = SORT_TOTAL_FRAMES / VIDEO.fps;
@@ -470,9 +471,20 @@ export function buildHarmonicSortingAudio(
 
   calibrateStereoMaster(buf, { targetLufs: -14.0, ceilingDbTp: -1.8 });
   const features = extractFrameAudioFeatures(buf.left, buf.right, VIDEO.fps);
-  const wav = encodeStereoPcm16Wav(buf.left, buf.right);
-  cachedSortAudio = { buffer: buf, wav, features };
-  return cachedSortAudio;
+  const out = { buffer: buf, features };
+  if (trace === cachedSortTrace) cachedSortFeatures = out;
+  return out;
+}
+
+export function buildHarmonicSortingAudio(
+  trace = simulateHarmonicSorting(),
+): { buffer: StereoBuffer; wav: Uint8Array; features: FrameAudioFeatures[] } {
+  if (cachedSortAudio && trace === cachedSortTrace) return cachedSortAudio;
+  const { buffer, features } = buildHarmonicSortingFeatures(trace);
+  const wav = encodeStereoPcm16Wav(buffer.left, buffer.right);
+  const out = { buffer, wav, features };
+  if (trace === cachedSortTrace) cachedSortAudio = out;
+  return out;
 }
 
 function valueColor(val: number, sortedVerified: boolean, active: boolean): string {

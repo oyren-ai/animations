@@ -199,12 +199,19 @@ test("HarmonicSortingMatrix sorts all 96 channels across Radix, Quick, and Heap 
   }
 });
 
-test("GPU_AUDIO_COMPOSITIONS registry synthesizes 48 kHz stereo WAVs for all 3 compositions", () => {
+test("GPU_AUDIO_COMPOSITIONS and browser feature builders run cleanly without Node Buffer", () => {
   assert.equal(GPU_AUDIO_COMPOSITIONS.length, 3);
-  for (const comp of GPU_AUDIO_COMPOSITIONS) {
-    const wav = synthesizeGpuAudioSceneWav(comp.slug);
-    assert.equal(wav.readUInt16LE(22), 2); // Stereo
-    assert.equal(wav.readUInt32LE(24), 48000); // 48 kHz
-    assert.equal(wav.length, 44 + (comp.totalFrames / VIDEO.fps) * 48000 * 4);
+  const savedBuffer = (globalThis as Record<string, unknown>).Buffer;
+  try {
+    (globalThis as Record<string, unknown>).Buffer = undefined;
+    for (const comp of GPU_AUDIO_COMPOSITIONS) {
+      const wav = synthesizeGpuAudioSceneWav(comp.slug);
+      const view = new DataView(wav.buffer, wav.byteOffset, wav.byteLength);
+      assert.equal(view.getUint16(22, true), 2); // Stereo
+      assert.equal(view.getUint32(24, true), 48000); // 48 kHz
+      assert.equal(wav.byteLength, 44 + (comp.totalFrames / VIDEO.fps) * 48000 * 4);
+    }
+  } finally {
+    (globalThis as Record<string, unknown>).Buffer = savedBuffer;
   }
 });

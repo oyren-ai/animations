@@ -180,16 +180,20 @@ void main() {
 }
 `;
 
-export interface CyberTunnelAudioBundle {
+export interface CyberTunnelFeatureBundle {
   buffer: StereoBuffer;
-  wav: Buffer;
   features: FrameAudioFeatures[];
 }
 
+export interface CyberTunnelAudioBundle extends CyberTunnelFeatureBundle {
+  wav: Uint8Array;
+}
+
+let cachedFeatures: CyberTunnelFeatureBundle | null = null;
 let cachedBundle: CyberTunnelAudioBundle | null = null;
 
-export function buildCyberTunnelAudio(): CyberTunnelAudioBundle {
-  if (cachedBundle) return cachedBundle;
+export function buildCyberTunnelFeatures(): CyberTunnelFeatureBundle {
+  if (cachedFeatures) return cachedFeatures;
 
   const buf = createStereoBuffer(CYBER_TUNNEL_TOTAL_FRAMES, VIDEO.fps);
   const beatSec = 60 / CYBER_TUNNEL_BPM; // 0.483871 s
@@ -303,8 +307,15 @@ export function buildCyberTunnelAudio(): CyberTunnelAudioBundle {
 
   calibrateStereoMaster(buf, { targetLufs: -14.0, ceilingDbTp: -1.8 });
   const features = extractFrameAudioFeatures(buf.left, buf.right, VIDEO.fps);
-  const wav = encodeStereoPcm16Wav(buf.left, buf.right);
-  cachedBundle = { buffer: buf, wav, features };
+  cachedFeatures = { buffer: buf, features };
+  return cachedFeatures;
+}
+
+export function buildCyberTunnelAudio(): CyberTunnelAudioBundle {
+  if (cachedBundle) return cachedBundle;
+  const { buffer, features } = buildCyberTunnelFeatures();
+  const wav = encodeStereoPcm16Wav(buffer.left, buffer.right);
+  cachedBundle = { buffer, wav, features };
   return cachedBundle;
 }
 

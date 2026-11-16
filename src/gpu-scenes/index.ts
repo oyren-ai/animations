@@ -39,7 +39,7 @@ export const GPU_AUDIO_COMPOSITIONS: readonly GpuAudioCompositionDef[] = [
   },
 ] as const;
 
-export function synthesizeGpuAudioSceneWav(slug: GpuAudioSceneSlug): Buffer {
+export function synthesizeGpuAudioSceneWav(slug: GpuAudioSceneSlug): Uint8Array {
   switch (slug) {
     case "cyber-synth-shader-tunnel":
       return buildCyberTunnelAudio().wav;

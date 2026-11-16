@@ -472,33 +472,40 @@ export function calibrateStereoMaster(
   };
 }
 
-export function encodeStereoPcm16Wav(left: Float32Array, right: Float32Array): Buffer {
+function writeAscii(bytes: Uint8Array, offset: number, text: string): void {
+  for (let i = 0; i < text.length; i++) {
+    bytes[offset + i] = text.charCodeAt(i) & 0xff;
+  }
+}
+
+export function encodeStereoPcm16Wav(left: Float32Array, right: Float32Array): Uint8Array {
   if (left.length !== right.length) {
     throw new RangeError(`Channel length mismatch: left=${left.length}, right=${right.length}`);
   }
   const sampleCount = left.length;
   const dataBytes = sampleCount * 4;
-  const wav = Buffer.alloc(44 + dataBytes);
+  const wav = new Uint8Array(44 + dataBytes);
+  const view = new DataView(wav.buffer, wav.byteOffset, wav.byteLength);
 
-  wav.write("RIFF", 0);
-  wav.writeUInt32LE(36 + dataBytes, 4);
-  wav.write("WAVEfmt ", 8);
-  wav.writeUInt32LE(16, 16); // PCM fmt chunk size
-  wav.writeUInt16LE(1, 20); // AudioFormat = 1 (PCM)
-  wav.writeUInt16LE(2, 22); // NumChannels = 2 (Stereo)
-  wav.writeUInt32LE(STEREO_SAMPLE_RATE, 24);
-  wav.writeUInt32LE(STEREO_SAMPLE_RATE * 4, 28); // ByteRate = 48000 * 2 * 2
-  wav.writeUInt16LE(4, 32); // BlockAlign = 4
-  wav.writeUInt16LE(16, 34); // BitsPerSample = 16
-  wav.write("data", 36);
-  wav.writeUInt32LE(dataBytes, 40);
+  writeAscii(wav, 0, "RIFF");
+  view.setUint32(4, 36 + dataBytes, true);
+  writeAscii(wav, 8, "WAVEfmt ");
+  view.setUint32(16, 16, true); // PCM fmt chunk size
+  view.setUint16(20, 1, true); // AudioFormat = 1 (PCM)
+  view.setUint16(22, 2, true); // NumChannels = 2 (Stereo)
+  view.setUint32(24, STEREO_SAMPLE_RATE, true);
+  view.setUint32(28, STEREO_SAMPLE_RATE * 4, true); // ByteRate = 48000 * 2 * 2
+  view.setUint16(32, 4, true); // BlockAlign = 4
+  view.setUint16(34, 16, true); // BitsPerSample = 16
+  writeAscii(wav, 36, "data");
+  view.setUint32(40, dataBytes, true);
 
   for (let i = 0; i < sampleCount; i++) {
     const l = Math.max(-1, Math.min(1, left[i]));
     const r = Math.max(-1, Math.min(1, right[i]));
     const offset = 44 + i * 4;
-    wav.writeInt16LE(Math.round(l * 32767), offset);
-    wav.writeInt16LE(Math.round(r * 32767), offset + 2);
+    view.setInt16(offset, Math.round(l * 32767), true);
+    view.setInt16(offset + 2, Math.round(r * 32767), true);
   }
   return wav;
 }

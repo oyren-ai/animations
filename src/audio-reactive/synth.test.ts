@@ -28,7 +28,7 @@ test("panGains preserves constant power across [-1, 1]", () => {
   assert.ok(hardRight.right > 0.999 && hardRight.left < 1e-6);
 });
 
-test("encodeStereoPcm16Wav writes a valid 48 kHz 2-channel 16-bit RIFF header and interleaved samples", () => {
+test("encodeStereoPcm16Wav writes a valid 48 kHz 2-channel 16-bit RIFF header and works without Node Buffer", () => {
   const frames = 60; // 1.0s at 60 fps
   const buf = createStereoBuffer(frames, 60);
   assert.equal(buf.left.length, STEREO_SAMPLE_RATE);
@@ -37,19 +37,29 @@ test("encodeStereoPcm16Wav writes a valid 48 kHz 2-channel 16-bit RIFF header an
   buf.left[0] = 0.5;
   buf.right[0] = -0.5;
 
-  const wav = encodeStereoPcm16Wav(buf.left, buf.right);
-  assert.equal(wav.toString("ascii", 0, 4), "RIFF");
-  assert.equal(wav.toString("ascii", 8, 16), "WAVEfmt ");
-  assert.equal(wav.readUInt16LE(20), 1); // PCM
-  assert.equal(wav.readUInt16LE(22), 2); // Stereo
-  assert.equal(wav.readUInt32LE(24), 48000); // 48 kHz
-  assert.equal(wav.readUInt32LE(28), 48000 * 4); // byteRate
-  assert.equal(wav.readUInt16LE(32), 4); // blockAlign
-  assert.equal(wav.readUInt16LE(34), 16); // bitsPerSample
-  assert.equal(wav.readUInt32LE(40), STEREO_SAMPLE_RATE * 4);
-  assert.equal(wav.length, 44 + STEREO_SAMPLE_RATE * 4);
-  assert.equal(wav.readInt16LE(44), Math.round(0.5 * 32767));
-  assert.equal(wav.readInt16LE(46), Math.round(-0.5 * 32767));
+  const savedBuffer = (globalThis as Record<string, unknown>).Buffer;
+  let wav: Uint8Array;
+  try {
+    (globalThis as Record<string, unknown>).Buffer = undefined;
+    wav = encodeStereoPcm16Wav(buf.left, buf.right);
+  } finally {
+    (globalThis as Record<string, unknown>).Buffer = savedBuffer;
+  }
+
+  const ascii = new TextDecoder("ascii");
+  const view = new DataView(wav.buffer, wav.byteOffset, wav.byteLength);
+  assert.equal(ascii.decode(wav.subarray(0, 4)), "RIFF");
+  assert.equal(ascii.decode(wav.subarray(8, 16)), "WAVEfmt ");
+  assert.equal(view.getUint16(20, true), 1); // PCM
+  assert.equal(view.getUint16(22, true), 2); // Stereo
+  assert.equal(view.getUint32(24, true), 48000); // 48 kHz
+  assert.equal(view.getUint32(28, true), 48000 * 4); // byteRate
+  assert.equal(view.getUint16(32, true), 4); // blockAlign
+  assert.equal(view.getUint16(34, true), 16); // bitsPerSample
+  assert.equal(view.getUint32(40, true), STEREO_SAMPLE_RATE * 4);
+  assert.equal(wav.byteLength, 44 + STEREO_SAMPLE_RATE * 4);
+  assert.equal(view.getInt16(44, true), Math.round(0.5 * 32767));
+  assert.equal(view.getInt16(46, true), Math.round(-0.5 * 32767));
 });
 
 test("calibrateStereoMaster hits ~-14 LUFS target, keeps true peak <= -1.5 dBTP, and stays deterministic", () => {

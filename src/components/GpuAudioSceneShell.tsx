@@ -11,20 +11,20 @@ import {
   useVideoConfig,
 } from "remotion";
 import {
-  buildCyberTunnelAudio,
+  buildCyberTunnelFeatures,
   createCyberTunnelGlRenderer,
   paintCyberTunnelFallback2D,
   paintCyberTunnelHud,
   type CyberTunnelGlRenderer,
 } from "../gpu-scenes/cyberTunnel.ts";
 import {
-  buildHarmonicSortingAudio,
+  buildHarmonicSortingFeatures,
   paintHarmonicSortingFrame,
   simulateHarmonicSorting,
 } from "../gpu-scenes/harmonicSorting.ts";
 import type { GpuAudioSceneSlug } from "../gpu-scenes/index.ts";
 import {
-  buildWallCascadeAudio,
+  buildWallCascadeFeatures,
   paintWallCascadeFrame,
   simulateWallCascade,
 } from "../gpu-scenes/wallCascade.ts";
@@ -64,7 +64,7 @@ function CyberTunnelStage() {
   const glCanvasRef = useRef<HTMLCanvasElement>(null);
   const hudCanvasRef = useRef<HTMLCanvasElement>(null);
   const glRendererRef = useRef<CyberTunnelGlRenderer | null | undefined>(undefined);
-  const bundle = useMemo(() => buildCyberTunnelAudio(), []);
+  const bundle = useMemo(() => buildCyberTunnelFeatures(), []);
 
   useEffect(() => {
     return () => {
@@ -119,7 +119,7 @@ function WallCascadeStage() {
   const frame = useCurrentFrame();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const trace = useMemo(() => simulateWallCascade(), []);
-  const audioBundle = useMemo(() => buildWallCascadeAudio(trace), [trace]);
+  const audioBundle = useMemo(() => buildWallCascadeFeatures(trace), [trace]);
 
   useLayoutEffect(() => {
     const ctx = canvasRef.current?.getContext("2d");
@@ -141,7 +141,7 @@ function HarmonicSortingStage() {
   const frame = useCurrentFrame();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const trace = useMemo(() => simulateHarmonicSorting(), []);
-  const audioBundle = useMemo(() => buildHarmonicSortingAudio(trace), [trace]);
+  const audioBundle = useMemo(() => buildHarmonicSortingFeatures(trace), [trace]);
 
   useLayoutEffect(() => {
     const ctx = canvasRef.current?.getContext("2d");

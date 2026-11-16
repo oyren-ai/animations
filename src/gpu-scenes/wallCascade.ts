@@ -125,7 +125,7 @@ function signedSegmentDistance(
 }
 
 let cachedCascadeTrace: WallCascadeTrace | null = null;
-let cachedCascadeAudio: { buffer: StereoBuffer; wav: Buffer; features: FrameAudioFeatures[] } | null = null;
+let cachedCascadeAudio: { buffer: StereoBuffer; wav: Uint8Array; features: FrameAudioFeatures[] } | null = null;
 
 export function simulateWallCascade(seed = 20261116): WallCascadeTrace {
   if (cachedCascadeTrace && cachedCascadeTrace.seed === seed) return cachedCascadeTrace;
@@ -354,10 +354,12 @@ export function simulateWallCascade(seed = 20261116): WallCascadeTrace {
   return cachedCascadeTrace;
 }
 
-export function buildWallCascadeAudio(
+let cachedCascadeFeatures: { buffer: StereoBuffer; features: FrameAudioFeatures[] } | null = null;
+
+export function buildWallCascadeFeatures(
   trace = simulateWallCascade(),
-): { buffer: StereoBuffer; wav: Buffer; features: FrameAudioFeatures[] } {
-  if (cachedCascadeAudio && trace === cachedCascadeTrace) return cachedCascadeAudio;
+): { buffer: StereoBuffer; features: FrameAudioFeatures[] } {
+  if (cachedCascadeFeatures && trace === cachedCascadeTrace) return cachedCascadeFeatures;
 
   const buf = createStereoBuffer(WALL_CASCADE_TOTAL_FRAMES, VIDEO.fps);
   const totalSec = WALL_CASCADE_TOTAL_FRAMES / VIDEO.fps;
@@ -457,9 +459,20 @@ export function buildWallCascadeAudio(
 
   calibrateStereoMaster(buf, { targetLufs: -14.0, ceilingDbTp: -1.8 });
   const features = extractFrameAudioFeatures(buf.left, buf.right, VIDEO.fps);
-  const wav = encodeStereoPcm16Wav(buf.left, buf.right);
-  cachedCascadeAudio = { buffer: buf, wav, features };
-  return cachedCascadeAudio;
+  const out = { buffer: buf, features };
+  if (trace === cachedCascadeTrace) cachedCascadeFeatures = out;
+  return out;
+}
+
+export function buildWallCascadeAudio(
+  trace = simulateWallCascade(),
+): { buffer: StereoBuffer; wav: Uint8Array; features: FrameAudioFeatures[] } {
+  if (cachedCascadeAudio && trace === cachedCascadeTrace) return cachedCascadeAudio;
+  const { buffer, features } = buildWallCascadeFeatures(trace);
+  const wav = encodeStereoPcm16Wav(buffer.left, buffer.right);
+  const out = { buffer, wav, features };
+  if (trace === cachedCascadeTrace) cachedCascadeAudio = out;
+  return out;
 }
 
 export function paintWallCascadeFrame(
