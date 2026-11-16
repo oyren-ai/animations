@@ -2,9 +2,11 @@ import { Composition } from "remotion";
 import { STYLES } from "./ball-drop/sim.ts";
 import { AnimationShell } from "./components/AnimationShell.tsx";
 import { PatateShell } from "./components/PatateShell.tsx";
+import { GpuAudioSceneShell } from "./components/GpuAudioSceneShell.tsx";
 import { getReelArenaTiming, ReelArenaShell } from "./components/ReelArenaShell.tsx";
 import { COUNTRY_MAPS } from "./country-maps/fourier.ts";
 import { DROP_STYLES } from "./drop-arenas/sim.ts";
+import { GPU_AUDIO_COMPOSITIONS } from "./gpu-scenes/index.ts";
 import { PATATE_COMPOSITIONS, PATATE_TOTAL_FRAMES } from "./patate/themes.ts";
 import { STRING_ROUNDS } from "./string-arena/sim.ts";
 import { TOTAL_FRAMES, VIDEO } from "./settings.ts";
@@ -83,6 +85,19 @@ export function Root() {
         fps={VIDEO.fps}
         durationInFrames={PATATE_TOTAL_FRAMES}
         defaultProps={{ slug: patate.slug }}
+      />
+    ))}
+
+    {GPU_AUDIO_COMPOSITIONS.map((gpuScene) => (
+      <Composition
+        key={gpuScene.id}
+        id={gpuScene.id}
+        component={GpuAudioSceneShell}
+        width={VIDEO.width}
+        height={VIDEO.height}
+        fps={VIDEO.fps}
+        durationInFrames={gpuScene.totalFrames}
+        defaultProps={{ slug: gpuScene.slug }}
       />
     ))}
   </>;
