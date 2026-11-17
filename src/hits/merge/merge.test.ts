@@ -421,7 +421,7 @@ test("merge: frame 0 shows the rule, the empty ladder and the nozzle; the HUD co
   const mock0 = createMockCanvas();
   funnelMerge.paint(mock0.ctx, trace, 0);
   const t0s = mock0.texts.map((t) => t.text);
-  assert.ok(t0s.includes(MERGE_SPEC.rule));
+  assert.ok(t0s.join(" ").includes(MERGE_SPEC.rule), "the rule may wrap onto two lines");
   for (const name of ["bit", "byte", "line", "func", "file", "repo", "agent"]) assert.ok(t0s.includes(name), `ladder shows ${name}`);
   assert.ok(t0s.includes("TIER") && t0s.includes("0/7"), "tier counter starts at 0/7");
   assert.ok(t0s.includes("MERGES") && t0s.includes("0"));

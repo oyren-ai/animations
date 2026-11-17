@@ -1,5 +1,6 @@
 import { drawReelText, type ReelBox } from "../../shared/reelUtils.ts";
 import {
+  chromeLayout,
   clamp,
   clamp01,
   createRng,
@@ -78,8 +79,14 @@ function surfaceY(x: number): number {
 
 const TUBE_HALF = 52;
 const NOZZLE_TOP = 596;
-const LADDER_Y = 570;
-const STATS_Y = 516;
+/**
+ * The ladder sits right under the shared chrome (hook, rule); the counters sit beside the tube mouth,
+ * left and right of it, so nothing crosses the pieces' exit at MOUTH_Y.
+ */
+const CHROME = chromeLayout(MERGE_SPEC);
+const LADDER_Y = CHROME.counterY - 30;
+const STATS_Y = MOUTH_Y + 38;
+const MERGES_X = 330;
 
 /* ---------- per-trace cache ---------- */
 
@@ -955,7 +962,7 @@ function drawHud(
   drawStat(ctx, boxes, {
     label: "MERGES",
     value: String(merges),
-    x: SAFE_CENTER_X,
+    x: MERGES_X,
     y: STATS_Y,
     align: "center",
     valueSize: 54 + 8 * bump,
