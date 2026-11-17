@@ -1,14 +1,19 @@
-import { makeStubHit } from "../stub.ts";
-import { makeHitSpec } from "../types.ts";
+import { HIT_SEED, type HitComposition } from "../types.ts";
+import { buildBrickAudio } from "./audio.ts";
+import { paintScene } from "./paint.ts";
+import { digestBrickTrace, simulateBrick, type BrickTrace } from "./sim.ts";
+import { BRICK_SPEC } from "./spec.ts";
 
-export const BRICK_SPEC = makeHitSpec({
-  id: "BrickEscape",
-  slug: "brick-escape",
-  question: "Will it get out in time?",
-  rule: "Every bounce lays a brick. Every brick shrinks the exit.",
-  sceneSeconds: 24,
-  description:
-    "Full-screen chamber: one ball, bricks pile up on every bounce, the exit shrinks, and each bounce plays the next note of a public-domain tune.",
-});
+export { BRICK_SPEC };
 
-export const brickEscape = makeStubHit(BRICK_SPEC);
+/**
+ * BrickEscape: one ball in a sealed full-screen chamber. Every bounce lays a brick on the wall and plays the next
+ * note of Ode to Joy; every brick shrinks the exit. Simulation, painter and audio live next to this file.
+ */
+export const brickEscape: HitComposition<BrickTrace> = {
+  spec: BRICK_SPEC,
+  simulate: (seed: number = HIT_SEED) => simulateBrick(seed),
+  digest: digestBrickTrace,
+  buildAudio: buildBrickAudio,
+  paint: (ctx, trace, frame) => paintScene(ctx, trace, frame).boxes,
+};

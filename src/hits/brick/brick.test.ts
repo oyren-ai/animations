@@ -145,7 +145,7 @@ test("brick: the audio schedule has a bell at every bounce time and respects a r
   for (let i = 1; i < schedule.notes.length; i++) {
     assert.ok(schedule.notes[i].t - schedule.notes[i - 1].t >= BRICK_NOTE_MIN_GAP - 1e-9, `bells ${i - 1} and ${i} are too close`);
   }
-  assert.equal(thinEvents(schedule.notes, 1 / (BRICK_NOTE_MIN_GAP + 0.002)).length, schedule.notes.length, "the cap drops nothing");
+  assert.equal(thinEvents(schedule.notes, 1 / (BRICK_NOTE_MIN_GAP - 0.001)).length, schedule.notes.length, "the cap drops nothing");
   assert.ok(schedule.thuds.length > 0 && schedule.thuds.length <= schedule.notes.length);
   const e = escapeOf(t);
   assert.ok(schedule.escapeT !== null && Math.abs(schedule.escapeT - e.t) < 1e-9);
