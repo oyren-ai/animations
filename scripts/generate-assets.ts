@@ -17,6 +17,8 @@ import {
 import { PATATE_COMPOSITIONS, simulatePatate } from "../src/patate/sim.ts";
 import { synthesizePatateWav } from "../src/patate/audio.ts";
 import { GPU_AUDIO_COMPOSITIONS, synthesizeGpuAudioSceneWav } from "../src/gpu-scenes/index.ts";
+import { HIT_COMPOSITIONS, synthesizeHitWav } from "../src/hits/index.ts";
+import { HIT_SEED } from "../src/hits/types.ts";
 import {
   synthesize,
   synthesizeCountryMapWav,
@@ -165,6 +167,22 @@ for (const gpuScene of GPU_AUDIO_COMPOSITIONS) {
   });
   console.log(
     `${gpuScene.id}: 48 kHz stereo audio synthesized; ${gpuScene.totalFrames} frames (${(gpuScene.totalFrames / VIDEO.fps).toFixed(2)}s)`,
+  );
+}
+
+for (const hit of HIT_COMPOSITIONS) {
+  const wav = synthesizeHitWav(hit.spec.slug);
+  writeFileSync(new URL("../public/generated/" + hit.spec.slug + ".wav", import.meta.url), wav);
+  results.push({
+    id: hit.spec.id,
+    seed: HIT_SEED,
+    frames: hit.spec.totalFrames,
+    channels: 2,
+    sampleRate: 48000,
+    audioDigest: createHash("sha256").update(wav).digest("hex"),
+  });
+  console.log(
+    `${hit.spec.id}: 48 kHz stereo audio synthesized; ${hit.spec.totalFrames} frames (${(hit.spec.totalFrames / VIDEO.fps).toFixed(2)}s)`,
   );
 }
 

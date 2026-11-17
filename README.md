@@ -81,6 +81,10 @@ Every composition renders at 1080 × 1920 and 60 fps, closing with a code end ca
 | `CyberSynthShaderTunnel` | Full-bleed `1080 × 1920` WebGL2 `#version 300 es` raymarched octagonal synthwave tunnel whose ribs, chromatic dispersion, and shock rings pulse to a 124 BPM 48 kHz stereo score. | Change the GLSL distance field or chord progression in `src/gpu-scenes/cyberTunnel.ts`. |
 | `PolyphonicWallCascade` | Fourteen luminous orbs bounce edge-to-edge across the entire `0..1080 × 0..1920` acoustic chamber, plucking eight full-span harmonic strings with stereo-panned FM chords. | Retune `HARMONIC_STRINGS` or orb count in `src/gpu-scenes/wallCascade.ts`. |
 | `HarmonicSortingMatrix` | Full-bleed three-band `1080 × 1920` race comparing LSD Radix Sort, Median-of-3 Quick Sort, and Max-Heap Sort over 96 channels with stereo Lydian-pentatonic arpeggios. | Swap sorting algorithms or scale intervals in `src/gpu-scenes/harmonicSorting.ts`. |
+| `OverflowArena` | *Will it overflow?* One big ball in a sealed full-screen chamber. A spinning turbine splits a ball on every hit, the balls shrink as they multiply, and at 10,000 the walls crack and the balls spill out. | Change the turbine arms, ball speed, or split rule in `src/hits/overflow/sim.ts`. |
+| `BrickEscape` | *Will it get out in time?* One ball in a sealed full-screen chamber. Every bounce lays a brick and plays the next note of a public-domain tune, and every brick shrinks the exit. | Change the tune, brick thickness, or door width in `src/hits/brick/`. |
+| `FunnelMerge` | *Will it merge into its final form?* Only tier-1 pieces drop from a top tube; two of the same tier merge into the next across seven tiers, with a live chain counter, until the final form appears. | Change tier radii, gravity, or the drop cadence in `src/hits/merge/`. |
+| `ColourWarV4` | *Which colour takes the board?* Four colours paint a full-screen board; every 5 s the smallest colour doubles its balls; the biggest share wins when the clock ends. | Change the cell size, ball speed, or underdog rule in `src/hits/war/`. |
 
 ## Run locally
 
@@ -117,6 +121,15 @@ pnpm still PinballBumperMatrix out/pinball.png --frame=240
 ~~~
 
 An existing compatible browser can be selected with `REMOTION_BROWSER_EXECUTABLE`. Output goes in `out/`; generated WAV files and the deterministic asset manifest go in `public/generated/`. Both directories are ignored by Git.
+
+### Preview a frame without a browser
+
+The four short-video compositions under `src/hits/` can be inspected without Chromium or a render. `scripts/preview-hit.mjs` runs the real simulation and painter on a software canvas, writes a contact sheet, and prints the active-pixel fill that the render QA measures. The canvas package is optional and not a dependency of this repository.
+
+~~~sh
+pnpm add -D @napi-rs/canvas
+node --import tsx scripts/preview-hit.mjs overflow-arena 0,40,420,900,1180 out/overflow.png 0.25
+~~~
 
 ## Run & remix in an Oyren Codespace
 
@@ -189,6 +202,10 @@ The full-screen GPU and stereo audio-reactive scenes (`CyberSynthShaderTunnel`, 
 | `src/gpu-scenes/cyberTunnel.ts` | WebGL2 `#version 300 es` raymarched octagonal synthwave tunnel, 124 BPM stereo score, and safe-zone HUD |
 | `src/gpu-scenes/wallCascade.ts` | Full-screen `1080 × 1920` 480 Hz wall + 8-string acoustic chamber solver and stereo-panned chord engine |
 | `src/gpu-scenes/harmonicSorting.ts` | Full-bleed 3-band Radix, Quick, and Heap Sort showdown and Lydian-pentatonic arpeggio sonifier |
+| `src/hits/kit.ts` | Hook, rule and CTA chrome, safe-zone text helpers, seeded random numbers, and the full-bleed backdrop |
+| `src/hits/voices.ts` | Warm band-limited bell, thud, tick, whoosh, boom and pad voices, event thinning, and the `-14 LUFS` master |
+| `src/hits/overflow/`, `brick/`, `merge/`, `war/` | The four proven-format shorts: deterministic `sim.ts`, Canvas 2D `paint.ts`, and stereo `audio.ts` |
+| `docs/TIKTOK-IG-HITS.md` | The design contract those four shorts follow |
 | `docs/VIDEO-AUDIO-STACK.md` | Evaluation of open-source video agent skills, WebGL2 shader pipeline, and audio DSP stack |
 | `src/shared/reelUtils.ts` | Reel safe-zone bounds assertions and procedural geometric emblem renderer |
 | `src/audio.ts` | Event-to-tone mapping, harmonic map chords, arena soundtracks, and PCM synthesis |
