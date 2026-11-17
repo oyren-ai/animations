@@ -1,5 +1,6 @@
 import { VIDEO } from "../settings.ts";
 import { theme } from "../theme.ts";
+import { bodyDeformation, impactsByBody, NO_DEFORMATION, type Deformation } from "./feel.ts";
 import { FLASK_JOIN_Y, type PatateTrace } from "./sim.ts";
 import {
   PATATE_FLASK,
@@ -931,10 +932,15 @@ export function drawPotatoCharacter(
   scaleY: number,
   tierSpec: PatateTierSpec,
   alpha = 1,
+  deformation: Deformation = NO_DEFORMATION,
 ) {
   ctx.save();
   ctx.globalAlpha *= alpha;
   ctx.translate(x, y);
+  // Squash-and-stretch goes first, in world space, so it follows the contact direction and not the potato's spin.
+  if (deformation !== NO_DEFORMATION) {
+    ctx.transform(deformation.a, deformation.b, deformation.c, deformation.d, 0, 0);
+  }
   ctx.rotate(theta);
   ctx.scale(scaleX, scaleY);
 
@@ -1237,6 +1243,7 @@ export function paintPatateFrame(
 
   // Draw active potatoes sorted smaller-first so giant boss potatoes command foreground presence
   const sortedBodies = [...f.bodies].sort((a, b) => a.tier - b.tier || a.id - b.id);
+  const impactIndex = impactsByBody(trace.impacts);
   for (const b of sortedBodies) {
     drawPotatoCharacter(
       ctx,
@@ -1248,6 +1255,7 @@ export function paintPatateFrame(
       b.scaleY,
       trace.spec.tiers[b.tier - 1],
       1,
+      bodyDeformation(impactIndex.get(b.id), frame),
     );
   }
 

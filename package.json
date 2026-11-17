@@ -13,7 +13,7 @@
     "render": "pnpm assets && node scripts/render.mjs",
     "still": "pnpm assets && remotion still src/index.ts",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test --test-concurrency=1 src/ball-drop/sim.test.ts src/ball-drop/bounds.test.ts src/components/end-card.test.ts src/pendulum-wave/wave.test.ts src/country-maps/fourier.test.ts src/string-arena/sim.test.ts src/drop-arenas/sim.test.ts src/patate/sim.test.ts src/audio.test.ts src/encoding.test.ts"
+    "test": "node --import tsx --test --test-concurrency=1 src/ball-drop/sim.test.ts src/ball-drop/bounds.test.ts src/components/end-card.test.ts src/pendulum-wave/wave.test.ts src/country-maps/fourier.test.ts src/string-arena/sim.test.ts src/drop-arenas/sim.test.ts src/patate/sim.test.ts src/patate/feel.test.ts src/audio.test.ts src/encoding.test.ts"
   },
   "dependencies": {
     "@fontsource-variable/inter": "5.2.8",

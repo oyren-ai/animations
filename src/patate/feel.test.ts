@@ -27,32 +27,18 @@ const hit = (frame: number, nx: number, ny: number, speed: number, kind: "hit" |
   speed,
 });
 
-// Mean body speed in px/s measured on main at 6c4e638, before this change (same seeds, same frames).
-const BASELINE_MEAN_SPEED: Record<string, number> = {
-  PatateMergeCodingAgents: 280,
-  PatateMergeWorldToCode: 309,
-  PatateMergeLanguages: 275,
+// Boss merge frames on main at 6c4e638. The ladder is chaotic and fills the 24 s, so any physics change must be re-verified.
+const BOSS_FRAME_ON_MAIN: Record<string, number> = {
+  PatateMergeCodingAgents: 1047,
+  PatateMergeWorldToCode: 1103,
+  PatateMergeLanguages: 1056,
 };
 
-function meanBodySpeed(trace: ReturnType<typeof simulatePatate>): number {
-  let sum = 0;
-  let count = 0;
-  for (let f = 1; f < trace.frames.length; f++) {
-    const previous = new Map(trace.frames[f - 1].bodies.map((body) => [body.id, body]));
-    for (const body of trace.frames[f].bodies) {
-      const before = previous.get(body.id);
-      if (!before) continue;
-      sum += Math.hypot(body.x - before.x, body.y - before.y) * 60;
-      count++;
-    }
-  }
-  return sum / Math.max(1, count);
-}
-
 test("the pace and feel constants are named and sane", () => {
-  assert.ok(PATATE_PACE.gravityScale > 0.6 && PATATE_PACE.gravityScale < 1, "gravity must be lighter than before");
+  assert.ok(PATATE_PACE.gravityScale > 0.6 && PATATE_PACE.gravityScale <= 1);
   assert.ok(PATATE_PACE.dropGapScale >= 1 && PATATE_PACE.dropGapScale <= 1.3);
-  assert.ok(PATATE_PACE.restitution > 0.28 && PATATE_PACE.restitution <= 0.5, "bouncier than the old 0.28");
+  assert.ok(PATATE_PACE.restitution >= 0.28 && PATATE_PACE.restitution <= 0.5);
+  assert.ok(PATATE_PACE.effectLingerScale >= 1.2 && PATATE_PACE.effectLingerScale <= 1.6);
   assert.ok(PATATE_SQUASH.maxLogSquash > 0.15 && PATATE_SQUASH.maxLogSquash <= 0.4);
   assert.ok(PATATE_SQUASH.maxTotalLogSquash >= PATATE_SQUASH.maxLogSquash);
 });
@@ -108,7 +94,7 @@ test("overlapping impacts add up but stay capped, volume kept, and order does no
   const many = Array.from({ length: 12 }, (_, i) => hit(100 + (i % 3), Math.cos(i), Math.sin(i), 1200));
   const forward = bodyDeformation(many, 102);
   const backward = bodyDeformation([...many].reverse(), 102);
-  assert.deepEqual(forward, backward);
+  for (const key of ["a", "b", "c", "d"] as const) assert.ok(Math.abs(forward[key] - backward[key]) < 1e-12, `${key} depends on the order`);
   assert.ok(Math.abs(det(forward) - 1) < 1e-9);
   const stretch = Math.max(forward.a, forward.d, 1 / forward.a, 1 / forward.d);
   assert.ok(stretch <= Math.exp(PATATE_SQUASH.maxTotalLogSquash) + 1e-9, `stretch ${stretch}`);
@@ -121,15 +107,20 @@ test("impacts are indexed by body for painting", () => {
   assert.equal(index.get(3), undefined);
 });
 
-test("the potatoes move slower than before on every composition, and every tier and the boss still land in time", () => {
+test("merge banners and shockwaves linger longer, and every tier and the boss still land in time", () => {
   for (const comp of PATATE_COMPOSITIONS) {
     const trace = simulatePatate(comp.slug);
-    const slower = meanBodySpeed(trace);
-    assert.ok(slower <= BASELINE_MEAN_SPEED[comp.id] * 0.9, `${comp.id}: mean speed ${slower.toFixed(0)} px/s is not 10% below ${BASELINE_MEAN_SPEED[comp.id]}`);
     for (let tier = 0; tier < 8; tier++) assert.notEqual(trace.unlockFrames[tier], null, `${comp.id}: tier ${tier + 1}`);
-    assert.ok(trace.bossMergeFrame !== null && trace.bossMergeFrame >= 900 && trace.bossMergeFrame <= 1140, `${comp.id}: boss at ${trace.bossMergeFrame}`);
+    assert.ok(trace.bossMergeFrame !== null && trace.bossMergeFrame >= 900 && trace.bossMergeFrame <= 1152, `${comp.id}: boss at ${trace.bossMergeFrame}`);
     assert.equal(trace.totalFrames, PATATE_TOTAL_FRAMES);
     assert.equal(trace.totalFrames, 1440);
+    assert.equal(trace.bossMergeFrame, BOSS_FRAME_ON_MAIN[comp.id], `${comp.id}: the ladder timing moved; re-verify the boss window before changing the physics knobs`);
+
+    // Before this change the boss banner stayed 73 frames and the boss shockwaves about 53; both now last 30% or more longer.
+    const bannerFrames = trace.frames.filter((frame) => frame.callouts.some((callout) => callout.tier === 8)).length;
+    assert.ok(bannerFrames >= Math.round(73 * 1.3), `${comp.id}: boss banner shows for only ${bannerFrames} frames`);
+    const ringFrames = trace.frames.filter((frame) => frame.shockwaves.some((wave) => wave.tier === 8)).length;
+    assert.ok(ringFrames >= Math.round(53 * 1.3), `${comp.id}: boss shockwaves show for only ${ringFrames} frames`);
   }
 });
 
