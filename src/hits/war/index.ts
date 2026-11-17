@@ -1,5 +1,7 @@
-import { makeStubHit } from "../stub.ts";
-import { makeHitSpec } from "../types.ts";
+import { HIT_SEED, makeHitSpec, type HitComposition } from "../types.ts";
+import { buildWarAudio } from "./audio.ts";
+import { paintWar } from "./paint.ts";
+import { digestWar, simulateWar, type WarTrace } from "./sim.ts";
 
 export const WAR_SPEC = makeHitSpec({
   id: "ColourWarV4",
@@ -11,4 +13,11 @@ export const WAR_SPEC = makeHitSpec({
     "Full-screen four-way territory war: one ball per colour paints the board, the smallest colour gets double balls every 5 s, the biggest share wins at 24 s.",
 });
 
-export const colourWarV4 = makeStubHit(WAR_SPEC);
+export const colourWarV4: HitComposition<WarTrace> = {
+  spec: WAR_SPEC,
+  status: "ready",
+  simulate: (seed = HIT_SEED) => simulateWar(seed),
+  digest: digestWar,
+  buildAudio: buildWarAudio,
+  paint: (ctx, trace, frame) => paintWar(ctx, WAR_SPEC, trace, frame),
+};

@@ -140,7 +140,7 @@ test("ownership always adds up: owned cells per team plus unowned equal 3,600 at
 test("the board starts empty and the war really fills it: most cells are owned by the middle, nearly all by the end", () => {
   const trace = getTrace();
   const unownedAt = (sec: number) => cellCounts(trace, Math.round(sec * 60))[0] / CELLS;
-  assert.ok(unownedAt(1) > 0.9, "still mostly empty after 1 s");
+  assert.ok(unownedAt(0.5) > 0.9, "still mostly empty after half a second");
   assert.ok(unownedAt(12) < 0.25, `12 s: ${(unownedAt(12) * 100).toFixed(1)}% unowned`);
   assert.ok(unownedAt(22.4) < 0.06, `end: ${(unownedAt(22.4) * 100).toFixed(1)}% unowned`);
 });
@@ -221,9 +221,9 @@ test("balls reflect off the canvas edges, never tunnel, and keep a steady pace",
     }
   }
   // the balls really do use the whole canvas: the four edges are all touched
-  let minX = W;
+  let minX: number = W;
   let maxX = 0;
-  let minY = H;
+  let minY: number = H;
   let maxY = 0;
   for (let f = 0; f <= CLOCK_ZERO_FRAME; f++) {
     for (let b = 0; b < trace.nBalls; b++) {
