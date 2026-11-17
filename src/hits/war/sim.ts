@@ -44,22 +44,29 @@ export interface WarParams {
   inset: number;
   /** Heading scatter around "toward the middle": tan of the half angle (0.2 is about 22 degrees). */
   aimK: number;
+  /** Which corner each colour starts in: 0 top-left, 1 top-right, 2 bottom-left, 3 bottom-right. */
+  cornerOrder: readonly number[];
 }
 
 /**
  * The tuned constants. Seeds are never touched; pacing is tuned here.
- * Scanned over speed 800..1100, inset 120..160 and scatter 0.05..0.45 (234 runs) for: a closing gap of
- * 1.5 to 5 points, at least 3 lead changes in the last 10 s that each last at least half a second, the
- * last one before 21.8 s so the viewer can read it, at least 97 percent of the board owned at the end,
- * and no colour under 15 percent. At the brief's 600 px/s the board was still 10.6 percent dark at the
- * end and 65 percent dark at 5 s, which felt sluggish, so the balls run faster (950 px/s).
+ * Scanned over speed 775..1100, inset 100..170, heading scatter 0.05..0.5 and all 24 corner assignments
+ * (about 1,100 runs) for: a closing gap of 1.2 to 5 points, at least 3 lead changes in the last 10 s that
+ * each last at least 0.4 s, the last one before 21.8 s so the viewer can read it, a mostly full board at
+ * the end, no colour under 15 percent, and every underdog at least 1.0 point below the next colour at its
+ * tick (more than one rounding step, so the integer labels on screen always show why it was picked).
+ * Small scatter keeps the opening a clean X: all four balls converge on the middle at about 1 s and
+ * collide there. At the brief's 600 px/s the board was still 10.6 percent dark at the end and 65 percent
+ * dark at 5 s, which felt sluggish, so the balls run at 900 px/s.
  */
 export const WAR_PARAMS: WarParams = {
-  speed: 950,
+  speed: 900,
   captureR: 34,
   substeps: 4,
   inset: 160,
   aimK: 0.05,
+  // teal top-right, amber bottom-left, violet top-left, coral bottom-right
+  cornerOrder: [1, 2, 0, 3],
 };
 
 // cos and sin of half the 25 degree split angle, as literals so no trig runs in the simulation
@@ -130,7 +137,7 @@ export function simulateWar(seed: number = HIT_SEED, overrides: Partial<WarParam
     [W - P.inset, H - P.inset],
   ];
   for (let team = 0; team < TEAM_COUNT; team++) {
-    const [sx, sy] = corners[team];
+    const [sx, sy] = corners[P.cornerOrder[team]];
     const dx = W / 2 - sx;
     const dy = H / 2 - sy;
     const len = Math.sqrt(dx * dx + dy * dy);
