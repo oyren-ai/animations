@@ -176,6 +176,7 @@ The Patate Merge scenes integrate 240 Hz rigid-body circle dynamics with rotatio
 | `src/patate/sim.ts` | 240 Hz boiling-flask + chute rigid-body solver, rolling spin, and Suika chain merges |
 | `src/patate/paint.ts` | Rotating rainbow flask wall, 23 cartoon potato costumes, shockwaves, and 8-slot HUD |
 | `src/patate/audio.ts` | Coupled `asetrate` French voice resampler, chain-interrupt fades, and tactile SFX mixer |
+| `src/patate/feel.ts` | The Patate pace knob (3 solver sub-steps per frame: motion 25% slower, videos 31 s) and the volume-preserving squash-and-stretch spring that follows each contact and merge |
 | `src/shared/reelUtils.ts` | Reel safe-zone bounds assertions and procedural geometric emblem renderer |
 | `src/audio.ts` | Event-to-tone mapping, harmonic map chords, arena soundtracks, and PCM synthesis |
 | `src/encoding.ts` | Explicit PNG-to-BT.709 conversion for the pinned renderer |

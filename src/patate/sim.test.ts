@@ -3,6 +3,7 @@ import test from "node:test";
 import { SAMPLE_RATE, SAMPLES_PER_FRAME } from "../audio.ts";
 import { VIDEO } from "../settings.ts";
 import { synthesizePatateWav } from "./audio.ts";
+import { PATATE_FRAME_STRETCH } from "./feel.ts";
 import { FLASK_JOIN_Y, PATATE_COMPOSITIONS, simulatePatate } from "./sim.ts";
 import {
   PATATE_FLASK,
@@ -10,7 +11,7 @@ import {
   PATATE_TOTAL_FRAMES,
 } from "./themes.ts";
 
-test("all three Patate Merge simulations are deterministic, finite, contained, and unlock Tiers 1..8 before 19.2s", () => {
+test("all three Patate Merge simulations are deterministic, finite, contained, and unlock Tiers 1..8 inside the boss window", () => {
   const seenSeeds = new Set<number>();
 
   for (const comp of PATATE_COMPOSITIONS) {
@@ -24,7 +25,8 @@ test("all three Patate Merge simulations are deterministic, finite, contained, a
     assert.equal(trace.frames.length, PATATE_SCENE_FRAMES + 1);
     assert.deepEqual(trace.events, replay.events);
 
-    // Every tier 1..8 unlocked cleanly, with Boss Tier 8 before 19.2s (frame 1152)
+    // Every tier 1..8 unlocked cleanly, with Boss Tier 8 inside the original 15 s .. 19.2 s window
+    // (solver frames 900..1152), stretched to the slower video by PATATE_FRAME_STRETCH.
     for (let t = 0; t < 8; t++) {
       assert.notEqual(
         trace.unlockFrames[t],
@@ -34,9 +36,9 @@ test("all three Patate Merge simulations are deterministic, finite, contained, a
     }
     assert.ok(
       trace.bossMergeFrame !== null &&
-        trace.bossMergeFrame >= 900 &&
-        trace.bossMergeFrame <= 1152,
-      `${comp.id}: expected boss merge before 19.2s, got ${trace.bossMergeFrame}`,
+        trace.bossMergeFrame >= 900 * PATATE_FRAME_STRETCH &&
+        trace.bossMergeFrame <= 1152 * PATATE_FRAME_STRETCH,
+      `${comp.id}: expected boss merge inside the stretched 15 s .. 19.2 s window, got ${trace.bossMergeFrame}`,
     );
 
     // Monotonic displayed score and zero NaNs / flask containment
