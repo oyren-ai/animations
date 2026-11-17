@@ -1,5 +1,6 @@
 import { drawReelText, type ReelBox } from "../../shared/reelUtils.ts";
 import {
+  chromeLayout,
   clamp01,
   drawChrome,
   easeOutCubic,
@@ -327,6 +328,12 @@ function paintBalls(ctx: CanvasRenderingContext2D, trace: WarTrace, f: number): 
 
 /* ---------- HUD ---------- */
 
+/**
+ * The HUD, banner and ending below are laid out for a chrome whose counters start at y 506. The shared
+ * chrome now has a bigger hook and a two-line rule, so the painter shifts them by the difference.
+ */
+const HUD_BASE_COUNTER_Y = 506;
+
 const HUD_Y = {
   clockLabel: 478,
   clock: 552,
@@ -535,7 +542,13 @@ function paintBanner(ctx: CanvasRenderingContext2D, boxes: ReelBox[], trace: War
   }
 }
 
-function paintConfetti(ctx: CanvasRenderingContext2D, trace: WarTrace, endT: number, winner: number): void {
+function paintConfetti(
+  ctx: CanvasRenderingContext2D,
+  trace: WarTrace,
+  endT: number,
+  winner: number,
+  dy: number,
+): void {
   const count = Math.min(90, trace.dots.length / 6);
   const t = endT / FPS;
   const fade = clamp01(1 - (endT - 36) / 56);
@@ -554,7 +567,7 @@ function paintConfetti(ctx: CanvasRenderingContext2D, trace: WarTrace, endT: num
       const x = SAFE_CENTER_X + Math.cos(angle) * dist;
       const y = 960 + Math.sin(angle) * dist + 300 * t * t;
       const r = 4 + trace.dots[i * 6 + 4] * 1.3;
-      if ((y > 440 && y < 740) || y > 1460) continue; // the scoreboard card and the CTA lines stay clean
+      if ((y > 440 + dy && y < 740 + dy) || y > 1460) continue; // the scoreboard card and the CTA lines stay clean
       ctx.moveTo(x + r, y);
       ctx.arc(x, y, r, 0, TAU);
     }
@@ -623,6 +636,7 @@ function paintEnding(ctx: CanvasRenderingContext2D, boxes: ReelBox[], trace: War
 export function paintWar(ctx: CanvasRenderingContext2D, spec: HitSpec, trace: WarTrace, frame: number): ReelBox[] {
   const boxes: ReelBox[] = [];
   const f = Math.max(0, Math.min(Math.round(frame), trace.frames - 1));
+  const dy = chromeLayout(spec).counterY - HUD_BASE_COUNTER_Y;
   fillBackdrop(ctx, f, { top: "#090e16", bottom: "#05070b" });
   paintTiles(ctx, trace, f);
   if (f <= CLOCK_ZERO_FRAME + 12) paintCaptureFlash(ctx, trace, f);
@@ -631,12 +645,15 @@ export function paintWar(ctx: CanvasRenderingContext2D, spec: HitSpec, trace: Wa
   paintAmbient(ctx, trace, f);
   paintRings(ctx, trace, f);
   paintBalls(ctx, trace, f);
-  if (f >= CLOCK_ZERO_FRAME) paintConfetti(ctx, trace, f - CLOCK_ZERO_FRAME, winner);
+  if (f >= CLOCK_ZERO_FRAME) paintConfetti(ctx, trace, f - CLOCK_ZERO_FRAME, winner, dy);
   paintBeats(ctx, f);
   paintScrims(ctx);
   drawChrome(ctx, boxes, spec);
+  ctx.save();
+  ctx.translate(0, dy);
   paintHud(ctx, boxes, trace, f);
   paintBanner(ctx, boxes, trace, f);
   paintEnding(ctx, boxes, trace, f, winner);
+  ctx.restore();
   return boxes;
 }
