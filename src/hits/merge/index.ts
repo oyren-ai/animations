@@ -5,6 +5,7 @@ import { paintMerge } from "./paint.ts";
 import { MERGE_SPEC } from "./spec.ts";
 
 export { MERGE_SPEC };
+export { TIERS } from "./tiers.ts";
 
 /**
  * FunnelMerge: pieces leave a top tube at random angles, only tier 1 drops, two of the same tier merge

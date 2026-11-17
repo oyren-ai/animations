@@ -948,7 +948,7 @@ function drawHud(
   drawStat(ctx, boxes, {
     label: "TIER",
     value: `${top}/${TIER_COUNT}`,
-    x: SAFE.left,
+    x: SAFE.left + 4,
     y: STATS_Y,
     align: "left",
     valueSize: 54 + 6 * justReached,
@@ -968,7 +968,7 @@ function drawHud(
     drawStat(ctx, boxes, {
       label: "CHAIN",
       value: `x${live}`,
-      x: SAFE.right,
+      x: SAFE.right - 4,
       y: STATS_Y,
       align: "right",
       valueSize: 54 + 10 * bump,
