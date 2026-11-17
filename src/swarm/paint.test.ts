@@ -1,0 +1,136 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { REEL_SAFE_BOUNDS } from "../shared/reelUtils.ts";
+import { barSegments, paintSwarmFrame, SWARM_LAYOUT, TITLE_CAP_HEIGHT, TITLE_FONT_SIZE, TITLE_MIN_FONT_SIZE } from "./paint.ts";
+import { SWARM_DEFINITIONS, simulateSwarmDefinition } from "./themes.ts";
+
+function makeMockCanvasContext(): CanvasRenderingContext2D {
+  let currentFont = '600 20px "Inter Variable"';
+  const gradientStub = { addColorStop() {} };
+  const target: Record<string, unknown> = {
+    fillStyle: "#000",
+    strokeStyle: "#000",
+    lineWidth: 1,
+    lineCap: "butt",
+    lineJoin: "miter",
+    miterLimit: 10,
+    globalAlpha: 1,
+    globalCompositeOperation: "source-over",
+    shadowColor: "rgba(0,0,0,0)",
+    shadowBlur: 0,
+    textAlign: "left",
+    textBaseline: "alphabetic",
+    get font() {
+      return currentFont;
+    },
+    set font(v: string) {
+      currentFont = v;
+    },
+    measureText(str: string) {
+      const match = /(\d+(?:\.\d+)?)px/.exec(currentFont);
+      const size = match ? Number(match[1]) : 20;
+      const width = str.length * size * 0.52;
+      return {
+        width,
+        actualBoundingBoxLeft: 0,
+        actualBoundingBoxRight: width,
+        actualBoundingBoxAscent: size * 0.76,
+        actualBoundingBoxDescent: size * 0.22,
+      };
+    },
+    createRadialGradient: () => gradientStub,
+    createLinearGradient: () => gradientStub,
+  };
+  return new Proxy(target, {
+    get(obj, prop) {
+      if (prop in obj) return obj[prop as string];
+      return () => {};
+    },
+    set(obj, prop, val) {
+      obj[prop as string] = val;
+      return true;
+    },
+  }) as unknown as CanvasRenderingContext2D;
+}
+
+const inSafeZone = (b: { left: number; right: number; top: number; bottom: number }) =>
+  b.left >= REEL_SAFE_BOUNDS.left - 0.5 &&
+  b.right <= REEL_SAFE_BOUNDS.right + 0.5 &&
+  b.top >= REEL_SAFE_BOUNDS.top - 0.5 &&
+  b.bottom <= REEL_SAFE_BOUNDS.bottom + 0.5;
+
+test("swarm HUD, title and caption stay inside the reel-safe zone with a 110 px+ title", () => {
+  assert.ok(TITLE_MIN_FONT_SIZE >= 110 && TITLE_FONT_SIZE >= TITLE_MIN_FONT_SIZE);
+  assert.ok(TITLE_CAP_HEIGHT >= 110, "drawn cap height, not only the font size, is 110 px or more");
+  const ctx = makeMockCanvasContext();
+  for (const definition of SWARM_DEFINITIONS) {
+    const trace = simulateSwarmDefinition(definition.slug);
+    const frames = [0, Math.floor(trace.winFrame / 2), trace.winFrame - 1, trace.winFrame, trace.totalFrames - 1];
+    for (const frame of frames) {
+      const boxes = paintSwarmFrame(ctx, definition, trace, frame);
+      for (const box of boxes) assert.ok(inSafeZone(box), `${definition.id} f${frame}: ${JSON.stringify(box)} escaped the safe zone`);
+      const title = boxes.find((b) => b.label === definition.skin.title);
+      assert.ok(title, `${definition.id}: title missing`);
+      assert.ok(title.bottom - title.top >= TITLE_MIN_FONT_SIZE, `${definition.id}: title shorter than ${TITLE_MIN_FONT_SIZE}px`);
+      assert.ok(boxes.some((b) => b.label === definition.skin.rules), `${definition.id}: rules line missing`);
+      assert.ok(boxes.some((b) => b.label === "bar"));
+    }
+  }
+});
+
+test("the caption reads '<TYPE> WINS' from the winning frame to the end of the 3 s hold, never before", () => {
+  const ctx = makeMockCanvasContext();
+  for (const definition of SWARM_DEFINITIONS) {
+    const trace = simulateSwarmDefinition(definition.slug);
+    const expected = `${definition.skin.types[trace.winner].caption} WINS`;
+    const caption = (frame: number) => paintSwarmFrame(ctx, definition, trace, frame).filter((b) => /WINS$/.test(b.label) && b.label !== definition.skin.title);
+    assert.equal(caption(trace.winFrame - 1).length, 0, `${definition.id}: caption shown before the win`);
+    for (const frame of [trace.winFrame, trace.winFrame + 20, trace.totalFrames - 1]) {
+      const found = caption(frame);
+      assert.equal(found.length, 1);
+      assert.equal(found[0].label, expected);
+    }
+    assert.equal(trace.totalFrames - trace.winFrame, trace.config.holdFrames);
+  }
+});
+
+test("the painted counters always add up to the sprite total and match the trace", () => {
+  const ctx = makeMockCanvasContext();
+  for (const definition of SWARM_DEFINITIONS) {
+    const trace = simulateSwarmDefinition(definition.slug);
+    for (let frame = 0; frame < trace.totalFrames; frame += 97) {
+      const boxes = paintSwarmFrame(ctx, definition, trace, frame);
+      const numbers = boxes.filter((b) => /^\d+$/.test(b.label)).map((b) => Number(b.label));
+      assert.equal(numbers.length, trace.types);
+      assert.equal(numbers.reduce((a, b) => a + b, 0), trace.count, `${definition.id} f${frame}`);
+      assert.deepEqual(numbers, Array.from(trace.counts.subarray(frame * trace.types, (frame + 1) * trace.types)));
+    }
+  }
+});
+
+test("barSegments are exactly proportional to the counts, contiguous, and zero for empty types", () => {
+  const counts = [70, 53, 27, 0, 60];
+  const segments = barSegments(counts, SWARM_LAYOUT.barLeft, SWARM_LAYOUT.barWidth);
+  const total = counts.reduce((a, b) => a + b, 0);
+  assert.equal(segments.length, counts.length);
+  assert.equal(segments[0].x, SWARM_LAYOUT.barLeft);
+  let width = 0;
+  segments.forEach((segment, k) => {
+    assert.ok(Math.abs(segment.width - (SWARM_LAYOUT.barWidth * counts[k]) / total) < 1e-9, `segment ${k}`);
+    if (k > 0) assert.ok(Math.abs(segment.x - (segments[k - 1].x + segments[k - 1].width)) < 1e-9, "contiguous");
+    width += segment.width;
+  });
+  assert.equal(segments[3].width, 0);
+  assert.ok(Math.abs(width - SWARM_LAYOUT.barWidth) < 1e-9);
+  assert.ok(Math.abs(segments[4].x + segments[4].width - (SWARM_LAYOUT.barLeft + SWARM_LAYOUT.barWidth)) < 1e-9);
+  assert.deepEqual(barSegments([0, 0, 0], 60, 840).map((s) => s.width), [0, 0, 0]);
+  assert.deepEqual(barSegments([5, 0, 0], 60, 840).map((s) => s.width), [840, 0, 0]);
+});
+
+test("painting is a pure function of the frame", () => {
+  const definition = SWARM_DEFINITIONS[0];
+  const trace = simulateSwarmDefinition(definition.slug);
+  const a = paintSwarmFrame(makeMockCanvasContext(), definition, trace, 123);
+  const b = paintSwarmFrame(makeMockCanvasContext(), definition, trace, 123);
+  assert.deepEqual(a, b);
+});

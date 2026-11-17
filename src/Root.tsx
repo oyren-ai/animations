@@ -3,10 +3,12 @@ import { STYLES } from "./ball-drop/sim.ts";
 import { AnimationShell } from "./components/AnimationShell.tsx";
 import { PatateShell } from "./components/PatateShell.tsx";
 import { getReelArenaTiming, ReelArenaShell } from "./components/ReelArenaShell.tsx";
+import { SwarmShell } from "./components/SwarmShell.tsx";
 import { COUNTRY_MAPS } from "./country-maps/fourier.ts";
 import { DROP_STYLES } from "./drop-arenas/sim.ts";
 import { PATATE_COMPOSITIONS, PATATE_TOTAL_FRAMES } from "./patate/themes.ts";
 import { STRING_ROUNDS } from "./string-arena/sim.ts";
+import { getSwarmTiming, SWARM_DEFINITIONS } from "./swarm/themes.ts";
 import { TOTAL_FRAMES, VIDEO } from "./settings.ts";
 
 export function Root() {
@@ -83,6 +85,19 @@ export function Root() {
         fps={VIDEO.fps}
         durationInFrames={PATATE_TOTAL_FRAMES}
         defaultProps={{ slug: patate.slug }}
+      />
+    ))}
+
+    {SWARM_DEFINITIONS.map((swarm) => (
+      <Composition
+        key={swarm.id}
+        id={swarm.id}
+        component={SwarmShell}
+        width={VIDEO.width}
+        height={VIDEO.height}
+        fps={VIDEO.fps}
+        durationInFrames={getSwarmTiming(swarm.slug).totalFrames}
+        defaultProps={{ slug: swarm.slug }}
       />
     ))}
   </>;
