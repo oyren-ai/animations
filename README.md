@@ -44,9 +44,13 @@ Every composition renders at 1080 × 1920 and 60 fps, closing with a code end ca
 | --- | --- |
 | <img src="docs/previews/PatateMergeWorldToCode.png" width="270" alt="World-cuisine potatoes merging into AI coding agents inside a rainbow-rimmed flask"> | <img src="docs/previews/PatateMergeLanguages.png" width="270" alt="Programming-language potatoes merging up to Lean 4 inside a rainbow-rimmed flask"> |
 
-| Shared closing beat |  |
+| Cyber synth shader tunnel (WebGL2) | Polyphonic wall cascade |
 | --- | --- |
-| <img src="docs/previews/code-end-card.png" width="270" alt="Get the code for this animation at github.com/oyren-ai/animations"> |  |
+| <img src="docs/previews/CyberSynthShaderTunnel.png" width="270" alt="Full-bleed 1080x1920 WebGL2 raymarched octagonal synthwave tunnel pulsing to a 124 BPM stereo score"> | <img src="docs/previews/PolyphonicWallCascade.png" width="270" alt="Full-screen 1080x1920 acoustic chamber with glowing outer rails, eight harmonic strings, and luminous orbs"> |
+
+| Harmonic sorting matrix | Shared closing beat |
+| --- | --- |
+| <img src="docs/previews/HarmonicSortingMatrix.png" width="270" alt="Full-bleed three-band Radix, Quick, and Max-Heap Sort race over 96 neon channels"> | <img src="docs/previews/code-end-card.png" width="270" alt="Get the code for this animation at github.com/oyren-ai/animations"> |
 
 ## The compositions
 
