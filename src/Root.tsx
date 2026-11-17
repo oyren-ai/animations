@@ -1,8 +1,10 @@
 import { Composition } from "remotion";
 import { STYLES } from "./ball-drop/sim.ts";
 import { AnimationShell } from "./components/AnimationShell.tsx";
+import { FourierExplainerShell } from "./components/FourierExplainerShell.tsx";
 import { PatateShell } from "./components/PatateShell.tsx";
 import { getReelArenaTiming, ReelArenaShell } from "./components/ReelArenaShell.tsx";
+import { EXPLAINER_FRAMES, EXPLAINER_SLUG } from "./country-maps/explainer.ts";
 import { COUNTRY_MAPS } from "./country-maps/fourier.ts";
 import { DROP_STYLES } from "./drop-arenas/sim.ts";
 import { PATATE_COMPOSITIONS, PATATE_TOTAL_FRAMES } from "./patate/themes.ts";
@@ -19,9 +21,12 @@ export function Root() {
       defaultProps={{ style: style.slug }} />)}
     <Composition id="PendulumWave" component={AnimationShell} width={VIDEO.width} height={VIDEO.height}
       fps={VIDEO.fps} durationInFrames={TOTAL_FRAMES} defaultProps={{}} />
-    {COUNTRY_MAPS.map((map) => <Composition key={map.id} id={map.id} component={AnimationShell}
-      width={VIDEO.width} height={VIDEO.height} fps={VIDEO.fps} durationInFrames={TOTAL_FRAMES}
-      defaultProps={{ countryMap: map.slug }} />)}
+    {COUNTRY_MAPS.map((map) => map.slug === EXPLAINER_SLUG
+      ? <Composition key={map.id} id={map.id} component={FourierExplainerShell}
+        width={VIDEO.width} height={VIDEO.height} fps={VIDEO.fps} durationInFrames={EXPLAINER_FRAMES} />
+      : <Composition key={map.id} id={map.id} component={AnimationShell}
+        width={VIDEO.width} height={VIDEO.height} fps={VIDEO.fps} durationInFrames={TOTAL_FRAMES}
+        defaultProps={{ countryMap: map.slug }} />)}
 
     <Composition
       id="StringArenasCombined"

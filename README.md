@@ -8,7 +8,7 @@
 
 Twenty-two animations built from TypeScript, a canvas, and a clock: five foundational physics scenes, five complex-Fourier country-border reconstructions, four zero-gravity wall-bounce string-arena compositions, five bouncy arcade ball-drop and funnel-merge compositions, and three Suika-style Patate Merge boiling-flask compositions with pitch-coupled French voice announcements. Change the equations or physics, scrub to any frame, and render the result as a 60 fps video.
 
-Every composition renders at 1080 × 1920 and 60 fps, closing with a code end card pointing to `github.com/oyren-ai/animations`. Shapes, sovereign map contours, cartoon potato costumes, and geometric vector emblems are drawn procedurally. Sound is synthesized and mixed locally from simulation events and self-generated voice stems. No stock footage, third-party logo files, or music downloads are needed.
+Every composition renders at 1080 × 1920 and 60 fps, closing with a code end card pointing to `github.com/oyren-ai/animations` (`MapOfIndia` ends on its own MIT-licence line with the same link). Shapes, sovereign map contours, cartoon potato costumes, and geometric vector emblems are drawn procedurally. Sound is synthesized and mixed locally from simulation events and self-generated voice stems (`MapOfIndia` is silent). No stock footage, third-party logo files, or music downloads are needed.
 
 ## A few frames
 
@@ -59,7 +59,7 @@ Every composition renders at 1080 × 1920 and 60 fps, closing with a code end ca
 | `PendulumWave` | Twelve closed-form oscillators drift out of alignment, then return after one loop. | Change the cycle counts or string lengths. |
 | `MapOfAzerbaijan` | Sovereign mainland Azerbaijan and Nakhchivan sharpen across eight complex Fourier orders (`N = 1` to `240`). | Add another country polygon or change the harmonic schedule. |
 | `MapOfTurkey` | Anatolia and Eastern Thrace emerge across eight harmonic orders with live epicycles and spectrum bars. | Adjust epicycle chain count or morph duration. |
-| `MapOfIndia` | Complete India border converges from an `N = 1` ellipse to `N = 240` harmonic pairs. | Inspect individual frequency modes or grid spacing. |
+| `MapOfIndia` | An 82-second explainer: the India border as one complex function `z(t) = x(t) + i y(t)`, rebuilt from tip-to-tail rotating circles one harmonic pair at a time (`N = 1` ellipse, then `2` to `5`, then `8` to `240`, 481 circles) with KaTeX-typeset formulas whose coloured terms match the circles. Silent. | Change the stage list in `src/country-maps/explainer.ts` or the harmonic colours in `src/country-maps/explainer-text.ts`. |
 | `MapOfItaly` | Peninsular Italy, Sardinia, and Sicily reconstruct simultaneously as separate closed Fourier loops. | Compare island convergence rates across low orders. |
 | `MapOfJapan` | Honshu, Kyushu, Hokkaido, and Shikoku sharpen from four ellipses into archipelago coastlines. | Tune the harmonic bell chord voicings in `src/audio.ts`. |
 | `StringArenasCombined` | Three back-to-back zero-gravity string-arena rounds (`Coding CLIs`, `Languages`, `Frameworks`) where rim bounces add `+1` anchored line and rival crossings cut lines. | Change `initialStrings`, arena radius, or round seeds in `src/string-arena/sim.ts`. |
@@ -149,6 +149,8 @@ The pendulum wave uses an analytic trajectory. Each successive oscillator comple
 
 The country-map scenes project Natural Earth `10m` closed sovereign rings with spherical Mercator coordinates so east-west distances match cosine-latitude aspect ratios. Each closed loop is decomposed by exact complex discrete Fourier transform across modes `k = -240 .. 240`, then reconstructed through eight progressive harmonic orders (`N = 1, 2, 4, 8, 18, 42, 96, 240`) with smooth order morphing, rotating epicycle vectors, and live normalized `L2` contour precision.
 
+`MapOfIndia` is the long-form exception. It reuses the same exact complex DFT, but parametrises the border counter-clockwise with the imaginary axis up, so `c_k = (1 / 2π) ∫ z(t) e^(-ikt) dt` and the dominant circle is `k = +1`. The partial sum `z_N(t) = Σ_{k=-N..N} c_k e^(ikt)` is drawn as a tip-to-tail chain in the order `k = 0, +1, -1, +2, -2, …`: pairs `N = 2` to `5` appear one at a time (7 s, one revolution each), then `N = 8, 16, 32, 64, 128, 240` (5 s each). `N = 1` is an exact ellipse with semi-axes `|c_1| + |c_-1|` and `||c_1| - |c_-1||`. Each harmonic keeps one colour in the chain, the spectrum bars, and its KaTeX term, and every typeset line is measured against the top and bottom 150 px safe margins at render time (violations are logged as `SAFE_VIOLATION`).
+
 The zero-gravity string arenas integrate 16 substeps per video frame (`960 Hz`) and solve exact swept polynomial contacts between moving contender discs and anchored chords. Each contender opens with 12 rim-anchored lines, gains `+1` line anchored at the exact rim impact point on wall bounces (never on ball-ball collisions), cuts rival lines on contact, and bursts across a centre-filled Fermat disc when its line count reaches zero.
 
 The four-stage arcade ball-drop scenes pair 480 Hz fixed-step collision resolution with an underdamped squash-and-stretch spring (`scaleNormal = 1 - s`, `scaleTangent = 1 / (1 - s)`) aligned to each impact normal while keeping emblems upright, plus live post-climax physics across the celebration window.
@@ -168,6 +170,11 @@ The Patate Merge scenes integrate 240 Hz rigid-body circle dynamics with rotatio
 | `src/data/countryContours.ts` | Arc-length resampled WGS84 sovereign border loops for the five countries |
 | `src/country-maps/fourier.ts` | Spherical Mercator projection, complex DFT, harmonic tiers, and epicycle evaluation |
 | `src/country-maps/paint.ts` | Canvas map renderer, coordinate grid, formula telemetry, and harmonic spectrum |
+| `src/country-maps/explainer.ts` | `MapOfIndia` timeline, counter-clockwise coefficients, term weights, partial sums, and the tip-to-tail epicycle chain |
+| `src/country-maps/explainer-text.ts` | `MapOfIndia` harmonic colours, KaTeX formula rows, captions, and header counter |
+| `src/country-maps/explainer-paint.ts` | `MapOfIndia` canvas: border pass, partial curves, trail, epicycle rings, and spectrum bars |
+| `src/components/FourierExplainerShell.tsx` | `MapOfIndia` page: canvas plus typeset formulas, captions, and the safe-area probe |
+| `src/components/Tex.tsx` | KaTeX renderer and bundled-font loader |
 | `src/string-arena/sim.ts` | Zero-gravity 960 Hz swept-contact string solver, rim-gain rules, and three-round timeline |
 | `src/string-arena/paint.ts` | Reel-safe (`x: 60..900`, `y: 220..1560`) string-arena HUD, chords, and full-disc bursts |
 | `src/drop-arenas/sim.ts` | Plinko gates, breakable rings, bouncy 8-tier funnel merge, pinball bumpers, and squash springs |
@@ -189,10 +196,10 @@ pnpm test
 pnpm assets
 ~~~
 
-Tests cover seeded replay, mass and disc-area conservation, moving contacts, curved boundaries, safe text bounds, exact oscillator derivatives, monotonic Fourier contour convergence and Mercator bounds, deterministic audio duration and peak levels, and the rendered end-card link. Run these checks locally on Node.js 24 before sharing a remix.
+Tests cover seeded replay, mass and disc-area conservation, moving contacts, curved boundaries, safe text bounds, exact oscillator derivatives, monotonic Fourier contour convergence and Mercator bounds, the `MapOfIndia` explainer maths (independent `c_k`, the `N = 1` ellipse, chain tip, whole-revolution stage timing, valid KaTeX), deterministic audio duration and peak levels, and the rendered end-card link. Run these checks locally on Node.js 24 before sharing a remix.
 
 Render and inspect frames after changing the layout or motion. A passing typecheck does not inspect pixels.
 
 ## License
 
-The source in this repository is [MIT licensed](LICENSE), copyright 2026 Oyren. Dependencies retain their own licenses, including [Remotion's licensing terms](https://www.remotion.dev/license).
+The source in this repository is [MIT licensed](LICENSE), copyright 2026 Oyren. Dependencies retain their own licenses, including [Remotion's licensing terms](https://www.remotion.dev/license) and the MIT-licensed [KaTeX](https://katex.org) used to typeset the `MapOfIndia` formulas.

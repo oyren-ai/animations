@@ -111,7 +111,7 @@ export function mercatorProject(lonDeg: number, latDeg: number): { x: number; y:
   };
 }
 
-function computeLoopModes(xs: Float64Array, ys: Float64Array, maxOrder: number): ComplexMode[] {
+export function computeLoopModes(xs: Float64Array, ys: Float64Array, maxOrder: number): ComplexMode[] {
   const M = xs.length;
   const limit = Math.min(maxOrder, Math.floor((M - 1) / 2));
   const stepAngle = (-2 * Math.PI) / M;
