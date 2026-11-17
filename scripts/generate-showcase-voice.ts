@@ -1,0 +1,153 @@
+// Generates the English voiceover for AnimationsRepoShowcase with Speechify and writes:
+//   public/audio/showcase/<line>.wav          48 kHz mono PCM16, leading and trailing silence trimmed
+//   src/repo-showcase/voice.generated.ts      measured durations plus word marks (browser-safe data)
+//
+// Usage: SPEECHIFY_API_KEY=... node --import tsx scripts/generate-showcase-voice.ts
+// The key is read from the environment, never printed and never written to a file.
+import { spawnSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { SHOWCASE_LINES, SHOWCASE_VOICE } from "../src/repo-showcase/script.ts";
+
+const key = process.env.SPEECHIFY_API_KEY?.trim();
+if (!key) throw new Error("Set SPEECHIFY_API_KEY to generate the voiceover");
+
+const outDir = fileURLToPath(new URL("../public/audio/showcase/", import.meta.url));
+const dataFile = fileURLToPath(new URL("../src/repo-showcase/voice.generated.ts", import.meta.url));
+mkdirSync(outDir, { recursive: true });
+const work = mkdtempSync(join(tmpdir(), "showcase-voice-"));
+
+interface Mark {
+  type?: string;
+  start?: number;
+  end?: number;
+  start_time?: number;
+  end_time?: number;
+  chunks?: Mark[];
+}
+interface Word {
+  text: string;
+  charStart: number;
+  startMs: number;
+  endMs: number;
+}
+
+function collectWords(node: Mark | Mark[], text: string, out: { text: string; startMs: number; endMs: number }[]) {
+  if (Array.isArray(node)) {
+    for (const child of node) collectWords(child, text, out);
+    return;
+  }
+  if (node.type === "word") {
+    out.push({
+      text: text.slice(node.start ?? 0, node.end ?? 0),
+      startMs: node.start_time ?? 0,
+      endMs: node.end_time ?? 0,
+    });
+  }
+  for (const child of node.chunks ?? []) collectWords(child, text, out);
+}
+
+/** Milliseconds of leading silence (below -45 dBFS) in a 16-bit PCM wav. */
+function leadingSilenceMs(wav: Uint8Array): number {
+  const view = new DataView(wav.buffer, wav.byteOffset, wav.byteLength);
+  let offset = 12;
+  let sampleRate = 24000;
+  let channels = 1;
+  while (offset + 8 <= wav.byteLength) {
+    const id = String.fromCharCode(wav[offset], wav[offset + 1], wav[offset + 2], wav[offset + 3]);
+    const size = view.getUint32(offset + 4, true);
+    if (id === "fmt ") {
+      channels = view.getUint16(offset + 10, true);
+      sampleRate = view.getUint32(offset + 12, true);
+    }
+    if (id === "data") {
+      const threshold = 32768 * 10 ** (-45 / 20);
+      const frames = Math.floor(Math.min(size, wav.byteLength - offset - 8) / 2 / channels);
+      for (let i = 0; i < frames; i++) {
+        if (Math.abs(view.getInt16(offset + 8 + i * 2 * channels, true)) > threshold) return (i / sampleRate) * 1000;
+      }
+      return 0;
+    }
+    offset += 8 + size + (size % 2);
+  }
+  return 0;
+}
+
+function run(cmd: string, args: string[]): string {
+  const result = spawnSync(cmd, args, { encoding: "utf8" });
+  if (result.status !== 0) throw new Error(`${cmd} failed: ${result.stderr?.slice(0, 300)}`);
+  return result.stdout.trim();
+}
+
+async function synthesize(text: string) {
+  const body = JSON.stringify({ input: text, voice_id: SHOWCASE_VOICE.voiceId, model: SHOWCASE_VOICE.model, audio_format: "wav" });
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const res = await fetch("https://api.speechify.ai/v1/audio/speech", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body,
+    });
+    if (res.ok) return (await res.json()) as { audio_data: string; speech_marks?: Mark | Mark[] };
+    if (res.status !== 429 || attempt === 4) throw new Error(`Speechify request failed with HTTP ${res.status}`);
+    await new Promise((resolve) => setTimeout(resolve, 3000 * (attempt + 1)));
+  }
+  throw new Error("unreachable");
+}
+
+const lines = [];
+let characters = 0;
+try {
+  for (const line of SHOWCASE_LINES) {
+    const reply = await synthesize(line.text);
+    characters += line.text.length;
+    const raw = join(work, `${line.id}-raw.wav`);
+    writeFileSync(raw, Buffer.from(reply.audio_data, "base64"));
+    const shiftMs = leadingSilenceMs(new Uint8Array(readFileSync(raw)));
+    const trimmed = join(outDir, `${line.id}.wav`);
+    const trim = "silenceremove=start_periods=1:start_duration=0.02:start_threshold=-45dB,areverse,silenceremove=start_periods=1:start_duration=0.05:start_threshold=-45dB,areverse";
+    run("ffmpeg", ["-y", "-loglevel", "error", "-i", raw, "-af", trim, "-ar", "48000", "-ac", "1", "-c:a", "pcm_s16le", trimmed]);
+    const durationMs = Math.round(Number(run("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", trimmed])) * 1000);
+
+    const marks: { text: string; startMs: number; endMs: number }[] = [];
+    collectWords(reply.speech_marks ?? [], line.text, marks);
+    let cursor = 0;
+    const words: Word[] = marks.map((mark) => {
+      const charStart = line.text.indexOf(mark.text, cursor);
+      if (charStart < 0) throw new Error(`${line.id}: word mark "${mark.text}" is not in the spoken text`);
+      cursor = charStart + mark.text.length;
+      const startMs = Math.max(0, Math.round(mark.startMs - shiftMs));
+      return { text: mark.text, charStart, startMs, endMs: Math.min(durationMs, Math.max(startMs, Math.round(mark.endMs - shiftMs))) };
+    });
+    if (words.length === 0) throw new Error(`${line.id}: Speechify returned no word marks`);
+    lines.push({ id: line.id, file: `audio/showcase/${line.id}.wav`, text: line.text, durationMs, words });
+    console.log(`${line.id}: ${durationMs} ms, ${words.length} word marks, lead trimmed ${shiftMs.toFixed(0)} ms`);
+  }
+} finally {
+  rmSync(work, { recursive: true, force: true });
+}
+
+const header = [
+  "// Generated by scripts/generate-showcase-voice.ts (Speechify). Do not edit by hand.",
+  "// Browser-safe data: durations are measured with ffprobe on the trimmed clips, word marks come from Speechify.",
+  "",
+  "export interface VoiceWord {",
+  "  readonly text: string;",
+  "  readonly charStart: number;",
+  "  readonly startMs: number;",
+  "  readonly endMs: number;",
+  "}",
+  "",
+  "export interface VoiceClip {",
+  "  readonly id: string;",
+  "  readonly file: string;",
+  "  readonly text: string;",
+  "  readonly durationMs: number;",
+  "  readonly words: readonly VoiceWord[];",
+  "}",
+  "",
+].join("\n");
+const data = { provider: SHOWCASE_VOICE.provider, model: SHOWCASE_VOICE.model, voiceId: SHOWCASE_VOICE.voiceId, lines };
+writeFileSync(dataFile, `${header}export const SHOWCASE_VOICE_DATA: { readonly provider: string; readonly model: string; readonly voiceId: string; readonly lines: readonly VoiceClip[] } = ${JSON.stringify(data, null, 2)};\n`);
+console.log(`wrote ${dataFile.split("/").slice(-3).join("/")}; ${characters} characters sent`);

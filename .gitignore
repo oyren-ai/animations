@@ -8,6 +8,7 @@ public/generated/
 *.mp4
 *.mov
 *.wav
+!public/audio/**/*.wav
 *.m4a
 *.webm
 *.tsbuildinfo
