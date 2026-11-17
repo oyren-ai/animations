@@ -1,13 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { SAMPLE_RATE, SAMPLES_PER_FRAME } from "../audio.ts";
-import { synthesizePatateWav } from "./audio.ts";
+import { scheduleFrenchVoices, synthesizePatateWav } from "./audio.ts";
 import {
   bodyDeformation,
   impactAmount,
   impactsByBody,
   impactSpring,
   NO_DEFORMATION,
+  PATATE_FRAME_STRETCH,
   PATATE_PACE,
   PATATE_SQUASH,
   type Deformation,
@@ -15,7 +16,7 @@ import {
 } from "./feel.ts";
 import { paintPatateFrame } from "./paint.ts";
 import { PATATE_COMPOSITIONS, simulatePatate } from "./sim.ts";
-import { PATATE_TOTAL_FRAMES } from "./themes.ts";
+import { PATATE_CLOSING_FRAMES, PATATE_SCENE_FRAMES, PATATE_TOTAL_FRAMES } from "./themes.ts";
 
 const det = (d: Deformation) => d.a * d.d - d.b * d.c;
 const hit = (frame: number, nx: number, ny: number, speed: number, kind: "hit" | "pop" = "hit"): PatateImpact => ({
@@ -27,20 +28,43 @@ const hit = (frame: number, nx: number, ny: number, speed: number, kind: "hit" |
   speed,
 });
 
-// Boss merge frames on main at 6c4e638. The ladder is chaotic and fills the 24 s, so any physics change must be re-verified.
-const BOSS_FRAME_ON_MAIN: Record<string, number> = {
-  PatateMergeCodingAgents: 1047,
-  PatateMergeWorldToCode: 1103,
-  PatateMergeLanguages: 1056,
+// Unlock frames of tiers 1..8 on main at 6c4e638: the 24 s version, 60 solver frames per second. The last entry is the boss merge.
+// The merge ladder is chaotic and fills its timeline, so the only safe way to slow it is to keep the solver identical and
+// step it fewer times per video frame. These frames times the stretch are therefore exactly where the chain must land.
+const MAIN_UNLOCKS: Record<string, readonly number[]> = {
+  PatateMergeCodingAgents: [0, 107, 135, 299, 373, 518, 799, 1047],
+  PatateMergeWorldToCode: [0, 109, 136, 306, 385, 501, 898, 1103],
+  PatateMergeLanguages: [0, 108, 137, 299, 371, 484, 675, 1056],
+};
+// Mean body speed in px per video second on main at 6c4e638.
+const MAIN_MEAN_SPEED: Record<string, number> = {
+  PatateMergeCodingAgents: 280,
+  PatateMergeWorldToCode: 309,
+  PatateMergeLanguages: 275,
 };
 
+function meanBodySpeed(trace: ReturnType<typeof simulatePatate>): number {
+  let sum = 0;
+  let count = 0;
+  for (let f = 1; f < trace.frames.length; f++) {
+    const previous = new Map(trace.frames[f - 1].bodies.map((body) => [body.id, body]));
+    for (const body of trace.frames[f].bodies) {
+      const before = previous.get(body.id);
+      if (!before) continue;
+      sum += Math.hypot(body.x - before.x, body.y - before.y) * 60;
+      count++;
+    }
+  }
+  return sum / Math.max(1, count);
+}
+
 test("the pace and feel constants are named and sane", () => {
-  assert.ok(PATATE_PACE.gravityScale > 0.6 && PATATE_PACE.gravityScale <= 1);
-  assert.ok(PATATE_PACE.dropGapScale >= 1 && PATATE_PACE.dropGapScale <= 1.3);
-  assert.ok(PATATE_PACE.restitution >= 0.28 && PATATE_PACE.restitution <= 0.5);
-  assert.ok(PATATE_PACE.effectLingerScale >= 1.2 && PATATE_PACE.effectLingerScale <= 1.6);
+  assert.ok(Number.isInteger(PATATE_PACE.substepsPerFrame), "an integer keeps the 240 Hz solver step, and so the merge chain, unchanged");
+  assert.ok(PATATE_PACE.substepsPerFrame >= 2 && PATATE_PACE.substepsPerFrame <= 3, "slower than the original 4 per frame, but not absurdly so");
+  assert.ok(PATATE_FRAME_STRETCH >= 1.25 && PATATE_FRAME_STRETCH <= 1.5);
   assert.ok(PATATE_SQUASH.maxLogSquash > 0.15 && PATATE_SQUASH.maxLogSquash <= 0.4);
   assert.ok(PATATE_SQUASH.maxTotalLogSquash >= PATATE_SQUASH.maxLogSquash);
+  assert.ok(PATATE_SQUASH.frequencyHz <= 2.6 && PATATE_SQUASH.settleFrames >= 60, "the squash springs follow the slowed motion");
 });
 
 test("the spring squashes at impact, rebounds into a stretch, then settles to exactly nothing", () => {
@@ -107,16 +131,43 @@ test("impacts are indexed by body for painting", () => {
   assert.equal(index.get(3), undefined);
 });
 
-test("merge banners and shockwaves linger longer, and every tier and the boss still land in time", () => {
+test("the video is 30 to 32 seconds and one constant sets every length", () => {
+  assert.equal(PATATE_SCENE_FRAMES, Math.round(1260 * PATATE_FRAME_STRETCH));
+  assert.equal(PATATE_TOTAL_FRAMES, PATATE_SCENE_FRAMES + PATATE_CLOSING_FRAMES);
   for (const comp of PATATE_COMPOSITIONS) {
     const trace = simulatePatate(comp.slug);
-    for (let tier = 0; tier < 8; tier++) assert.notEqual(trace.unlockFrames[tier], null, `${comp.id}: tier ${tier + 1}`);
-    assert.ok(trace.bossMergeFrame !== null && trace.bossMergeFrame >= 900 && trace.bossMergeFrame <= 1152, `${comp.id}: boss at ${trace.bossMergeFrame}`);
+    assert.ok(trace.totalFrames >= 1800 && trace.totalFrames <= 1920, `${comp.id}: ${trace.totalFrames} frames is outside 1800..1920`);
     assert.equal(trace.totalFrames, PATATE_TOTAL_FRAMES);
-    assert.equal(trace.totalFrames, 1440);
-    assert.equal(trace.bossMergeFrame, BOSS_FRAME_ON_MAIN[comp.id], `${comp.id}: the ladder timing moved; re-verify the boss window before changing the physics knobs`);
+    assert.equal(trace.sceneFrames + trace.closingFrames, trace.totalFrames);
+    assert.equal(trace.frames.length, trace.sceneFrames + 1);
+  }
+});
 
-    // Before this change the boss banner stayed 73 frames and the boss shockwaves about 53; both now last 30% or more longer.
+test("the merge chain is main's chain, only slower: every unlock and the boss land at main's frame times the stretch", () => {
+  const windowStart = 900 * PATATE_FRAME_STRETCH;
+  const windowEnd = 1152 * PATATE_FRAME_STRETCH;
+  for (const comp of PATATE_COMPOSITIONS) {
+    const trace = simulatePatate(comp.slug);
+    MAIN_UNLOCKS[comp.id].forEach((mainFrame, index) => {
+      const unlock = trace.unlockFrames[index];
+      assert.notEqual(unlock, null, `${comp.id}: tier ${index + 1} never unlocked`);
+      assert.ok(Math.abs((unlock as number) - mainFrame * PATATE_FRAME_STRETCH) <= 1.5, `${comp.id}: tier ${index + 1} at ${unlock}, main's ${mainFrame} stretched is ${(mainFrame * PATATE_FRAME_STRETCH).toFixed(1)}`);
+    });
+    assert.ok(trace.bossMergeFrame !== null && trace.bossMergeFrame >= windowStart && trace.bossMergeFrame <= windowEnd, `${comp.id}: boss at ${trace.bossMergeFrame}, window ${windowStart}..${windowEnd}`);
+  }
+});
+
+test("the physics genuinely run slower, not just the picture", () => {
+  for (const comp of PATATE_COMPOSITIONS) {
+    const slower = meanBodySpeed(simulatePatate(comp.slug));
+    assert.ok(slower <= MAIN_MEAN_SPEED[comp.id] * 0.8, `${comp.id}: mean speed ${slower.toFixed(0)} px/s is not 20% below main's ${MAIN_MEAN_SPEED[comp.id]}`);
+  }
+});
+
+test("merge banners and shockwaves follow the pace and stay on screen at least as long as before", () => {
+  for (const comp of PATATE_COMPOSITIONS) {
+    const trace = simulatePatate(comp.slug);
+    // On main the boss banner showed for 73 frames and its shockwaves for about 53. Both now last about a third longer.
     const bannerFrames = trace.frames.filter((frame) => frame.callouts.some((callout) => callout.tier === 8)).length;
     assert.ok(bannerFrames >= Math.round(73 * 1.3), `${comp.id}: boss banner shows for only ${bannerFrames} frames`);
     const ringFrames = trace.frames.filter((frame) => frame.shockwaves.some((wave) => wave.tier === 8)).length;
@@ -207,6 +258,25 @@ test("paint squashes each potato along its contact, keeps the volume, and leaves
     if (deformed) deformedFrames++;
   }
   assert.ok(deformedFrames >= 120, `only ${deformedFrames} of ${Math.ceil(trace.sceneFrames / 3)} sampled frames show a squash`);
+});
+
+test("French voice lines never overlap and the soundtrack is exactly as long as the video", () => {
+  for (const comp of PATATE_COMPOSITIONS) {
+    const trace = simulatePatate(comp.slug);
+    const wav = synthesizePatateWav(trace);
+    assert.equal(wav.length, 44 + trace.totalFrames * SAMPLES_PER_FRAME * 2, `${comp.id}: audio length differs from the video`);
+    assert.ok(trace.totalFrames / 60 >= 30 && trace.totalFrames / 60 <= 32);
+
+    const clips = scheduleFrenchVoices(trace);
+    assert.ok(clips.length >= 6, `${comp.id}: only ${clips.length} voice lines`);
+    for (let i = 1; i < clips.length; i++) {
+      assert.ok(clips[i].startSample >= clips[i - 1].endSample, `${comp.id}: voice ${i} starts ${clips[i - 1].endSample - clips[i].startSample} samples before the previous one ends`);
+    }
+    for (const clip of clips) {
+      assert.ok(clip.endSample - clip.startSample >= 0.2 * SAMPLE_RATE, `${comp.id}: a voice line is cut shorter than 0.2 s`);
+      assert.ok(clip.endSample <= trace.sceneFrames * SAMPLES_PER_FRAME, `${comp.id}: a voice line runs into the end card`);
+    }
+  }
 });
 
 test("the sound follows the new timing: silent until the first event frame, present right after it", () => {
