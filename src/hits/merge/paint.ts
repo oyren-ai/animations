@@ -866,16 +866,14 @@ function drawPopups(ctx: CanvasRenderingContext2D, boxes: ReelBox[], trace: Merg
   const to = countAtOrBefore(cache.mergeFrames, f);
   let shown = 0;
   let lastX = -9999;
-  let lastChain = -1;
   for (let i = to - 1; i >= 0 && shown < 2; i--) {
     const m = trace.merges[i];
     const ageF = f - m.frame;
     if (ageF > 52) break;
     if (m.chain < 2 || ageF < 0) continue;
-    // two popups with the same count side by side say nothing new: keep the newer one
-    if (m.chain === lastChain && Math.abs(m.x - lastX) < 180) continue;
+    // a cascade climbs x2, x3, x4 in one place: only the newest count is shown there
+    if (Math.abs(m.x - lastX) < 190) continue;
     lastX = m.x;
-    lastChain = m.chain;
     shown++;
     const p = ageF / 52;
     const size = 42 + 9 * Math.min(m.chain - 2, 4);
