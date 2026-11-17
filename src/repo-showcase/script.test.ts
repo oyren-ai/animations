@@ -71,7 +71,7 @@ test("remix window shows real repo values and commands", () => {
   for (const [index, line] of remix.code.entries()) {
     if (index === remix.editLineIndex) continue;
     const value = /"(#[0-9a-f]{6})"/i.exec(line)?.[1];
-    if (value) assert.ok(Object.values(theme.colors).includes(value), `${value} is not a theme colour`);
+    if (value) assert.ok((Object.values(theme.colors) as string[]).includes(value), `${value} is not a theme colour`);
   }
   assert.equal(remix.file, "src/theme.ts");
   assert.ok(read("../theme.ts").includes("export const theme"));

@@ -68,6 +68,7 @@ export const SCENE_PLAN: readonly ScenePlanEntry[] = [
   { line: "l2", atWord: null, scene: "pendulum", variant: null, sceneStartFrame: 200, speed: 1 },
   { line: "l2", atWord: "Ball", scene: "ball-drop", variant: "vortex-spiral-bowl", sceneStartFrame: 150, speed: 1 },
   { line: "l2", atWord: "String", scene: "string-arena", variant: "string-arena-languages", sceneStartFrame: 200, speed: 1 },
+  { line: "l2", atWord: "all", scene: "ball-drop", variant: "pinball-bumper-matrix", sceneStartFrame: 210, speed: 1 },
   { line: "l3", atWord: null, scene: "country-map", variant: "map-of-india", sceneStartFrame: 60, speed: 2 },
 ];
 
