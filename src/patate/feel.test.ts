@@ -36,6 +36,14 @@ const MAIN_UNLOCKS: Record<string, readonly number[]> = {
   PatateMergeWorldToCode: [0, 109, 136, 306, 385, 501, 898, 1103],
   PatateMergeLanguages: [0, 108, 137, 299, 371, 484, 675, 1056],
 };
+// Locked on purpose, replacing the old lock on main's 1047 / 1103 / 1056: these are those boss frames times the 4/3 stretch.
+// They only move if the solver or the pace changes, and the chain is chaotic (nudging gravity, bounce or drop spacing lost
+// the boss merge in most compositions), so any change here must be re-verified against the boss window first.
+const BOSS_FRAME_NOW: Record<string, number> = {
+  PatateMergeCodingAgents: 1396,
+  PatateMergeWorldToCode: 1471,
+  PatateMergeLanguages: 1408,
+};
 // Mean body speed in px per video second on main at 6c4e638.
 const MAIN_MEAN_SPEED: Record<string, number> = {
   PatateMergeCodingAgents: 280,
@@ -154,6 +162,7 @@ test("the merge chain is main's chain, only slower: every unlock and the boss la
       assert.ok(Math.abs((unlock as number) - mainFrame * PATATE_FRAME_STRETCH) <= 1.5, `${comp.id}: tier ${index + 1} at ${unlock}, main's ${mainFrame} stretched is ${(mainFrame * PATATE_FRAME_STRETCH).toFixed(1)}`);
     });
     assert.ok(trace.bossMergeFrame !== null && trace.bossMergeFrame >= windowStart && trace.bossMergeFrame <= windowEnd, `${comp.id}: boss at ${trace.bossMergeFrame}, window ${windowStart}..${windowEnd}`);
+    assert.equal(trace.bossMergeFrame, BOSS_FRAME_NOW[comp.id], `${comp.id}: the boss merge moved; see the comment on BOSS_FRAME_NOW before changing it`);
   }
 });
 
