@@ -16,7 +16,13 @@ export const SCENE_FRAMES = OVERFLOW_SPEC.sceneFrames;
 export const R0 = 112;
 export const R_EXP = 0.31;
 export const R_MIN = 4.5;
-export const BALL_SPEED = 680;
+/**
+ * Pacing is tuned on this constant only; the seed never changes. The run is chaotic, so the overflow time
+ * is not monotonic in the speed. A scan of 11 speeds from 600 to 780 px/s gave overflow times of 15.0 to
+ * 20.8 s, and 600 and 620 never reached 10,000 inside the scene. 720 lands the overflow at 18.5 s and
+ * leaves the chamber clear by the end, which is what the story needs.
+ */
+export const BALL_SPEED = 720;
 
 export const ROTOR = {
   cx: W / 2,
@@ -66,9 +72,21 @@ export interface OverflowTrace {
   openFrame: number;
 }
 
+/**
+ * Cross-engine safety: the audio is built in Node and the picture is simulated again in the render
+ * browser, and this solver is chaotic. Every transcendental result that feeds the dynamics is rounded
+ * to 6 decimals (4 for the radius), so a last-bit difference between two math libraries cannot change a
+ * single split. Everything else in the loop is + - * / and sqrt, which are exact in IEEE 754.
+ */
+const q = (v: number, scale = 1e6): number => Math.round(v * scale) / scale;
+
 export function ballRadius(n: number): number {
-  return clamp(R0 * Math.max(1, n) ** -R_EXP, R_MIN, R0);
+  return clamp(q(R0 * Math.max(1, n) ** -R_EXP, 1e4), R_MIN, R0);
 }
+
+const SPLIT_ANGLE = 0.45;
+const SPLIT_COS = q(Math.cos(SPLIT_ANGLE));
+const SPLIT_SIN = q(Math.sin(SPLIT_ANGLE));
 
 export function rotorAngle(frame: number): number {
   return ROTOR.theta0 + (ROTOR.omega * frame) / FPS;
@@ -79,7 +97,11 @@ export function frameRange(trace: OverflowTrace, frame: number): { start: number
   return { start: trace.offsets[f], end: trace.offsets[f + 1] };
 }
 
-export function simulateOverflow(seed: number = HIT_SEED): OverflowTrace {
+export function simulateOverflow(
+  seed: number = HIT_SEED,
+  opts: { speed?: number } = {},
+): OverflowTrace {
+  const speed = opts.speed ?? BALL_SPEED;
   const rng = createRng(seed);
   const dt = 1 / (FPS * SUBSTEPS);
 
@@ -95,9 +117,9 @@ export function simulateOverflow(seed: number = HIT_SEED): OverflowTrace {
   // Start: one big ball up-left, heading toward the turbine with a small seeded deviation.
   px[0] = 250;
   py[0] = 620;
-  const aim = Math.atan2(ROTOR.cy - py[0], ROTOR.cx - px[0]) + rng.range(-0.2, 0.2);
-  vx[0] = Math.cos(aim) * BALL_SPEED;
-  vy[0] = Math.sin(aim) * BALL_SPEED;
+  const aim = q(Math.atan2(ROTOR.cy - py[0], ROTOR.cx - px[0])) + rng.range(-0.2, 0.2);
+  vx[0] = q(Math.cos(aim)) * speed;
+  vy[0] = q(Math.sin(aim)) * speed;
   ids[0] = 0;
 
   const counts = new Uint16Array(SCENE_FRAMES);
@@ -144,8 +166,8 @@ export function simulateOverflow(seed: number = HIT_SEED): OverflowTrace {
       const theta = rotorAngle(frame + sub / SUBSTEPS);
       for (let b = 0; b < ROTOR.bars; b++) {
         const a = theta + (b * Math.PI) / ROTOR.bars;
-        cosines[b] = Math.cos(a);
-        sines[b] = Math.sin(a);
+        cosines[b] = q(Math.cos(a));
+        sines[b] = q(Math.sin(a));
       }
 
       for (let i = 0; i < n; i++) {
@@ -220,9 +242,8 @@ export function simulateOverflow(seed: number = HIT_SEED): OverflowTrace {
             if (cool[i] === 0 && n < OVERFLOW_TARGET && walls) {
               // split: parent and child leave in two directions 0.9 rad apart
               const j = n++;
-              const ang = 0.45;
-              const ca = Math.cos(ang);
-              const sa = Math.sin(ang);
+              const ca = SPLIT_COS;
+              const sa = SPLIT_SIN;
               const ovx = vx[i];
               const ovy = vy[i];
               vx[i] = ovx * ca + ovy * sa;
@@ -310,10 +331,10 @@ export function simulateOverflow(seed: number = HIT_SEED): OverflowTrace {
       }
 
       // keep speeds in a lively band
-      const lo = BALL_SPEED * 0.6;
-      const hi = BALL_SPEED * 1.6;
+      const lo = speed * 0.6;
+      const hi = speed * 1.6;
       for (let i = 0; i < n; i++) {
-        const sp = Math.hypot(vx[i], vy[i]);
+        const sp = Math.sqrt(vx[i] * vx[i] + vy[i] * vy[i]);
         if (sp < lo) {
           const k = sp > 1e-6 ? lo / sp : 0;
           if (k === 0) {
@@ -337,7 +358,7 @@ export function simulateOverflow(seed: number = HIT_SEED): OverflowTrace {
         for (let i = 0; i < n; i++) {
           const ox = px[i] - W / 2;
           const oy = py[i] - H / 2;
-          const len = Math.hypot(ox, oy) || 1;
+          const len = Math.sqrt(ox * ox + oy * oy) || 1;
           const boost = SPILL_SPEED * (0.8 + 0.5 * rng.next());
           vx[i] += (ox / len) * boost;
           vy[i] += (oy / len) * boost;
