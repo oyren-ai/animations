@@ -8,6 +8,10 @@ import { DROP_STYLES } from "./drop-arenas/sim.ts";
 import { PATATE_COMPOSITIONS, PATATE_TOTAL_FRAMES } from "./patate/themes.ts";
 import { STRING_ROUNDS } from "./string-arena/sim.ts";
 import { TOTAL_FRAMES, VIDEO } from "./settings.ts";
+import { MusicShell } from "./music/MusicShell.tsx";
+import { CARPET_TOTAL_FRAMES } from "./music-carpet/score.ts";
+import { FIREWORK_TOTAL_FRAMES } from "./music-fireworks/score.ts";
+import { ROPE_HARP_TOTAL_FRAMES } from "./music-rope-harp/score.ts";
 
 export function Root() {
   const stringCombinedTiming = getReelArenaTiming({ kind: "string-combined" });
@@ -85,5 +89,33 @@ export function Root() {
         defaultProps={{ slug: patate.slug }}
       />
     ))}
+
+    <Composition
+      id="MusicCarpetLoom"
+      component={MusicShell}
+      width={VIDEO.width}
+      height={VIDEO.height}
+      fps={VIDEO.fps}
+      durationInFrames={CARPET_TOTAL_FRAMES}
+      defaultProps={{ slug: "music-carpet-loom" }}
+    />
+    <Composition
+      id="MusicFireworkKing"
+      component={MusicShell}
+      width={VIDEO.width}
+      height={VIDEO.height}
+      fps={VIDEO.fps}
+      durationInFrames={FIREWORK_TOTAL_FRAMES}
+      defaultProps={{ slug: "music-firework-king" }}
+    />
+    <Composition
+      id="MusicRopeHarp"
+      component={MusicShell}
+      width={VIDEO.width}
+      height={VIDEO.height}
+      fps={VIDEO.fps}
+      durationInFrames={ROPE_HARP_TOTAL_FRAMES}
+      defaultProps={{ slug: "music-rope-harp" }}
+    />
   </>;
 }

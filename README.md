@@ -74,6 +74,9 @@ Every composition renders at 1080 × 1920 and 60 fps, closing with a code end ca
 | `PatateMergeCodingAgents` | Costumed coding-agent potatoes drop down a glass neck and merge up an 8-tier rainbow flask (*copilotienne* → *codexienne* → *claude-codienne* → *oyrenienne*) with pitch-scaled French voice callouts. | Swap tier playback rates, radii, or costumes in `src/patate/themes.ts`. |
 | `PatateMergeWorldToCode` | Classic world-patate progression (*turque*, *mexicaine*, *italienne*, *française*) plot-twisting at Tier 6 into *codexienne*, *claude-codienne*, and *oyrenienne*. | Change drop cadence or chain-reaction radial impulse in `src/patate/sim.ts`. |
 | `PatateMergeLanguages` | Eight-tier programming-language patate evolution (*bashienne* → *javascriptienne* → *pythonienne* → *typescriptienne* → *go-langienne* → *rustienne* → *lean-quatrienne*). | Add a new language costume in `src/patate/paint.ts` or adjust interrupt timing in `src/patate/audio.ts`. |
+| `MusicCarpetLoom` | Traditional *Sarı gəlin* arranged for synthesized *tar*, *kamança*, *qaval*, and *D şur* drone while a vertical loom knots a stepped border, *buta* motifs, and central medallion tuft by tuft. | Swap the note array in `src/music-carpet/sariGelinData.ts` or recolor the natural dye palette in `src/music-carpet/pattern.ts`. |
+| `MusicFireworkKing` | Grieg's *In the Hall of the Mountain King* accelerates from stealthy pizzicato to full brass and bells while every note launches a pitch-positioned rocket that detonates on the audio onset. | Swap the note data in `src/music-fireworks/score.ts` for another public-domain piece or adjust burst spark physics. |
+| `MusicRopeHarp` | Traditional *Greensleeves* played on a twenty-bar tuned chime rack as animated scissors snip hanging weights so each weight strikes its chime bar on the exact beat and rolls into collector buckets. | Swap the melody and harp chords in `src/music-rope-harp/score.ts` or change fall duration and bucket count in `src/music-rope-harp/sim.ts`. |
 
 ## Run locally
 
@@ -180,6 +183,10 @@ The Patate Merge scenes integrate 240 Hz rigid-body circle dynamics with rotatio
 | `src/audio.ts` | Event-to-tone mapping, harmonic map chords, arena soundtracks, and PCM synthesis |
 | `src/encoding.ts` | Explicit PNG-to-BT.709 conversion for the pinned renderer |
 | `src/components/GetTheCodeEndCard.tsx` | Shared closing copy and repository link |
+| `src/music/` | Stereo Karplus-Strong, bowed-string, FM bell, and drum synthesizer plus pitch/sync/loudness verification |
+| `src/music-carpet/` | *Sarı gəlin* transcription, natural-dye medallion & *buta* knot grid, and vertical loom renderer |
+| `src/music-fireworks/` | Accelerando *Mountain King* score, mortar-to-sky firework physics, and chrysanthemum spark renderer |
+| `src/music-rope-harp/` | *Greensleeves* chime-bar arrangement, scissor-snip gravity timing, and collector-bucket harp renderer |
 
 ## Verify a remix
 
