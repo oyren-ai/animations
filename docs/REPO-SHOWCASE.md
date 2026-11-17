@@ -1,6 +1,6 @@
 # Repo showcase video (`AnimationsRepoShowcase`)
 
-A ~22 s, 1080x1920, 60 fps short that introduces this repo with a natural English AI voiceover. It is a different voice from the French `Patate*` Shorts.
+A 24 s, 1080x1920, 60 fps short that introduces this repo with a natural English AI voiceover. It is a different voice from the French `Patate*` Shorts.
 
 ## Claim rule
 
