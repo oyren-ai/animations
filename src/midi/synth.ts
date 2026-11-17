@@ -32,7 +32,7 @@ export interface SynthOptions {
   channelPrograms?: Record<string, number>;
   /** Reverb send level 0..1 (default 0.22): wet = reverb * decorrelated tail, added on top of the dry signal. */
   reverb?: number;
-  /** Soft-limiter ceiling; the output peak is guaranteed <= ceiling (default 0.89). */
+  /** Soft-limiter ceiling; the output peak is guaranteed <= ceiling (default 0.84). */
   ceiling?: number;
   /** Peak that loud passages are normalised towards before the limiter (default 0.8). */
   targetPeak?: number;
@@ -76,7 +76,7 @@ const PAN_SPREAD = 0.3;
 const DC_CUTOFF_HZ = 22;
 const END_FADE_SEC = 0.015;
 const DEFAULT_REVERB = 0.22;
-const DEFAULT_CEILING = 0.89;
+const DEFAULT_CEILING = 0.84; // leaves about 1 dB of headroom for AAC overshoot, which measured up to +1 dB on marimba transients
 const DEFAULT_TARGET_PEAK = 0.8;
 const DEFAULT_MAX_GAIN = 4;
 /** Per-voice trims so a note at the same velocity is about equally loud on every instrument (measured, see tests). */

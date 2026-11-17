@@ -157,13 +157,13 @@ test("dense polyphony of all four voices is finite, audible and stays under the 
     for (let i = 0; i < channel.length; i++) assert.ok(Number.isFinite(channel[i]), `non-finite sample at ${i}`);
     assert.ok(rms(channel) > 0.02, `rms ${rms(channel)}`);
     assert.ok(peakAbs(channel) < 0.95, `peak ${peakAbs(channel)}`);
-    assert.ok(peakAbs(channel) <= 0.89 + 1e-6, "float peak must respect the ceiling");
+    assert.ok(peakAbs(channel) <= 0.84 + 1e-6, "float peak must respect the ceiling");
   }
   const wav = encodeWavPcm16(audio);
   let maxInt = 0;
   for (let offset = 44; offset < wav.length; offset += 2) maxInt = Math.max(maxInt, Math.abs(wav.readInt16LE(offset)));
   assert.ok(maxInt / 32768 < 0.95, `quantised peak ${maxInt / 32768}`);
-  assert.ok(maxInt / 32767 <= 0.89 + 1e-6, "quantised peak must respect the ceiling");
+  assert.ok(maxInt / 32767 <= 0.84 + 1e-6, "quantised peak must respect the ceiling");
   assert.ok(maxInt / 32767 > 0.6, "loud passages should be normalised near the target, not left tiny");
   // A tighter custom ceiling is honoured too.
   assert.ok(peakAbs(renderNotes(notes, { ...options, ceiling: 0.5 }).left) <= 0.5 + 1e-6);
