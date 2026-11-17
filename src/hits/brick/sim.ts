@@ -6,13 +6,17 @@ import { HIT_SEED } from "../types.ts";
  * Every wall bounce lays one brick on the wall slot that was hit, every brick shrinks the exit.
  *
  * Model
- * - Each wall is a 1-D profile of brick levels over slots (48 px on the long walls, 1080/22 px on the short ones).
- *   A slot column is a rectangle `lining + 40 px x level` thick. The ball is a circle that collides with those
- *   rectangles, so it meets front faces, side faces and corners the way a viewer expects.
- * - The exit is a gap in the LEFT wall at y = 900. Its width is `doorW0 - doorDelta x bricks`; the two posts are
- *   the ends of the wall columns next to the gap, so a ball that grazes a post bounces (and lays a brick).
- * - Speed is constant, reflections only rotate the velocity, so the whole run is piecewise linear and every
- *   constant below can be tuned without touching the seed.
+ * - Each wall is a 1-D profile of brick levels over slots (80 px on the long walls, 1080/14 px on the short ones, so
+ *   a brick is about 2:1). A slot column is `lining + 40 px x level` thick.
+ * - The ball is a circle; each wall reacts to it with the brick boundary under the slots the ball overlaps (the
+ *   largest thickness among them). A wall only reacts to a ball moving into it, and a reflection only flips one
+ *   velocity component, so the ball can never wedge in a pocket and the run stays piecewise linear.
+ * - The exit is a gap in the LEFT wall at y = 900. Its width is `doorW0 - doorDelta x bricks`. The ball is through once
+ *   its leading edge crosses the 12 px lining with the whole ball inside the gap (centre within the gap +- (width / 2 - r)),
+ *   otherwise the two lining ends act as posts and the ball bounces. Bricks keep one slot away from the gap so the
+ *   posts stay thin.
+ * - Speed is constant and reflections only flip one velocity component, so every constant below can be tuned
+ *   without touching the seed.
  * - The simulation runs on a fine step clock (360 Hz). A small online "last chance" slow motion maps video
  *   frames to fractional steps, so the final approach to the exit is readable. Physics never depends on it.
  */
@@ -42,8 +46,8 @@ export interface BrickParams {
 export const BRICK = {
   ballR: 30,
   stepHz: 360,
-  slotsV: 40,
-  slotsH: 22,
+  slotsV: 24,
+  slotsH: 14,
   lining: 12,
   brickDepth: 40,
   capPx: 280,
@@ -51,19 +55,17 @@ export const BRICK = {
   doorY: 900,
   popFrames: 6,
   trailLen: 14,
-  /** Contacts on the same wall closer than this many fine steps count as one bounce (no brick, no note). */
-  debounceSteps: 24,
   /** Last-chance slow motion: only when the exit is narrower than `slowGateW` and the ball heads for it. */
   slowGateW: 260,
-  slowDistX: 560,
+  slowDistX: 330,
   slowMargin: 70,
-  rateMin: 0.22,
+  rateMin: 0.28,
   slowIn: 0.054,
   slowOut: 0.027,
   /** Tuned constants (see the report). */
   params: {
-    speed: 2000,
-    angleDeg: 43.318,
+    speed: 2110,
+    angleDeg: 43.474,
     angleJitterDeg: 3,
     doorW0: 600,
     doorDelta: 10.65,
@@ -100,11 +102,13 @@ export interface BrickRec {
 }
 
 export interface EscapeEvent {
+  /** Video seconds at which the ball centre crosses the canvas edge. */
   readonly t: number;
   /** First frame whose ball centre is outside the canvas. */
   readonly frame: number;
+  /** Fine step at which the centre crosses the canvas edge. */
   readonly step: number;
-  /** Ball centre y when it crosses the canvas edge. */
+  /** Ball centre y when its leading edge crossed the lining, with the whole ball inside the exit. */
   readonly y: number;
   /** Exit width at that moment. */
   readonly doorW: number;
@@ -138,7 +142,6 @@ export interface BrickTrace {
   readonly minRate: number;
 }
 
-const BIG = 4000;
 const q4 = (v: number): number => Math.round(v * 1e4) / 1e4;
 
 /** Reflect `y` into the range the ball centre can occupy (used to guess where the ball will meet the left wall). */
@@ -348,7 +351,8 @@ export function simulateBrick(seed: number = HIT_SEED, params: BrickParams = BRI
     }
     slow += (target - slow) * (target > slow ? BRICK.slowIn : BRICK.slowOut);
     const stepRate = 1 - (1 - BRICK.rateMin) * slow;
-    const dtv = stepRate * dt;
+    // Slow motion: one fine step lasts longer on screen (a rate of 0.25 shows it four times as long).
+    const dtv = dt / stepRate;
     vt += dtv;
     step += 1;
     stepX[step] = bx;

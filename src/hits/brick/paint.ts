@@ -69,14 +69,14 @@ const DOTS: readonly Dot[] = (() => {
 
 const BOKEH = (() => {
   const rng = createRng(HIT_SEED ^ 0x3a91);
-  return Array.from({ length: 10 }, () => ({
-    x: rng.range(0, W),
-    y: rng.range(0, H),
-    vx: rng.range(-0.12, 0.12),
-    vy: rng.range(-0.2, 0.2),
-    r: rng.range(70, 170),
-    c: rng.pick(["139,92,246", "45,212,191", "200,255,0", "34,211,238"]),
-    a: rng.range(0.035, 0.07),
+  return Array.from({ length: 9 }, (_, i) => ({
+    x: rng.range(80, W - 80),
+    y: rng.range(260, H - 200),
+    vx: rng.range(-0.14, 0.14),
+    vy: rng.range(-0.22, 0.22),
+    r: rng.range(190, 360),
+    c: (["139,92,246", "45,212,191", "139,92,246", "34,211,238", "200,255,0"] as const)[i % 5],
+    a: rng.range(0.1, 0.17),
   }));
 })();
 
@@ -171,7 +171,7 @@ function derive(trace: BrickTrace): Derived {
 
 function drawChamberPattern(ctx: CanvasRenderingContext2D): void {
   ctx.save();
-  ctx.strokeStyle = "rgba(139,92,246,0.085)";
+  ctx.strokeStyle = "rgba(150,110,255,0.115)";
   ctx.lineWidth = 2;
   ctx.beginPath();
   const rowH = 64;
@@ -191,12 +191,13 @@ function drawChamberPattern(ctx: CanvasRenderingContext2D): void {
 
 function drawAmbient(ctx: CanvasRenderingContext2D, f: number): number {
   for (const b of BOKEH) {
-    const x = (((b.x + b.vx * f) % W) + W) % W;
-    const y = (((b.y + b.vy * f) % H) + H) % H;
-    ctx.fillStyle = `rgba(${b.c},${b.a})`;
-    ctx.beginPath();
-    ctx.arc(x, y, b.r, 0, TAU);
-    ctx.fill();
+    const x = b.x + Math.sin(f * 0.006 + b.vx * 40) * 120 + b.vx * f * 0.5;
+    const y = b.y + Math.cos(f * 0.005 + b.vy * 40) * 120 + b.vy * f * 0.5;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, b.r);
+    g.addColorStop(0, `rgba(${b.c},${b.a})`);
+    g.addColorStop(1, `rgba(${b.c},0)`);
+    ctx.fillStyle = g;
+    ctx.fillRect(x - b.r, y - b.r, b.r * 2, b.r * 2);
   }
   let n = 0;
   for (const d of DOTS) {
@@ -221,6 +222,24 @@ function drawVignette(ctx: CanvasRenderingContext2D): void {
   ctx.fillRect(0, 0, W, H);
 }
 
+function drawWallGlow(ctx: CanvasRenderingContext2D): void {
+  const L = BRICK.lining;
+  const depth = 130;
+  const strips: [number, number, number, number, number, number, number, number][] = [
+    [0, 0, depth, H, L, 0, depth, 0],
+    [W - depth, 0, depth, H, W - L, 0, W - depth, 0],
+    [0, 0, W, depth, 0, L, 0, depth],
+    [0, H - depth, W, depth, 0, H - L, 0, H - depth],
+  ];
+  for (const [x, y, w, h, x0, y0, x1, y1] of strips) {
+    const g = ctx.createLinearGradient(x0, y0, x1, y1);
+    g.addColorStop(0, "rgba(139,92,246,0.32)");
+    g.addColorStop(1, "rgba(139,92,246,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(x, y, w, h);
+  }
+}
+
 function drawLining(ctx: CanvasRenderingContext2D, top: number, bot: number): void {
   const L = BRICK.lining;
   ctx.fillStyle = "rgba(139,92,246,0.62)";
@@ -240,16 +259,31 @@ function drawLining(ctx: CanvasRenderingContext2D, top: number, bot: number): vo
 function drawDoorLight(ctx: CanvasRenderingContext2D, w: number, pulse: number, f: number, lime: boolean): void {
   if (w <= 0.5) return;
   const top = DOOR_Y - w / 2;
-  const hue = lime ? "200,255,0" : "255,190,60";
-  const glow = ctx.createLinearGradient(0, 0, 420, 0);
-  glow.addColorStop(0, `rgba(${hue},${0.26 + 0.26 * pulse})`);
-  glow.addColorStop(1, `rgba(${hue},0)`);
-  ctx.fillStyle = glow;
-  ctx.fillRect(0, top - 40, 420, w + 80);
+  const hue = lime ? "205,255,70" : "255,206,110";
+  // The doorway: a warm panel with sharp top and bottom edges (the posts) that fades with the distance from the wall.
+  const panelHue = lime ? "214,255,96" : "255,224,150";
+  const panel = ctx.createLinearGradient(0, 0, 210, 0);
+  panel.addColorStop(0, `rgba(${panelHue},${0.5 + 0.18 * pulse})`);
+  panel.addColorStop(1, `rgba(${panelHue},0)`);
+  ctx.fillStyle = panel;
+  ctx.fillRect(0, top, 210, w);
+  // The glow beyond it is additive and elliptical: a soft pool as tall as the exit that fades in every direction.
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  const rx = 520;
+  ctx.translate(0, DOOR_Y);
+  ctx.scale(1, (w / 2 + 120) / rx);
+  const pool = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
+  pool.addColorStop(0, `rgba(${hue},${0.5 + 0.24 * pulse})`);
+  pool.addColorStop(0.45, `rgba(${hue},${0.18 + 0.1 * pulse})`);
+  pool.addColorStop(1, `rgba(${hue},0)`);
+  ctx.fillStyle = pool;
+  ctx.fillRect(0, -rx, rx, rx * 2);
+  ctx.restore();
   ctx.fillStyle = `rgba(255,248,224,${0.78 + 0.22 * pulse})`;
   ctx.fillRect(0, top, BRICK.lining, w);
   if (w > 120) {
-    ctx.strokeStyle = `rgba(${hue},0.55)`;
+    ctx.strokeStyle = `rgba(${hue},0.6)`;
     ctx.lineWidth = 5;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
@@ -299,8 +333,12 @@ function drawBricks(ctx: CanvasRenderingContext2D, trace: BrickTrace, d: Derived
       any = true;
     }
     if (any) {
-      ctx.lineWidth = 11;
-      ctx.strokeStyle = c === 0 ? "rgba(200,255,0,0.16)" : "rgba(139,92,246,0.26)";
+      ctx.lineJoin = "round";
+      ctx.lineWidth = 30;
+      ctx.strokeStyle = c === 0 ? "rgba(200,255,0,0.07)" : "rgba(139,92,246,0.12)";
+      ctx.stroke();
+      ctx.lineWidth = 13;
+      ctx.strokeStyle = c === 0 ? "rgba(200,255,0,0.2)" : "rgba(150,110,255,0.3)";
       ctx.stroke();
     }
   }
@@ -380,6 +418,16 @@ function drawSparks(ctx: CanvasRenderingContext2D, trace: BrickTrace, f: number)
     const ev = trace.bounces[j];
     const age = f - ev.frame;
     if (age > 18) break;
+    if (age < 12) {
+      // the wall lights up where the ball hit it
+      ctx.fillStyle = `rgba(255,255,235,${0.9 * (1 - age / 12) ** 1.5})`;
+      ctx.beginPath();
+      if (ev.wall === WALL.left) rr(ctx, 0, ev.y - 46, BRICK.lining + 6, 92, 6);
+      else if (ev.wall === WALL.right) rr(ctx, W - BRICK.lining - 6, ev.y - 46, BRICK.lining + 6, 92, 6);
+      else if (ev.wall === WALL.top) rr(ctx, ev.x - 46, 0, 92, BRICK.lining + 6, 6);
+      else rr(ctx, ev.x - 46, H - BRICK.lining - 6, 92, BRICK.lining + 6, 6);
+      ctx.fill();
+    }
     if (age < 10) {
       ctx.strokeStyle = `rgba(255,255,240,${0.75 * (1 - age / 10)})`;
       ctx.lineWidth = 4;
@@ -416,6 +464,24 @@ function drawBall(ctx: CanvasRenderingContext2D, trace: BrickTrace, f: number): 
   const x = trace.ballX[f];
   const y = trace.ballY[f];
   if (x < -R - 2) return 0;
+  // a short squash along the wall normal right after a bounce
+  let rx = R;
+  let ry = R;
+  const count = trace.bricksAt[f];
+  if (count > 0) {
+    const ev = trace.bounces[count - 1];
+    const age = f - ev.frame;
+    if (age >= 0 && age < 5) {
+      const k = 0.24 * (1 - age / 5) ** 2;
+      if (ev.wall < 2) {
+        rx = R * (1 - k);
+        ry = R * (1 + 0.7 * k);
+      } else {
+        rx = R * (1 + 0.7 * k);
+        ry = R * (1 - k);
+      }
+    }
+  }
   const halo = ctx.createRadialGradient(x, y, R * 0.5, x, y, R * 3.3);
   halo.addColorStop(0, "rgba(125,235,255,0.5)");
   halo.addColorStop(1, "rgba(125,235,255,0)");
@@ -429,60 +495,105 @@ function drawBall(ctx: CanvasRenderingContext2D, trace: BrickTrace, f: number): 
   body.addColorStop(1, "#22d3ee");
   ctx.fillStyle = body;
   ctx.beginPath();
-  ctx.arc(x, y, R, 0, TAU);
+  ctx.ellipse(x, y, rx, ry, 0, 0, TAU);
   ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,0.85)";
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
   return 1;
 }
 
 function drawEscapeBurst(ctx: CanvasRenderingContext2D, a: number): void {
-  const flash = ctx.createRadialGradient(0, DOOR_Y, 0, 0, DOOR_Y, 160 + a * 20);
-  const k = Math.exp(-a / 20);
-  flash.addColorStop(0, `rgba(255,252,230,${0.75 * k})`);
-  flash.addColorStop(0.45, `rgba(200,255,0,${0.35 * k})`);
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  const k = Math.exp(-a / 22);
+  const flash = ctx.createRadialGradient(0, DOOR_Y, 0, 0, DOOR_Y, 200 + a * 26);
+  flash.addColorStop(0, `rgba(255,248,214,${0.85 * k})`);
+  flash.addColorStop(0.4, `rgba(200,255,40,${0.34 * k})`);
   flash.addColorStop(1, "rgba(200,255,0,0)");
   ctx.fillStyle = flash;
-  ctx.fillRect(0, 0, 1100, H);
-  // rays
-  ctx.fillStyle = `rgba(255,250,215,${0.2 * Math.exp(-a / 55)})`;
+  ctx.fillRect(0, 0, 1180, H);
+  // light shafts fanning out of the exit, long and short ones alternating, bright at the door and fading outward
+  const shafts = ctx.createRadialGradient(0, DOOR_Y, 20, 0, DOOR_Y, 1150);
+  const sa = 0.5 * Math.exp(-a / 80);
+  shafts.addColorStop(0, `rgba(255,248,205,${sa})`);
+  shafts.addColorStop(0.5, `rgba(214,255,90,${sa * 0.45})`);
+  shafts.addColorStop(1, "rgba(200,255,0,0)");
+  ctx.fillStyle = shafts;
   ctx.beginPath();
-  for (let i = 0; i < 12; i++) {
-    const ang = -1.35 + (i / 11) * 2.7;
-    const len = 300 + a * 24;
-    const half = 0.035;
+  for (let i = 0; i < 11; i++) {
+    const ang = -1.3 + (i / 10) * 2.6;
+    const len = (i & 1 ? 760 : 1150) * (1 - Math.exp(-a / 10));
+    const half = i & 1 ? 0.03 : 0.045;
     ctx.moveTo(0, DOOR_Y);
     ctx.lineTo(Math.cos(ang - half) * len, DOOR_Y + Math.sin(ang - half) * len);
     ctx.lineTo(Math.cos(ang + half) * len, DOOR_Y + Math.sin(ang + half) * len);
     ctx.closePath();
   }
   ctx.fill();
-  // rings
+  ctx.restore();
+  // shock rings
   for (let r = 0; r < 3; r++) {
-    const age = a - r * 6;
-    if (age < 0 || age > 50) continue;
-    ctx.strokeStyle = r === 1 ? `rgba(200,255,0,${0.8 * (1 - age / 50)})` : `rgba(255,250,225,${0.7 * (1 - age / 50)})`;
-    ctx.lineWidth = 8 - r * 2;
+    const age = a - r * 7;
+    if (age < 0 || age > 56) continue;
+    const fade = 1 - age / 56;
+    ctx.strokeStyle = r === 1 ? `rgba(200,255,0,${0.85 * fade})` : `rgba(255,250,225,${0.75 * fade})`;
+    ctx.lineWidth = 7 - r * 2;
     ctx.beginPath();
-    ctx.arc(0, DOOR_Y, 60 + age * (22 + r * 4), -Math.PI / 2, Math.PI / 2);
+    ctx.arc(0, DOOR_Y, 70 + age * (26 + r * 5), -Math.PI / 2, Math.PI / 2);
     ctx.stroke();
   }
-  // confetti shot from the exit into the chamber
+  // confetti shot from the exit across the chamber
   for (let c = 0; c < CONFETTI_COLORS.length; c++) {
     ctx.fillStyle = CONFETTI_COLORS[c];
     for (let i = c; i < CONFETTI.length; i += 4) {
       const p = CONFETTI[i];
-      const t = a;
-      const dist = p.speed * 7 * (1 - Math.exp(-t / 16));
-      const life = Math.max(0, 1 - t / 95);
+      const life = Math.max(0, 1 - a / 110);
       if (life <= 0) continue;
+      const dist = p.speed * 28 * (1 - Math.exp(-a / 20));
       const x = Math.cos(p.ang) * dist + 14;
-      const y = DOOR_Y + Math.sin(p.ang) * dist + 0.5 * t * t * 0.02 + Math.sin(t * 0.18 + p.wobble) * 8;
-      ctx.globalAlpha = Math.min(1, life * 1.6);
+      const y = DOOR_Y + Math.sin(p.ang) * dist + 0.011 * a * a + Math.sin(a * 0.16 + p.wobble) * 9;
+      ctx.globalAlpha = Math.min(1, life * 1.8);
       ctx.beginPath();
-      ctx.arc(x, y, p.size * (0.5 + 0.5 * life), 0, TAU);
+      ctx.arc(x, y, p.size * (0.55 + 0.45 * life), 0, TAU);
       ctx.fill();
     }
   }
   ctx.globalAlpha = 1;
+}
+
+/** After the escape a white wave runs along the bricks, starting at the exit. */
+function drawRipple(ctx: CanvasRenderingContext2D, trace: BrickTrace, d: Derived, f: number, a: number): void {
+  const count = trace.bricksAt[f];
+  for (let i = 0; i < count; i++) {
+    const k = i * 4;
+    const cx = d.box[k] + d.box[k + 2] / 2;
+    const cy = d.box[k + 1] + d.box[k + 3] / 2;
+    const phase = a - Math.hypot(cx, cy - DOOR_Y) / 42;
+    if (phase < 0 || phase > 18) continue;
+    ctx.globalAlpha = 0.85 * (1 - phase / 18) ** 2;
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    rr(ctx, d.box[k] + 2.5, d.box[k + 1] + 2.5, d.box[k + 2] - 5, d.box[k + 3] - 5, 8);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+/** Last-chance slow motion: the room dims toward the exit and a ring tightens around it. */
+function drawFocus(ctx: CanvasRenderingContext2D, rate: number, w: number): void {
+  const k = clamp01((1 - rate) / (1 - BRICK.rateMin));
+  if (k < 0.02) return;
+  const g = ctx.createRadialGradient(0, DOOR_Y, 240, 0, DOOR_Y, 1500);
+  g.addColorStop(0, "rgba(3,5,10,0)");
+  g.addColorStop(1, `rgba(3,5,10,${0.5 * k})`);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = `rgba(255,200,90,${0.55 * k})`;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(0, DOOR_Y, Math.max(90, w * 0.5 + 60 + 190 * (1 - k)), -Math.PI / 2, Math.PI / 2);
+  ctx.stroke();
 }
 
 /* ---------- HUD ---------- */
@@ -490,9 +601,9 @@ function drawEscapeBurst(ctx: CanvasRenderingContext2D, a: number): void {
 function drawLabelPill(ctx: CanvasRenderingContext2D, boxes: ReelBox[], text: string, x: number, y: number, color: string): void {
   ctx.fillStyle = "rgba(5,7,11,0.62)";
   ctx.beginPath();
-  rr(ctx, x - 12, y - 25, 100, 38, 12);
+  rr(ctx, x - 12, y - 28, 108, 42, 13);
   ctx.fill();
-  drawReelText(ctx, boxes, text, x, y, { size: 26, weight: 800, color, maxWidth: 150 });
+  drawReelText(ctx, boxes, text, x, y, { size: 30, weight: 800, color, maxWidth: 150 });
 }
 
 export function paintScene(
@@ -514,18 +625,31 @@ export function paintScene(
   drawChamberPattern(ctx);
   const dots = drawAmbient(ctx, f);
   drawVignette(ctx);
+  drawWallGlow(ctx);
 
   drawDoorLight(ctx, w, pulse, f, escaped);
   drawLining(ctx, top, bot);
   const bricks = drawBricks(ctx, trace, d, f);
+  if (esc && escaped) drawRipple(ctx, trace, d, f, f - esc.frame);
   drawSparks(ctx, trace, f);
   drawPosts(ctx, w, pulse, escaped);
+  if (!escaped) drawFocus(ctx, trace.rate[f], w);
   const balls = drawBall(ctx, trace, f);
   if (esc && escaped) drawEscapeBurst(ctx, f - esc.frame);
 
   // HUD on top: question, rule, CTA and seed, then the two counters and the lines that explain the tune.
   const layout = drawChrome(ctx, boxes, BRICK_SPEC);
   const count = trace.bricksAt[f];
+  if (count > 0) {
+    const age = f - trace.bricks[count - 1].frame;
+    if (age < 10) {
+      const g = ctx.createRadialGradient(270, layout.counterY - 22, 0, 270, layout.counterY - 22, 110);
+      g.addColorStop(0, `rgba(200,255,0,${0.4 * (1 - age / 10)})`);
+      g.addColorStop(1, "rgba(200,255,0,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(160, layout.counterY - 132, 220, 220);
+    }
+  }
   drawStat(ctx, boxes, { label: "BRICKS", value: String(count), x: 270, y: layout.counterY, color: PALETTE.lime, maxWidth: 300 });
   drawStat(ctx, boxes, {
     label: "EXIT",
@@ -557,6 +681,11 @@ export function paintScene(
   if (esc && escaped) {
     const a = f - esc.frame;
     const pop = easeOutBack(a / 12);
+    const rg = ctx.createRadialGradient(SAFE_CENTER_X, 780, 0, SAFE_CENTER_X, 780, 430);
+    rg.addColorStop(0, `rgba(200,255,0,${0.2 * clamp01(a / 8)})`);
+    rg.addColorStop(1, "rgba(200,255,0,0)");
+    ctx.fillStyle = rg;
+    ctx.fillRect(0, 500, W, 560);
     drawResult(ctx, boxes, "IT GOT OUT!", 780, { size: 92 * (0.45 + 0.55 * pop), color: PALETTE.lime, alpha: 0.3 + 0.7 * clamp01(a / 5) });
     const sub = smoothstep(14, 30, a);
     if (sub > 0.01) {

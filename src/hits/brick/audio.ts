@@ -104,14 +104,31 @@ export function buildBrickAudio(trace: BrickTrace): HitAudio {
     startSec: payoffT - 0.05,
     durSec: total - payoffT + 2,
     freqs: [48, 55, 60, 64].map(noteHz),
-    gain: 0.062,
+    gain: 0.095,
     attackSec: 0.35,
     releaseSec: 0.5,
   });
 
-  // A riser that swells as the exit closes and peaks at the payoff.
-  const riserStart = Math.max(0.5, Math.min(schedule.halfClosedT, payoffT - 2));
-  addRiser(buf, { t: riserStart, durSec: payoffT - riserStart, gain: 0.1, fromHz: 140, toHz: 520 });
+  // The swell follows the exit narrowing: a soft G drone (the dominant, so the payoff chord resolves it) whose level
+  // tracks how shut the exit is, plus a short sine riser into the payoff.
+  const swellStart = Math.max(0.5, Math.min(schedule.halfClosedT, payoffT - 3));
+  const swellSteps = Math.max(3, Math.round((payoffT - swellStart) / 1.6));
+  const swellSeg = (payoffT - swellStart) / swellSteps;
+  for (let i = 0; i < swellSteps; i++) {
+    const t0 = swellStart + i * swellSeg;
+    const frame = Math.min(trace.sceneFrames - 1, Math.round((t0 + swellSeg / 2) * FPS));
+    const closure = trace.params.doorW0 > 0 ? 1 - trace.doorW[frame] / trace.params.doorW0 : 1;
+    addSoftPad(buf, {
+      startSec: t0 - 0.4,
+      durSec: swellSeg + 0.9,
+      freqs: [55, 62, 67].map(noteHz),
+      gain: 0.012 + 0.07 * closure ** 1.4,
+      attackSec: 0.7,
+      releaseSec: 0.7,
+    });
+  }
+  const riserDur = Math.min(3.5, payoffT - swellStart);
+  addRiser(buf, { t: payoffT - riserDur, durSec: riserDur, gain: 0.07, fromHz: 200, toHz: 640 });
 
   // One bell per bounce, always the next note of the tune, panned by the contact position.
   for (const n of schedule.notes) addBell(buf, { t: n.t, freq: noteHz(n.midi + 12), gain: n.gain, pan: n.pan });

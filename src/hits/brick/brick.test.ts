@@ -235,6 +235,54 @@ test("brick: with the door shut from the start the ball is walled in and the pai
   for (const box of boxes) assertReelSafeBox(box);
 });
 
+test("brick: the last-chance slow motion slows the picture, keeps frames in order and stays short", () => {
+  const t = trace();
+  const e = escapeOf(t);
+  assert.ok(t.minRate >= 0.2 && t.minRate <= 0.35, `slowest rate ${t.minRate}`);
+  for (let f = 1; f < SCENE_FRAMES; f++) assert.ok(t.frameStep[f] > t.frameStep[f - 1], `frame ${f} does not move forward`);
+  let slowFrames = 0;
+  for (let f = 1; f < e.frame; f++) {
+    if (t.rate[f] >= 0.5) continue;
+    slowFrames += 1;
+    const move = Math.hypot(t.ballX[f] - t.ballX[f - 1], t.ballY[f] - t.ballY[f - 1]);
+    assert.ok(move <= 0.75 * (t.params.speed / 60), `frame ${f}: the ball still moves ${move.toFixed(1)} px per frame in slow motion`);
+  }
+  assert.ok(slowFrames >= 20, "the slow motion is visible");
+  let total = 0;
+  for (let f = 0; f < SCENE_FRAMES; f++) {
+    if (t.rate[f] < 0.95) {
+      total += 1;
+      assert.ok(t.doorW[f] < BRICK.slowGateW + t.params.doorDelta, "slow motion only starts in the closing phase");
+    }
+  }
+  assert.ok(total / 60 <= 2.5, `slow motion lasts ${(total / 60).toFixed(2)} s`);
+});
+
+test("brick: the escape is not knife-edge, a launch angle nudge of 0.004 degrees keeps it", () => {
+  const t = trace();
+  const e = escapeOf(t);
+  for (const d of [-0.004, 0.004]) {
+    const nudged = simulateBrick(HIT_SEED, { ...BRICK.params, angleDeg: BRICK.params.angleDeg + d });
+    assert.ok(nudged.escape, `no escape at ${d}`);
+    assert.ok(Math.abs(nudged.escape.frame - e.frame) <= 6, `escape moved to frame ${nudged.escape.frame}`);
+    assert.equal(nudged.bounces.length, t.bounces.length);
+  }
+});
+
+test("brick: bricks stay a slot away from the exit and neighbouring columns never differ by more than two levels", () => {
+  const t = trace();
+  const span = 1920 / BRICK.slotsV;
+  t.bricks.forEach((b, i) => {
+    if (b.wall !== WALL.left) return;
+    const g = t.params.doorW0 - t.params.doorDelta * i;
+    if (g <= 0) return;
+    const y0 = b.slot * span;
+    const y1 = y0 + span;
+    assert.ok(y1 <= BRICK.doorY - g / 2 - span + 1e-6 || y0 >= BRICK.doorY + g / 2 + span - 1e-6, `brick ${i} sits next to the exit`);
+  });
+  for (const wall of t.profile) for (let s = 1; s < wall.length; s++) assert.ok(Math.abs(wall[s] - wall[s - 1]) <= 2);
+});
+
 test("brick: simulation is fast and the source avoids Math.random, Date, I/O and Buffer", () => {
   const t0 = performance.now();
   simulateBrick(HIT_SEED);
