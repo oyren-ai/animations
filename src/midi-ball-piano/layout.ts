@@ -3,12 +3,15 @@
  * (at least three octaves, at most about five, folding stray notes by octaves) inside the phone safe area.
  */
 
-export const SAFE = { left: 60, right: 930, bottom: 1620 } as const;
+/** Framing standard: the keyboard fills the width with equal 50 px margins (x 50..1030, centred on 540); nothing important within 200 px of the bottom. */
+export const SAFE = { left: 50, right: 1030, bottom: 1720 } as const;
 
-/** Vertical placement of the keys (keyboard bottom stays above the 300 px bottom safe margin). */
-export const KEY_TOP = 1366;
-export const WHITE_HEIGHT = 250;
-export const MIN_WHITE_KEYS = 22; // three octaves plus the closing key
+/** Vertical placement of the keys: the top edge sits at 67 percent of the height, the bottom 345 px above the frame edge. */
+export const KEY_TOP = 1290;
+export const WHITE_HEIGHT = 285;
+/** Top of the fall zone (the stage frame), and where balls are released. */
+export const STAGE_TOP = 320;
+export const MIN_WHITE_KEYS = 29; // four octaves plus the closing key, padded evenly around the piece's range
 export const MAX_WHITE_KEYS = 36;
 
 const BLACK_CLASSES = [1, 3, 6, 8, 10];
@@ -64,7 +67,7 @@ export function planKeyboard(pitches: readonly number[]): KeyboardLayout {
     growUp = !growUp;
   }
   const whiteCount = countWhite(lo, hi);
-  const keyWidth = Math.min(48, (SAFE.right - SAFE.left) / whiteCount);
+  const keyWidth = (SAFE.right - SAFE.left) / whiteCount; // the keyboard always spans the full 980 px
   const width = keyWidth * whiteCount;
   const left = SAFE.left + (SAFE.right - SAFE.left - width) / 2;
   const whiteIndex = (pitch: number) => countWhite(lo, pitch - 1); // white keys strictly below this pitch

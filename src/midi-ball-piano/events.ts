@@ -8,9 +8,9 @@ import type { KeyboardLayout } from "./layout.ts";
  */
 
 /** Seconds a ball falls from the top of the screen to its key: the release time is note-on minus this. */
-export const FALL_SEC = 1.15;
-/** Bottom of a ball when it is released, above the top edge of the canvas. */
-export const START_BOTTOM_Y = -70;
+export const FALL_SEC = 1.6;
+/** Bottom of a ball when it is released: inside the frame, below the title, so the whole fall path is visible. */
+export const START_BOTTOM_Y = 340;
 /** Seconds the ball is in contact with the key, squashing and rebounding. */
 export const CONTACT_SEC = 0.085;
 /** Seconds after note-on until a ball (and its effects) has completely faded. */
@@ -37,6 +37,8 @@ export interface BallEvent {
   impactSpeed: number;
   /** Number of sparks thrown on impact. */
   sparkCount: number;
+  /** Size factor of effects relative to the 39.5 px keys the effects were designed for. */
+  scale: number;
 }
 
 /** Hue (degrees) of a pitch class on a chromatic wheel, rotated so common keys give distinct, tasteful colours. */
@@ -49,7 +51,7 @@ export function buildBallEvents(notes: readonly MidiNote[], layout: KeyboardLayo
     const pitch = layout.fold(note.pitch);
     const rect = layout.keyRect(pitch);
     const vel01 = clamp01(note.velocity / 127);
-    const radius = layout.keyWidth * (0.5 + 0.24 * vel01) * (rect.black ? 0.94 : 1);
+    const radius = layout.keyWidth * (0.36 + 0.08 * vel01) * (rect.black ? 0.95 : 1); // diameter about 0.8 of a key width
     const keyTop = layout.top;
     const gravity = (2 * (keyTop - START_BOTTOM_Y)) / (FALL_SEC * FALL_SEC);
     return {
@@ -67,6 +69,7 @@ export function buildBallEvents(notes: readonly MidiNote[], layout: KeyboardLayo
       gravity,
       impactSpeed: gravity * FALL_SEC,
       sparkCount: 10 + Math.round(16 * vel01),
+      scale: layout.keyWidth / 39.5,
     };
   });
 }
@@ -105,13 +108,13 @@ export function ballPose(event: BallEvent, t: number): BallPose | null {
   const r = event.radius;
   if (age < 0) {
     const speed = event.gravity * (t - event.tRelease);
-    const stretch = 1 + clamp(speed / 6200, 0, 0.5);
+    const stretch = 1 + clamp(speed / 3200, 0, 0.5);
     const bottom = fallBottomY(event, t);
     const sy = stretch, sx = Math.pow(sy, -0.6);
     const y = bottom - r * sy;
-    return { x: event.x, y, sx, sy, age, speed, lift: 0, alpha: smoothstep(-90, 90, y), landed: false };
+    return { x: event.x, y, sx, sy, age, speed, lift: 0, alpha: smoothstep(START_BOTTOM_Y - 12, START_BOTTOM_Y + 70, y), landed: false };
   }
-  const stretch0 = 1 + clamp(event.impactSpeed / 6200, 0, 0.5);
+  const stretch0 = 1 + clamp(event.impactSpeed / 3200, 0, 0.5);
   let sy: number, lift = 0;
   if (age < CONTACT_SEC) {
     const u = age / CONTACT_SEC;
@@ -119,7 +122,7 @@ export function ballPose(event: BallEvent, t: number): BallPose | null {
   } else {
     const flight = age - CONTACT_SEC;
     sy = 1 + 0.22 * Math.exp(-flight / 0.12) * Math.cos(2 * Math.PI * 5.5 * flight);
-    const reboundSpeed = (0.15 + 0.2 * event.vel01) * event.impactSpeed;
+    const reboundSpeed = (0.1 + 0.14 * event.vel01) * event.impactSpeed;
     lift = Math.max(0, reboundSpeed * flight - 0.5 * event.gravity * flight * flight);
   }
   const sx = Math.pow(sy, -0.6);
@@ -135,13 +138,13 @@ export function sparkState(event: BallEvent, k: number, age: number): SparkState
   const life = 0.4 + 0.45 * hash01(event.seed, k * 3 + 1);
   if (age < 0 || age > life) return null;
   const angle = -Math.PI / 2 + (hash01(event.seed, k * 3 + 2) - 0.5) * 2.5;
-  const speed = (260 + 640 * hash01(event.seed, k * 3 + 3)) * (0.65 + 0.6 * event.vel01);
+  const speed = (260 + 640 * hash01(event.seed, k * 3 + 3)) * (0.65 + 0.6 * event.vel01) * event.scale;
   const drag = 2.4, gravity = 1500;
   const decay = (1 - Math.exp(-drag * age)) / drag;
   const x = event.x + Math.cos(angle) * speed * decay;
   const y = event.keyTop - 4 + Math.sin(angle) * speed * decay + gravity * (age - decay) / drag;
   const fade = 1 - age / life;
-  return { x, y, alpha: fade * fade, size: 5 + 9 * hash01(event.seed, k * 3 + 4) * (0.6 + 0.6 * event.vel01) };
+  return { x, y, alpha: fade * fade, size: (5 + 9 * hash01(event.seed, k * 3 + 4) * (0.6 + 0.6 * event.vel01)) * event.scale };
 }
 
 export interface KeyLight {

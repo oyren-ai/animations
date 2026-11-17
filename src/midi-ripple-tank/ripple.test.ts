@@ -6,7 +6,7 @@ import { parseMidi } from "../midi/parse.ts";
 import { buildSceneData, MIDI_TAIL_SEC, pieceTime, type MidiSceneData } from "../midi/timeline.ts";
 import type { MidiNote, ParsedMidi } from "../midi/types.ts";
 import { buildRippleAccents, buildRippleEvents, pitchHue, RIPPLE_LEAD_FRAMES, SOURCE_AREA } from "./events.ts";
-import { fieldGeometry, MAX_SOURCES, RippleField } from "./field.ts";
+import { fieldGeometry, MAX_SOURCES, RippleField, TANK, visibleRadius } from "./field.ts";
 import { RIPPLE_TANK } from "./scene.ts";
 
 const FPS = 60;
@@ -38,7 +38,7 @@ function syntheticScene(notes: MidiNote[]): MidiSceneData {
 }
 
 /** A coarse field (8 px cells) keeps the per-note tests fast; the shipped painter uses 3 px cells. */
-const coarse = () => new RippleField(fieldGeometry(1080, 1920, 8, 64));
+const coarse = () => new RippleField(fieldGeometry(8));
 const energy = (field: RippleField) => field.acc.reduce((sum, value, i) => sum + (i % 5 === 1 ? value : 0), 0);
 
 const CANON = loadScene("canon-in-d.mid");
@@ -81,15 +81,76 @@ test("a note's first visible frame is leadFrames + ceil(t * 60), and nothing of 
   }
 });
 
-test("source points stay inside the phone safe area for all shipped pieces", () => {
+test("framing standard: sources are centred and symmetric, inside the tank, clear of the title and the bottom", () => {
+  assert.equal((TANK.left + TANK.right) / 2, 540, "the tank is centred on x = 540");
+  assert.equal((TANK.top + TANK.bottom) / 2, 940, "the tank is centred on y = 940");
+  assert.ok(TANK.left >= 40 && TANK.left <= 60, "40-60 px side margins");
+  assert.ok(TANK.top >= 270 && 1920 - TANK.bottom >= 300 && 1920 - TANK.bottom < 350, "title above the tank, nothing within 200 px of the bottom, no band over 350 px");
   for (const file of FILES) {
-    for (const event of buildRippleEvents(loadScene(file))) {
-      assert.ok(event.x >= 150 && event.x <= 930, `${file}: x ${event.x}`);
-      assert.ok(event.y >= 380 && event.y <= 1560, `${file}: y ${event.y}`);
+    const events = buildRippleEvents(loadScene(file));
+    for (const event of events) {
+      assert.ok(event.x >= 110 && event.x <= 970, `${file}: x ${event.x}`);
+      assert.ok(event.y >= 380 && event.y <= 1500, `${file}: y ${event.y}`);
+      assert.ok(event.y > 270, "the title zone (y 150-260) is free of sources");
       assert.ok(event.x >= SOURCE_AREA.xMin && event.x <= SOURCE_AREA.xMax && event.y >= SOURCE_AREA.yMin && event.y <= SOURCE_AREA.yMax);
       assert.ok(Number.isFinite(event.hue) && event.hue >= 0 && event.hue < 360);
       assert.ok(event.wavelength > 20 && event.speed > 50 && event.life > 0.5 && event.amplitude > 0);
     }
+    const xs = events.map((e) => e.x), ys = events.map((e) => e.y);
+    const mid = (values: number[]) => (Math.min(...values) + Math.max(...values)) / 2;
+    const mean = (values: number[]) => values.reduce((a, b) => a + b, 0) / values.length;
+    assert.ok(Math.abs(mid(xs) - 540) <= 20, `${file}: source bounding box centre x ${mid(xs).toFixed(0)}`);
+    assert.ok(Math.abs(mid(ys) - 940) <= 40, `${file}: source bounding box centre y ${mid(ys).toFixed(0)}`);
+    assert.ok(Math.abs(mean(xs) - 540) <= 70, `${file}: sources are spread evenly, mean x ${mean(xs).toFixed(0)}`);
+    assert.ok(Math.min(...xs) - TANK.left <= 90 && TANK.right - Math.max(...xs) <= 90, `${file}: both edges of the pitch range reach the walls' neighbourhood`);
+  }
+});
+
+test("rings mostly stay inside the tank and the camera never zooms past 3 percent", () => {
+  for (const file of FILES) {
+    const events = buildRippleEvents(loadScene(file));
+    const reach = events.map((e) => visibleRadius(e)).sort((a, b) => a - b);
+    assert.ok(reach[reach.length >> 1] <= 450, `${file}: median visible radius ${reach[reach.length >> 1].toFixed(0)}`);
+    assert.ok(reach[Math.floor(reach.length * 0.9)] <= 650, `${file}: 90th percentile ${reach[Math.floor(reach.length * 0.9)].toFixed(0)}`);
+    assert.ok(reach[reach.length - 1] <= 950, `${file}: largest ${reach[reach.length - 1].toFixed(0)}`);
+  }
+  const accents = buildRippleAccents(CANON.notes, buildRippleEvents(CANON));
+  let strongest = 0;
+  for (let t = -1; t < CANON.endSec + 3; t += 0.005) strongest = Math.max(strongest, cameraKick(accents, t, 1).zoom);
+  assert.ok(strongest > 0.02 && strongest <= 0.03 + 1e-12, `strongest punch-in ${strongest}`);
+  assert.equal(cameraKick(accents, CANON.endSec + 3, 1).zoom, 0, "kicks return to exactly 1.0");
+});
+
+test("the water is mirror-symmetric about the vertical axis (images in the walls, lattice, light)", () => {
+  const field = new RippleField(fieldGeometry(6));
+  const rgba = new Uint8ClampedArray(field.cols * field.rows * 4);
+  const mirror = (row: number, col: number) => (row * field.cols + (field.cols - 1 - col));
+  // Empty tank: resting colour and dot lattice.
+  field.evaluate([], 0, -1);
+  field.shade(rgba, 0);
+  for (let row = 0; row < field.rows; row += 5) {
+    for (let col = 0; col < field.cols; col++) {
+      for (let c = 0; c < 3; c++) assert.ok(Math.abs(rgba[(row * field.cols + col) * 4 + c] - rgba[mirror(row, col) * 4 + c]) <= 1, `resting water row ${row} col ${col}`);
+    }
+  }
+  // One source exactly on the axis, with its four wall images, at a time when the rings have reached every wall.
+  const scene = syntheticScene([note(0, 60, 100, 1), note(0.0001, 61, 1, 2)]);
+  const [on] = buildRippleEvents(scene);
+  const source = { ...on, x: 540, y: 940 };
+  for (const age of [0.4, 1.1, 1.9]) {
+    const frame = source.startFrame + Math.round(age * FPS);
+    field.evaluate([source], frame, pieceTime(scene, frame));
+    field.shade(rgba, 0);
+    let worst = 0, shadedWorst = 0;
+    for (let row = 0; row < field.rows; row++) {
+      for (let col = 0; col < field.cols; col++) {
+        worst = Math.max(worst, Math.abs(field.acc[(row * field.cols + col) * 5] - field.acc[mirror(row, col) * 5]));
+        for (let c = 0; c < 3; c++) shadedWorst = Math.max(shadedWorst, Math.abs(rgba[(row * field.cols + col) * 4 + c] - rgba[mirror(row, col) * 4 + c]));
+      }
+    }
+    assert.ok(worst < 1e-4, `height field asymmetry ${worst} at age ${age}`);
+    assert.ok(shadedWorst <= 3, `shaded picture asymmetry ${shadedWorst} levels at age ${age}`);
+    assert.ok(energy(field) > 0);
   }
 });
 
@@ -120,7 +181,7 @@ test("x and colour follow pitch, loudness sets height and wavelength, voices get
 test("the field is a stateless function of the frame: any order, same bits", () => {
   const events = buildRippleEvents(CANON);
   const frameOf = (seconds: number) => RIPPLE_LEAD_FRAMES + Math.round(seconds * FPS);
-  const geo = fieldGeometry(1080, 1920, 6, 64);
+  const geo = fieldGeometry(6);
   const snapshot = (field: RippleField, frame: number) => {
     field.evaluate(events, frame, pieceTime(CANON, frame));
     const rgba = new Uint8ClampedArray(field.cols * field.rows * 4);
@@ -144,7 +205,7 @@ test("the field is a stateless function of the frame: any order, same bits", () 
 
 test("field values and shaded pixels are finite across the whole piece", () => {
   const events = buildRippleEvents(CANON);
-  const field = new RippleField(fieldGeometry(1080, 1920, 8, 64));
+  const field = new RippleField(fieldGeometry(8));
   const rgba = new Uint8ClampedArray(field.cols * field.rows * 4);
   let busiest = 0;
   for (let frame = 0; frame < CANON.totalFrames; frame += 37) {
@@ -193,7 +254,7 @@ test("thousands of notes cap the active sources and stay fast", () => {
   const scene = syntheticScene(notes);
   const events = buildRippleEvents(scene);
   assert.equal(events.length, 4000);
-  const field = new RippleField(fieldGeometry(1080, 1920, 6, 64));
+  const field = new RippleField(fieldGeometry(6));
   const frame = RIPPLE_LEAD_FRAMES + 30 * FPS;
   const started = performance.now();
   for (let k = 0; k < 4; k++) field.evaluate(events, frame + k, pieceTime(scene, frame + k));

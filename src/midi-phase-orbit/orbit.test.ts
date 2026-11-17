@@ -1,13 +1,14 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { hash01 } from "../midi/kit.ts";
+import { accentPulse, cameraKick, FRAME_CENTER_X, hash01 } from "../midi/kit.ts";
 import { parseMidi } from "../midi/parse.ts";
 import { barSeconds, buildSceneData, pieceTime, type MidiSceneData } from "../midi/timeline.ts";
 import type { MidiNote, ParsedMidi } from "../midi/types.ts";
 import {
-  angleDiff, arcState, barPulse, buildOrbit, buildRingMap, discRotation, DISC, MAX_ARCS, maxArcExtent, onsetFrame, orbitPeriod,
-  PALETTE, pickVisible, playheadAngle, shockwave, TAU, visibleRange, WINDOW_AHEAD, WINDOW_BEHIND, wrapAngle,
+  angleDiff, arcState, barPulse, breathing, buildOrbit, buildRingMap, cameraZoom, climaxEnvelope, discRotation, DISC, LEGEND, legendLayout,
+  MAX_ARCS, maxArcExtent, onsetFrame, orbitPeriod, PALETTE, pickVisible, playheadAngle, shockwave, strikeGlowDiameter, TAU, TICK_MAX,
+  TIMELINE, visibleRange, WINDOW_AHEAD, WINDOW_BEHIND, wrapAngle,
 } from "./layout.ts";
 import { createOrbitPainter } from "./paint.ts";
 import { DUST_COUNT, dustAt, SPARK_MAX_LIFE, sparkAt, type DustPoint, type SparkPoint } from "./particles.ts";
@@ -142,8 +143,8 @@ test("rings: rank-based and evenly spaced up to 24 pitches, linear in pitch beyo
   for (let i = 1; i < radii.length; i++) near(radii[i] - radii[i - 1], (DISC.rOut - DISC.rIn) / 14, 1e-9);
   for (const ev of PHASE_MODEL.events) near(ev.radius, ranked.radiusOf(ev.pitch), 5, "lane offset is small");
   // low bass sits near the hub, bells on the outer ring
-  assert.ok(PHASE_MODEL.events.find((ev) => ev.pitch === 40)!.radius < 120);
-  assert.ok(PHASE_MODEL.events.find((ev) => ev.pitch === 88)!.radius > 325);
+  assert.ok(PHASE_MODEL.events.find((ev) => ev.pitch === 40)!.radius < DISC.rIn + 20);
+  assert.ok(PHASE_MODEL.events.find((ev) => ev.pitch === 88)!.radius > DISC.rOut - 20);
   const many = Array.from({ length: 30 }, (_, i) => note(i * 0.1, 40 + i * 2));
   const linear = buildRingMap(many);
   assert.equal(linear.ranked, false);
@@ -209,22 +210,76 @@ test("visible window: about one revolution around the playhead, capped for dense
   assert.equal(picked.length, to - from);
 });
 
-test("every arc, spark, glow and ring of all three files stays inside the safe radius", () => {
-  assert.ok(DISC.cx + DISC.safeRadius <= 930 && DISC.cx - DISC.safeRadius >= 60);
-  assert.ok(DISC.cy + DISC.safeRadius <= 1620 && DISC.cy - DISC.safeRadius >= 330);
-  assert.ok(DISC.rMax * (1 + DISC.maxZoom) + DISC.maxShift <= DISC.safeRadius, "zoom and camera shift keep the disc inside");
-  assert.ok(DISC.rOut + 22 < DISC.rMax && DISC.rim + 4 + 22 <= DISC.rMax && DISC.haloOut + 9 <= DISC.rMax);
-  assert.ok(DISC.bloomDiameter / 2 <= DISC.rMax);
-  assert.ok(DISC.rOut + 26 + 26 <= DISC.rMax, "playhead tip and its glow");
+test("framing: a 1000 px disc centred on (540, 930) with equal 40-60 px margins, legend and timeline centred", () => {
+  assert.equal(DISC.cx, 540);
+  assert.equal(DISC.cx, FRAME_CENTER_X);
+  assert.equal(DISC.cy, 930);
+  // the disc including its tick marks is about 1000 px wide, with the same margin on both sides
+  const tickRadius = DISC.rim + 4 + TICK_MAX;
+  const margin = 1080 / 2 - tickRadius;
+  assert.ok(margin >= 40 && margin <= 60, `margin ${margin}`);
+  assert.ok(2 * tickRadius >= 960 && 2 * tickRadius <= 1020, `diameter ${2 * tickRadius}`);
+  assert.ok(DISC.rMax * (1 + DISC.maxZoom) + DISC.maxShift <= DISC.halfWidth, "zoom and camera shift keep the disc inside the frame");
+  // vertical: well below the title (baselines 196 and 240), nothing important within 200 px of the bottom edge
+  const reach = DISC.rMax * (1 + DISC.maxZoom) + DISC.maxShift;
+  assert.ok(DISC.cy - reach > 300 && DISC.cy + reach < 1920 - 200);
+  assert.ok(DISC.rOut + 34 <= DISC.rMax, "playhead tip");
+  assert.ok(tickRadius <= DISC.rMax && DISC.plate <= DISC.rMax && DISC.bloomDiameter / 2 <= DISC.rMax);
+  assert.ok(DISC.haloOut < DISC.haloExtent);
+  assert.ok(strikeGlowDiameter(1) / 2 + DISC.rOut + 6 <= DISC.halfWidth, "even the strike glow of the outer ring stays inside the frame");
   for (let age = 0; age < 2; age += 0.01) for (let k = 0; k < 3; k++) {
     const wave = shockwave(age, k);
-    if (wave) assert.ok(wave.radius + wave.width / 2 <= DISC.rMax - 9);
+    if (wave) assert.ok(wave.radius + wave.width / 2 <= DISC.rMax);
   }
+  // legend: every row is centred on x = 540 and stays inside the central 840 px (x 120..960), wrapping to rows
+  const layouts = [[190, 150, 120, 110], [210, 160, 120, 130, 140], [300, 300, 300, 300], [90]];
+  for (const widths of layouts) {
+    const slots = legendLayout(widths);
+    assert.equal(slots.length, widths.length);
+    const rows = [...new Set(slots.map((slot) => slot.row))];
+    for (const row of rows) {
+      const inRow = slots.filter((slot) => slot.row === row);
+      const left = Math.min(...inRow.map((slot) => slot.x));
+      const right = Math.max(...inRow.map((slot) => slot.x + widths[slot.index]));
+      near((left + right) / 2, 540, 0.5, `legend row ${row} centre`);
+      assert.ok(left >= 120 && right <= 960, `legend row ${row}: ${left}..${right}`);
+      assert.ok(right - left <= LEGEND.maxWidth + 1e-9);
+    }
+  }
+  assert.ok(legendLayout([210, 160, 120, 130, 140]).some((slot) => slot.row === 1), "five long names wrap to a second row");
+  assert.equal((TIMELINE.left + TIMELINE.right) / 2, 540);
+  assert.ok(TIMELINE.left >= 120 && TIMELINE.right <= 960 && TIMELINE.y < 1920 - 200 && TIMELINE.y > LEGEND.y + LEGEND.rowGap + 40);
+});
+
+test("camera budget: breathing at most 1.5 percent, kicks at most 3 percent on top, everything returns to exactly 1.0", () => {
+  assert.ok(breathing(1, 5, 1) <= 0.015 + 1e-12);
+  assert.ok(DISC.maxZoom <= 0.05);
+  const model = PHASE_MODEL;
+  let worst = 0, over3 = 0, frames = 0;
+  for (let frame = -66; frame < 3300; frame++) {
+    const t = frame / 60;
+    const kick = cameraKick(model.accents, t, 1);
+    assert.ok(kick.zoom <= 0.03 + 1e-12 && kick.zoom >= 0);
+    const zoom = cameraZoom(kick.zoom, breathing(barPulse(t, model.period), accentPulse(model.accents, t, 0.13), climaxEnvelope(model.climax, t, 0.75)));
+    worst = Math.max(worst, zoom);
+    if (zoom > 0.03) over3++;
+    frames++;
+    assert.ok(zoom >= 0 && zoom <= DISC.maxZoom + 1e-12);
+  }
+  assert.ok(worst <= 0.045 + 1e-12, `worst zoom ${worst}`);
+  assert.ok(over3 / frames < 0.08, `${over3} of ${frames} frames above 3 percent`);
+  assert.equal(cameraZoom(0, breathing(barPulse(-1, 3), 0, 0)), 0, "scale is exactly 1 before the music starts");
+  assert.equal(cameraZoom(cameraKick(model.accents, 56, 1).zoom, breathing(barPulse(56, 3) * 0, accentPulse(model.accents, 56, 0.13), climaxEnvelope(model.climax, 56, 0.75))), 0, "and long after the last chord");
+});
+
+test("every arc, spark, glow and ring of all three files stays inside the frame budget", () => {
   const wide = synthetic(Array.from({ length: 300 }, (_, i) => note(i * 0.2, 21 + (i * 7) % 88, 1 + (i % 6), 0.3, 1 + (i * 13) % 127)));
   const point: SparkPoint = { x: 0, y: 0, alpha: 0, size: 0 };
   for (const [name, scene] of [...FILES.map((file) => [file, loadScene(file)] as const), ["wide", wide] as const]) {
     const model = buildOrbit(scene);
-    assert.ok(maxArcExtent(model.events) <= DISC.rMax, `${name}: arcs reach ${maxArcExtent(model.events)}`);
+    const extent = maxArcExtent(model.events);
+    assert.ok(extent <= DISC.rMax, `${name}: arcs reach ${extent}`);
+    assert.ok(extent * (1 + DISC.maxZoom) + DISC.maxShift <= DISC.halfWidth, `${name}: arcs stay inside the frame at the largest zoom and shift`);
     for (const ring of model.ringMap.guideRadii) assert.ok(ring <= DISC.rOut && ring >= DISC.rIn);
     let alive = 0, farthest = 0;
     for (const ev of model.events) {
@@ -234,19 +289,40 @@ test("every arc, spark, glow and ring of all three files stays inside the safe r
           alive++;
           const reach = Math.hypot(point.x, point.y) + point.size / 2;
           farthest = Math.max(farthest, reach);
-          assert.ok(reach <= DISC.rMax, `${name}: spark of note ${ev.index} reaches ${reach.toFixed(1)}`);
+          assert.ok(reach <= DISC.halfWidth, `${name}: spark of note ${ev.index} reaches ${reach.toFixed(1)}`);
           assert.ok(point.alpha >= 0 && point.alpha <= 1 && Number.isFinite(point.x) && Number.isFinite(point.y));
         }
       }
     }
     assert.ok(alive > 100, `${name}: sparks exist`);
-    assert.ok(farthest > 250);
+    assert.ok(farthest > 330, `${name}: sparks travel well past the rings (${farthest})`);
   }
   const dust: DustPoint = { x: 0, y: 0, alpha: 0, size: 0, hue: 0, depth: 0 };
   for (let i = 0; i < DUST_COUNT + 12; i++) for (const t of [-1, 0, 20, 80]) {
     dustAt(i, t, 1080, 1920, dust);
     assert.ok(dust.x >= -40 && dust.x <= 1120 && dust.y >= -40 && dust.y <= 1960 && dust.alpha >= 0 && dust.alpha <= 1);
   }
+});
+
+test("timeline markers: voice entrances, the 45 s unison and the climax", () => {
+  const markers = PHASE_MODEL.markers;
+  assert.ok(markers.every((m, i) => i === 0 || m.timeSec >= markers[i - 1].timeSec));
+  const voices = markers.filter((m) => m.kind === "voice");
+  assert.equal(voices.length, 4);
+  near(voices[0].timeSec, 0, 1e-9);
+  near(voices[1].timeSec, 6, 0.01);
+  assert.ok(voices[2].timeSec > 14.9 && voices[2].timeSec < 15.5);
+  near(voices[3].timeSec, 18, 0.01);
+  const align = markers.filter((m) => m.kind === "align");
+  assert.equal(align.length, 1, "only the four-voice unison is a landmark");
+  near(align[0].timeSec, 45, 0.02);
+  const canon = buildOrbit(loadScene("canon-in-d.mid")).markers.filter((m) => m.kind === "align");
+  assert.ok(canon.length >= 1 && canon.length <= 3);
+  const climax = markers.filter((m) => m.kind === "climax");
+  assert.equal(climax.length, 1);
+  near(climax[0].timeSec, 48, 0.01);
+  assert.deepEqual(buildOrbit(synthetic([])).markers, []);
+  assert.equal(buildOrbit(synthetic([note(1, 60)])).markers.length, 1);
 });
 
 test("sparks fly outward from the strike point and are pure functions of (note, index, age)", () => {

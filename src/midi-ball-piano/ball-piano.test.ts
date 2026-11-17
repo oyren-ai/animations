@@ -7,7 +7,7 @@ import type { MidiNote } from "../midi/types.ts";
 import {
   BALL_LIFE_SEC, ballPose, buildBallEvents, FALL_SEC, fallBottomY, keyLight, sparkState, START_BOTTOM_Y, visibleRange,
 } from "./events.ts";
-import { isBlackKey, KEY_TOP, planKeyboard, SAFE, WHITE_HEIGHT } from "./layout.ts";
+import { isBlackKey, KEY_TOP, planKeyboard, SAFE, STAGE_TOP, WHITE_HEIGHT } from "./layout.ts";
 import { createBallPianoPainter } from "./paint.ts";
 import { BALL_PIANO } from "./scene.ts";
 
@@ -46,15 +46,20 @@ function mockContext() {
   return { ctx, calls };
 }
 
-test("keyboard covers every built-in piece in 3-5 octaves inside the phone safe area", () => {
+test("keyboard is centred on x = 540, spans 4-5 octaves with equal margins and stays 200 px above the bottom edge", () => {
   assert.ok(FILES.length >= 3);
   for (const name of FILES) {
     const pitches = parsedFile(name).notes.map((n) => n.pitch);
     const layout = planKeyboard(pitches);
     assert.ok(!isBlackKey(layout.lo) && !isBlackKey(layout.hi), `${name}: ends are white keys`);
-    assert.ok(layout.whiteCount >= 22 && layout.whiteCount <= 36, `${name}: ${layout.whiteCount} white keys`);
-    assert.ok(layout.left >= SAFE.left - 1e-6 && layout.right <= SAFE.right + 1e-6, `${name}: x ${layout.left}..${layout.right}`);
-    assert.ok(KEY_TOP + WHITE_HEIGHT <= SAFE.bottom, "keyboard bottom is above the 300 px bottom margin");
+    assert.ok(layout.whiteCount >= 29 && layout.whiteCount <= 36, `${name}: ${layout.whiteCount} white keys`);
+    assert.ok(Math.abs(layout.left - 50) < 1e-6 && Math.abs(layout.right - 1030) < 1e-6, `${name}: x ${layout.left}..${layout.right}`);
+    assert.ok(Math.abs((layout.left + layout.right) / 2 - 540) < 1e-6, "centred on x = 540");
+    assert.ok(Math.abs(layout.left - (1080 - layout.right)) < 1e-6, "equal left and right margins");
+    assert.ok(KEY_TOP + WHITE_HEIGHT <= SAFE.bottom, "nothing within 200 px of the bottom edge");
+    assert.ok(KEY_TOP / 1920 > 0.62 && KEY_TOP / 1920 < 0.7, "keyboard top at about two thirds of the height");
+    assert.ok(Math.abs((STAGE_TOP + KEY_TOP + WHITE_HEIGHT) / 2 - 940) <= 40, "the art (stage plus keyboard) is centred near y = 940");
+    assert.ok(1920 - (KEY_TOP + WHITE_HEIGHT) <= 350 && STAGE_TOP - 270 <= 60, "no empty band taller than about 350 px above or below the art");
     for (const pitch of pitches) {
       const folded = layout.fold(pitch);
       assert.ok(folded >= layout.lo && folded <= layout.hi && (folded - pitch) % 12 === 0);
@@ -63,12 +68,12 @@ test("keyboard covers every built-in piece in 3-5 octaves inside the phone safe 
     }
   }
   const ode = planKeyboard(parsedFile("ode-to-joy.mid").notes.map((n) => n.pitch));
-  assert.deepEqual([ode.lo, ode.hi, ode.whiteCount], [45, 81, 22]); // A2..A5: exactly three octaves
+  assert.deepEqual([ode.lo, ode.hi, ode.whiteCount], [40, 88, 29]); // E2..E6: four octaves around the piece's A2..A5
 });
 
 test("black and white keys do not overlap wrongly and wide files are folded into a 36-key window", () => {
   const wide = planKeyboard([21, 30, 60, 66, 100, 108]);
-  assert.ok(wide.whiteCount <= 36);
+  assert.ok(wide.whiteCount <= 36 && wide.whiteCount >= 29);
   assert.ok(wide.fold(21) >= wide.lo && wide.fold(108) <= wide.hi);
   const layout = planKeyboard([60, 72]);
   for (let pitch = layout.lo; pitch <= layout.hi; pitch++) {
@@ -76,7 +81,7 @@ test("black and white keys do not overlap wrongly and wide files are folded into
     assert.equal(rect.black, isBlackKey(pitch));
     assert.ok(rect.width > 0 && rect.height > 0);
   }
-  assert.equal(planKeyboard([]).whiteCount >= 22, true);
+  assert.equal(planKeyboard([]).whiteCount >= 29, true);
 });
 
 test("one ball per note; it lands on the key exactly at note-on, released FALL_SEC earlier", () => {
@@ -90,7 +95,7 @@ test("one ball per note; it lands on the key exactly at note-on, released FALL_S
       assert.ok(Math.abs(fallBottomY(event, event.tOn) - event.keyTop) < 1e-6, "bottom of the ball reaches the key top at note-on");
       assert.ok(Math.abs(fallBottomY(event, event.tRelease) - START_BOTTOM_Y) < 1e-6);
       assert.ok(event.x >= layout.left && event.x <= layout.right);
-      assert.ok(event.radius > 5 && event.radius < layout.keyWidth);
+      assert.ok(event.radius > 5 && Math.abs(event.radius * 2 / layout.keyWidth - 0.8) < 0.2, "ball diameter is about 0.8 of a key width");
     }
   }
 });

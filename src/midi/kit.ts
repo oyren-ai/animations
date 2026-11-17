@@ -1,4 +1,4 @@
-import { drawReelText, type ReelBox } from "../shared/reelUtils.ts";
+import type { ReelBox } from "../shared/reelUtils.ts";
 import type { MidiSceneData } from "./timeline.ts";
 import type { MidiNote } from "./types.ts";
 
@@ -153,11 +153,12 @@ export function cameraKick(accents: readonly Accent[], t: number, strength = 1):
     dy += wobble * Math.sin(age * 61 + phase * 1.7) * 12;
     rotation += wobble * Math.cos(age * 37 + phase * 0.6) * 0.0045;
   }
-  return { zoom: zoom * strength, dx: dx * strength, dy: dy * strength, rotation: rotation * strength };
+  // Framing standard: kicks never exceed 3 percent zoom (they decay back to exactly 1.0 within a second).
+  return { zoom: Math.min(0.03, zoom * strength), dx: dx * strength, dy: dy * strength, rotation: rotation * strength };
 }
 
-/** Opacity of a black cover that fades the picture out over the last `seconds` of the video. */
-export function endFade(frame: number, totalFrames: number, fps: number, seconds = 0.7): number {
+/** Opacity of a black cover that fades the picture out over the last `seconds` (default 0.3 s) of the video. */
+export function endFade(frame: number, totalFrames: number, fps: number, seconds = 0.3): number {
   return smoothstep(totalFrames - seconds * fps, totalFrames - 1, frame);
 }
 
@@ -199,21 +200,55 @@ export function drawGlow(ctx: CanvasRenderingContext2D, x: number, y: number, di
   ctx.globalAlpha = 1; // never leak this sprite's opacity into the next fill or stroke
 }
 
+/** Framing standard: everything is centred on x = 540 of 1080; text stays inside the central 840 px. */
+export const FRAME_CENTER_X = 540;
+export const TEXT_LEFT = 120;
+export const TEXT_RIGHT = 960;
+
 /**
- * The small, unobtrusive title shared by the MIDI scenes: the piece name and a "MIDI - <scene>" line,
- * top left inside the reel safe area. Fades in over the first 0.8 s of video time.
+ * Draws one line of text centred on `centerX` (default 540), shrinking the font until it fits `maxWidth`
+ * (at most the central 840 px), and returns its box. Throws if the box would leave the central 840 px.
+ */
+export function drawCenteredText(
+  ctx: CanvasRenderingContext2D, text: string, y: number,
+  options: { size?: number; weight?: number; color?: string; maxWidth?: number; letterSpacing?: number; centerX?: number } = {},
+): ReelBox {
+  const { size = 24, weight = 600, color = "#f4f5f7", maxWidth = TEXT_RIGHT - TEXT_LEFT, letterSpacing = 0, centerX = FRAME_CENTER_X } = options;
+  const spaced = ctx as CanvasRenderingContext2D & { letterSpacing?: string };
+  spaced.letterSpacing = letterSpacing + "px";
+  ctx.fillStyle = color;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  let fontSize = size;
+  let width: number;
+  for (;;) {
+    ctx.font = `${weight} ${fontSize}px "Inter Variable", Inter, sans-serif`;
+    width = ctx.measureText(text).width;
+    if (width <= maxWidth + letterSpacing || fontSize <= 10) break;
+    fontSize -= 0.5;
+  }
+  // Canvas letter spacing adds a trailing gap after the last glyph; shift by half of it so the visible text stays centred.
+  const x = centerX + letterSpacing / 2;
+  ctx.fillText(text, x, y);
+  spaced.letterSpacing = "0px";
+  const visible = width - letterSpacing;
+  const box: ReelBox = { label: text, left: centerX - visible / 2, right: centerX + visible / 2, top: y - fontSize * 0.78, bottom: y + fontSize * 0.22 };
+  if (box.left < TEXT_LEFT - 0.5 || box.right > TEXT_RIGHT + 0.5) throw new RangeError(`Text leaves the central 840 px: ${JSON.stringify(box)}`);
+  return box;
+}
+
+/**
+ * The small, unobtrusive title shared by the MIDI scenes: the piece name and a "MIDI - <scene>" line, centred
+ * on x = 540 near the top (baselines y = 196 and 240, above the art). Fades in over the first 0.8 s.
  */
 export function drawSceneTitle(ctx: CanvasRenderingContext2D, scene: MidiSceneData, label: string, frame: number): ReelBox[] {
   const boxes: ReelBox[] = [];
   const appear = smoothstep(0.1, 0.9, frame / scene.fps);
   ctx.save();
-  ctx.globalAlpha = 0.9 * appear;
-  drawReelText(ctx, boxes, scene.title, 66, 276, { size: 40, weight: 700, color: "#eef2ff", maxWidth: 700 });
-  ctx.globalAlpha = 0.62 * appear;
-  const letterSpaced = ctx as CanvasRenderingContext2D & { letterSpacing?: string };
-  letterSpaced.letterSpacing = "4px";
-  drawReelText(ctx, boxes, "MIDI  \u00b7  " + label.toUpperCase(), 68, 318, { size: 22, weight: 600, color: "#a9b4d6", maxWidth: 700 });
-  letterSpaced.letterSpacing = "0px";
+  ctx.globalAlpha = 0.92 * appear;
+  boxes.push(drawCenteredText(ctx, scene.title, 196, { size: 46, weight: 700, color: "#eef2ff", maxWidth: 780 }));
+  ctx.globalAlpha = 0.66 * appear;
+  boxes.push(drawCenteredText(ctx, "MIDI  \u00b7  " + label.toUpperCase(), 240, { size: 22, weight: 600, color: "#a9b4d6", maxWidth: 780, letterSpacing: 4 }));
   ctx.restore();
   return boxes;
 }

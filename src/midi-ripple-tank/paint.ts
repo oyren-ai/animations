@@ -4,12 +4,11 @@ import {
 } from "../midi/kit.ts";
 import { pieceTime, type MidiSceneData } from "../midi/timeline.ts";
 import { buildRippleAccents, buildRippleEvents, type RippleEvent } from "./events.ts";
-import { fieldGeometry, RippleField } from "./field.ts";
+import { fieldGeometry, RippleField, TANK } from "./field.ts";
 
 const BACKGROUND = "#05060d";
-/** Canvas px per field cell (3 = 360x640 over the picture, plus the overdraw margin). */
+/** Canvas px per field cell (3 px: the 984 x 1320 tank is about 330 x 440 cells). */
 const GRID_SCALE = 3;
-const GRID_MARGIN = 64;
 /** The longest any overlay (splash flash, sparks, buoy fade-out) outlives the note-on. */
 const OVERLAY_SEC = 4.5;
 
@@ -101,11 +100,41 @@ function drawBuoy(ctx: CanvasRenderingContext2D, ev: RippleEvent, age: number) {
   ctx.restore();
 }
 
+/** Rounded-rectangle path of the tank, optionally grown (negative inset) or shrunk (positive) by `inset` px. */
+function tankPath(ctx: CanvasRenderingContext2D, inset = 0) {
+  const l = TANK.left + inset, r = TANK.right - inset, t = TANK.top + inset, b = TANK.bottom - inset;
+  const radius = Math.max(0, TANK.radius - inset);
+  ctx.beginPath();
+  ctx.moveTo(l + radius, t);
+  ctx.arcTo(r, t, r, b, radius);
+  ctx.arcTo(r, b, l, b, radius);
+  ctx.arcTo(l, b, l, t, radius);
+  ctx.arcTo(l, t, r, t, radius);
+  ctx.closePath();
+}
+
+/** The glass rim takes the colour of the notes that just landed (recency and loudness weighted) and glows a little more with them. */
+function rimLight(events: readonly RippleEvent[], from: number, frame: number, t: number) {
+  let sum = 0, wr = 0, wg = 0, wb = 0;
+  for (let i = from; i < events.length; i++) {
+    const ev = events[i];
+    if (frame < ev.startFrame) break;
+    const age = t - ev.timeSec;
+    if (age > 2) continue;
+    const w = (0.35 + ev.vel) * (0.7 + 0.6 * ev.emphasis) * Math.exp(-age / 0.45);
+    sum += w; wr += w * ev.rgb[0]; wg += w * ev.rgb[1]; wb += w * ev.rgb[2];
+  }
+  const base = 0.3; // a cool blue when nothing has happened for a while
+  const norm = 1 / (sum + base);
+  const c = (v: number, rest: number) => Math.round(255 * (v + rest * base) * norm);
+  return { r: c(wr, 0.42), g: c(wg, 0.62), b: c(wb, 1), strength: 0.3 + 0.7 * (1 - Math.exp(-sum * 0.7)) };
+}
+
 /** The scene's painter: a pure function of the frame number (no state carried between frames). */
 export function createRipplePainter(scene: MidiSceneData, label: string): MidiPainter {
   const events = buildRippleEvents(scene);
   const accents = buildRippleAccents(scene.notes, events);
-  const geo = fieldGeometry(scene.width, scene.height, GRID_SCALE, GRID_MARGIN);
+  const geo = fieldGeometry(GRID_SCALE);
   const field = new RippleField(geo);
   let surface: Surface | undefined;
   let bloom: Surface | undefined;
@@ -129,29 +158,33 @@ export function createRipplePainter(scene: MidiSceneData, label: string): MidiPa
     ctx.fillStyle = BACKGROUND;
     ctx.fillRect(0, 0, width, height);
 
-    // Camera: punch-in and shake around the screen centre on loud chords. The water overdraws the canvas, so no edge shows.
-    const kick = cameraKick(accents, t, 1.3);
+    // Camera: punch-in (capped at 3 percent by the kit) and shake around the screen centre on loud chords, back to 1.0 after.
+    const kick = cameraKick(accents, t, 1);
     const zoom = 1 + kick.zoom;
     ctx.translate(width / 2 + kick.dx, height / 2 + kick.dy);
     ctx.rotate(kick.rotation);
     ctx.scale(zoom, zoom);
     ctx.translate(-width / 2, -height / 2);
 
-    const waterW = geo.cols * geo.scale, waterH = geo.rows * geo.scale;
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "high";
-    ctx.drawImage(surface.canvas, geo.originX, geo.originY, waterW, waterH);
-    ctx.globalCompositeOperation = "lighter";
-    ctx.globalAlpha = 0.24;
-    ctx.drawImage(bloom.canvas, geo.originX, geo.originY, waterW, waterH);
-
-    // Splashes, droplets and buoys of the notes that are still alive (events are in onset order).
-    ctx.globalCompositeOperation = "lighter";
     let lo = 0, hi = events.length;
     while (lo < hi) {
       const mid = (lo + hi) >> 1;
       if (events[mid].timeSec < t - OVERLAY_SEC) lo = mid + 1; else hi = mid;
     }
+    const rim = rimLight(events, lo, frame, t);
+    const rimColor = (alpha: number) => `rgba(${rim.r},${rim.g},${rim.b},${(alpha * rim.strength).toFixed(3)})`;
+
+    // Everything in the water stays inside the glass: the field, the bloom, splashes, droplets and buoys are clipped to the tank.
+    ctx.save();
+    tankPath(ctx);
+    ctx.clip();
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    const waterW = geo.cols * geo.scale, waterH = geo.rows * geo.scale;
+    ctx.drawImage(surface.canvas, geo.originX, geo.originY, waterW, waterH);
+    ctx.globalCompositeOperation = "lighter";
+    ctx.globalAlpha = 0.24;
+    ctx.drawImage(bloom.canvas, geo.originX, geo.originY, waterW, waterH);
     for (let i = lo; i < events.length; i++) {
       const ev = events[i];
       if (frame < ev.startFrame) break;
@@ -161,21 +194,30 @@ export function createRipplePainter(scene: MidiSceneData, label: string): MidiPa
       ctx.globalAlpha = 1;
       drawBuoy(ctx, ev, age);
     }
+    // Light creeping in along the inside of the glass (more when waves are hitting the walls).
+    ctx.globalAlpha = 1;
+    tankPath(ctx);
+    ctx.lineWidth = 90; ctx.strokeStyle = rimColor(0.05); ctx.stroke();
+    ctx.lineWidth = 34; ctx.strokeStyle = rimColor(0.08); ctx.stroke();
     ctx.restore();
 
-    // Everything below is screen-fixed: a soft dark top for the title, vignette, title, end fade.
+    // The glass rim itself: a thin bright line with a soft glow, symmetric about the vertical axis.
+    ctx.globalCompositeOperation = "lighter";
+    ctx.globalAlpha = 1;
+    tankPath(ctx);
+    ctx.lineWidth = 26; ctx.strokeStyle = rimColor(0.05); ctx.stroke();
+    ctx.lineWidth = 12; ctx.strokeStyle = rimColor(0.09); ctx.stroke();
+    ctx.lineWidth = 4.5; ctx.strokeStyle = rimColor(0.3); ctx.stroke();
+    ctx.lineWidth = 1.8; ctx.strokeStyle = `rgba(${Math.round((rim.r + 255 * 2) / 3)},${Math.round((rim.g + 255 * 2) / 3)},${Math.round((rim.b + 255 * 2) / 3)},${(0.35 + 0.4 * rim.strength).toFixed(3)})`; ctx.stroke();
+    ctx.restore();
+
+    // Everything below is screen-fixed: vignette, title (centred by the kit, above the tank), end fade.
     ctx.save();
     ctx.globalCompositeOperation = "source-over";
-    const top = ctx.createLinearGradient(0, 0, 0, 520);
-    top.addColorStop(0, "rgba(5,6,13,0.8)");
-    top.addColorStop(0.55, "rgba(5,6,13,0.55)");
-    top.addColorStop(1, "rgba(5,6,13,0)");
     ctx.globalAlpha = 1;
-    ctx.fillStyle = top;
-    ctx.fillRect(0, 0, width, 520);
-    drawVignette(ctx, width, height, 0.55);
+    drawVignette(ctx, width, height, 0.5);
     drawSceneTitle(ctx, scene, label, frame);
-    const fade = endFade(frame, scene.totalFrames, scene.fps, 0.7);
+    const fade = endFade(frame, scene.totalFrames, scene.fps);
     if (fade > 0) {
       ctx.globalAlpha = fade;
       ctx.fillStyle = BACKGROUND;

@@ -4,8 +4,9 @@ import {
 } from "../midi/kit.ts";
 import { pieceTime, type MidiSceneData } from "../midi/timeline.ts";
 import {
-  arcState, barPulse, buildOrbit, climaxEnvelope, DISC, discRotation, firstEventAfter, firstEventAtOrAfter, HALF_PI, pickVisible,
-  playheadAngle, polarX, polarY, shockwave, strikeGlowDiameter, TAU, type ArcState, type OrbitEvent, type OrbitModel,
+  arcState, barPulse, breathing, BUMP, buildOrbit, cameraZoom, climaxEnvelope, DISC, discRotation, firstEventAfter, firstEventAtOrAfter,
+  FLARE_MAX, GLOW_HALF, HALF_PI, LEGEND, legendLayout, pickVisible, playheadAngle, polarX, polarY, POP_MAX, shockwave, strikeGlowDiameter,
+  TAU, TICK_MAX, TIMELINE, type ArcState, type OrbitEvent, type OrbitModel,
 } from "./layout.ts";
 import { DUST_COUNT, dustAt, SPARK_MAX_LIFE, sparkAt, type DustPoint, type SparkPoint } from "./particles.ts";
 
@@ -55,14 +56,14 @@ function makeBackground(width: number, height: number): HTMLCanvasElement {
 
 /** The record itself: a dark, slightly bluish disc with a darker label area, blitted under the rings. */
 function makePlate(): { canvas: HTMLCanvasElement; radius: number } {
-  const radius = DISC.rim + 26;
+  const radius = DISC.plate;
   const [canvas, g] = makeCanvas(radius * 2, radius * 2);
   const gradient = g.createRadialGradient(radius, radius, 0, radius, radius, radius);
   const at = (r: number) => clamp01(r / radius);
   gradient.addColorStop(0, "rgba(5, 7, 20, 0.7)");
   gradient.addColorStop(at(DISC.rHub), "rgba(8, 10, 28, 0.62)");
-  gradient.addColorStop(at(DISC.rIn - 24), "rgba(12, 15, 40, 0.5)");
-  gradient.addColorStop(at(DISC.rOut + 10), "rgba(18, 22, 56, 0.5)");
+  gradient.addColorStop(at(DISC.rIn - 32), "rgba(12, 15, 40, 0.5)");
+  gradient.addColorStop(at(DISC.rOut + 14), "rgba(18, 22, 56, 0.5)");
   gradient.addColorStop(at(DISC.rim + 4), "rgba(30, 34, 82, 0.46)");
   gradient.addColorStop(1, "rgba(30, 34, 82, 0)");
   g.fillStyle = gradient;
@@ -85,7 +86,7 @@ function arcPath(ctx: CanvasRenderingContext2D, radius: number, from: number, to
 function drawGuides(ctx: CanvasRenderingContext2D, model: OrbitModel, frame: number, lead: number, appear: number, bar: number) {
   const radii = model.ringMap.guideRadii;
   ctx.lineCap = "butt";
-  ctx.lineWidth = 1;
+  ctx.lineWidth = 1.3;
   ctx.strokeStyle = hsla(COOL_HUE, 0.5, 0.7, 0.04 * appear);
   ctx.beginPath();
   for (let i = 0; i + 1 < radii.length; i++) {
@@ -94,7 +95,7 @@ function drawGuides(ctx: CanvasRenderingContext2D, model: OrbitModel, frame: num
     ctx.arc(0, 0, r, 0, TAU);
   }
   ctx.stroke();
-  ctx.lineWidth = 1.4;
+  ctx.lineWidth = 1.9;
   ctx.strokeStyle = hsla(COOL_HUE, 0.6, 0.76, 0.13 * appear);
   radii.forEach((r, i) => {
     const sweep = TAU * easeOutCubic((frame - i * 1.4) / (0.62 * lead));
@@ -103,35 +104,39 @@ function drawGuides(ctx: CanvasRenderingContext2D, model: OrbitModel, frame: num
     ctx.stroke();
   });
   const rimSweep = TAU * easeOutCubic((frame - 4) / (0.7 * lead));
-  ctx.lineWidth = 1.6;
-  ctx.strokeStyle = hsla(COOL_HUE, 0.6, 0.78, 0.26 * appear);
+  ctx.lineWidth = 13;
+  ctx.strokeStyle = hsla(COOL_HUE, 0.7, 0.7, 0.07 * appear);
+  arcPath(ctx, DISC.rim, -HALF_PI, -HALF_PI + rimSweep);
+  ctx.stroke();
+  ctx.lineWidth = 3.6;
+  ctx.strokeStyle = hsla(COOL_HUE, 0.6, 0.82, 0.62 * appear);
   arcPath(ctx, DISC.rim, -HALF_PI, -HALF_PI + rimSweep);
   ctx.stroke();
   // twelve ticks: one per eighth of a 6/4 bar, longer at the half-bar, longest at the bar line
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = hsla(COOL_HUE, 0.5, 0.8, 0.3 * appear);
+  ctx.lineWidth = 2.6;
+  ctx.strokeStyle = hsla(COOL_HUE, 0.5, 0.8, 0.42 * appear);
   ctx.beginPath();
   for (let k = 1; k < 12; k++) {
     const a = k * TAU / 12;
-    const len = k === 6 ? 16 : k % 3 === 0 ? 12 : 8;
+    const len = k === 6 ? 13 : k % 3 === 0 ? 10 : 7;
     ctx.moveTo(polarX(DISC.rim + 4, a), polarY(DISC.rim + 4, a));
     ctx.lineTo(polarX(DISC.rim + 4 + len, a), polarY(DISC.rim + 4 + len, a));
   }
   ctx.stroke();
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 4;
   ctx.lineCap = "round";
   ctx.strokeStyle = hsla(COOL_HUE, 0.7, 0.86, (0.34 + 0.66 * bar) * appear);
   ctx.beginPath();
   ctx.moveTo(0, -(DISC.rim + 4));
-  ctx.lineTo(0, -(DISC.rim + 4 + 22));
+  ctx.lineTo(0, -(DISC.rim + 4 + TICK_MAX));
   ctx.stroke();
 }
 
 /** One note as a neon tube: wide faint glow, body, bright core, swept (lit) part and the white-hot flash. */
 function drawArc(ctx: CanvasRenderingContext2D, ev: OrbitEvent, st: ArcState, flare: number) {
   const velF = 0.6 + 0.4 * ev.vel;
-  const thick = ev.thickness * clamp(1 + 0.55 * st.spring, 0.72, 1.6) * (1 + 0.22 * flare);
-  const radius = ev.radius + 3 * Math.max(0, st.spring);
+  const thick = ev.thickness * clamp(1 + 0.55 * st.spring, 0.72, POP_MAX) * (1 + (FLARE_MAX - 1) * flare);
+  const radius = ev.radius + BUMP * Math.max(0, st.spring);
   const half = thick / 2;
   const start = ev.angle - HALF_PI;
   const lengthPx = ev.length * ev.radius * (1 - 0.1 * st.spring);
@@ -144,7 +149,7 @@ function drawArc(ctx: CanvasRenderingContext2D, ev: OrbitEvent, st: ArcState, fl
   ctx.lineCap = "round";
 
   // wide soft glow
-  ctx.lineWidth = thick * 2.5;
+  ctx.lineWidth = thick * 2 * GLOW_HALF;
   ctx.strokeStyle = hsla(hue, sat, light, 0.12 * alpha + 0.1 * st.flash * velF);
   arcPath(ctx, radius, a0, a1);
   ctx.stroke();
@@ -200,7 +205,7 @@ function drawThread(ctx: CanvasRenderingContext2D, ev: OrbitEvent, next: OrbitEv
   };
   const p = [0, 0];
   ctx.lineCap = "round";
-  ctx.lineWidth = 2.2;
+  ctx.lineWidth = 3;
   for (let pass = 0; pass < 2; pass++) {
     const end = pass === 0 ? 1 : lit;
     if (end <= 0) continue;
@@ -226,10 +231,10 @@ function drawStrike(ctx: CanvasRenderingContext2D, ev: OrbitEvent, st: ArcState)
   glow(ctx, x, y, strikeGlowDiameter(ev.vel), ev.hue, 0.85 * fast * (0.6 + 0.4 * ev.vel));
   const u = st.age / 0.42;
   if (u < 1) {
-    ctx.lineWidth = 2.2 * (1 - u) + 0.6;
+    ctx.lineWidth = 3 * (1 - u) + 0.8;
     ctx.strokeStyle = hsla(ev.hue, 0.8, 0.75, 0.55 * ev.vel * (1 - u) ** 2);
     ctx.beginPath();
-    ctx.arc(x, y, 7 + 40 * easeOutCubic(u), 0, TAU);
+    ctx.arc(x, y, 9 + 54 * easeOutCubic(u), 0, TAU);
     ctx.stroke();
   }
 }
@@ -249,7 +254,7 @@ function drawSparks(ctx: CanvasRenderingContext2D, model: OrbitModel, t: number,
       if (age < 0.4) { // short streak along the flight direction while the spark is fast
         const hasPrev = sparkAt(ev, j, Math.max(0, age - 0.035), prev);
         if (hasPrev) {
-          ctx.lineWidth = Math.max(1.6, spark.size * 0.36);
+          ctx.lineWidth = Math.max(2.2, spark.size * 0.36);
           ctx.strokeStyle = hsla(ev.hue, 0.8, 0.82, 0.6 * spark.alpha);
           ctx.beginPath();
           ctx.moveTo(prev.x, prev.y);
@@ -263,7 +268,7 @@ function drawSparks(ctx: CanvasRenderingContext2D, model: OrbitModel, t: number,
 }
 
 function drawPlayhead(ctx: CanvasRenderingContext2D, angle: number, appear: number, hit: number) {
-  const tip = DISC.rOut + 26;
+  const tip = DISC.rOut + 34;
   const a = angle - HALF_PI;
   ctx.save();
   ctx.rotate(a);
@@ -296,28 +301,28 @@ function drawPlayhead(ctx: CanvasRenderingContext2D, angle: number, appear: numb
     ctx.lineTo(tip, 0);
     ctx.stroke();
   };
-  line(18, 0.07 + 0.05 * hit, 0.7);
-  line(7, 0.3 + 0.12 * hit, 0.8);
-  line(2.6, 0.95, 0.96);
-  glow(ctx, tip, 0, 52, COOL_HUE, 0.8 * appear);
+  line(24, 0.07 + 0.05 * hit, 0.7);
+  line(9.5, 0.3 + 0.12 * hit, 0.8);
+  line(3.6, 0.95, 0.96);
+  glow(ctx, tip, 0, 72, COOL_HUE, 0.8 * appear);
   ctx.restore();
 }
 
 /** Core glow at the hub, bar and unison pulses. */
 function drawHub(ctx: CanvasRenderingContext2D, model: OrbitModel, t: number, appear: number, bar: number, accent: number, bloom: number) {
   const breathe = 0.5 + 0.5 * Math.sin(t * 1.3);
-  glow(ctx, 0, 0, 230 + 60 * bar + 70 * Math.min(1, accent) + 70 * bloom, 246, (0.4 + 0.12 * breathe + 0.2 * bar - 0.1 * bloom) * appear);
-  glow(ctx, 0, 0, 108 + 30 * bar + 30 * bloom, 214, (0.6 + 0.25 * bar - 0.15 * bloom) * appear, 0.3);
+  glow(ctx, 0, 0, 310 + 80 * bar + 90 * Math.min(1, accent) + 90 * bloom, 246, (0.34 + 0.1 * breathe + 0.16 * bar - 0.1 * bloom) * appear);
+  glow(ctx, 0, 0, 150 + 36 * bar + 36 * bloom, 214, (0.52 + 0.2 * bar - 0.15 * bloom) * appear, 0.2);
   ctx.lineCap = "round";
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2.6;
   ctx.strokeStyle = hsla(COOL_HUE, 0.6, 0.8, (0.3 + 0.25 * bar) * appear);
   ctx.beginPath();
-  ctx.arc(0, 0, DISC.rHub - 14, 0, TAU);
+  ctx.arc(0, 0, DISC.rHub - 18, 0, TAU);
   ctx.stroke();
-  ctx.lineWidth = 1.2;
+  ctx.lineWidth = 1.6;
   ctx.strokeStyle = hsla(COOL_HUE, 0.6, 0.8, 0.16 * appear);
   ctx.beginPath();
-  ctx.arc(0, 0, DISC.rHub - 30, 0, TAU);
+  ctx.arc(0, 0, DISC.rHub - 40, 0, TAU);
   ctx.stroke();
 
   // unison pulses: a ring leaving the hub and a ghost spoke linking the coinciding voices
@@ -330,31 +335,31 @@ function drawHub(ctx: CanvasRenderingContext2D, model: OrbitModel, t: number, ap
     const u = age / 0.9;
     if (u >= 1 && !(c.strength >= 0.65 && age < 1.3)) continue;
     if (u < 1) {
-      ctx.lineWidth = 1.5 + 3 * c.strength * (1 - u);
+      ctx.lineWidth = 2 + 4 * c.strength * (1 - u);
       ctx.strokeStyle = hsla(c.hue, 0.5, 0.86, 0.7 * c.strength * (1 - u) ** 2);
       ctx.beginPath();
-      ctx.arc(0, 0, 26 + 76 * easeOutCubic(u), 0, TAU);
+      ctx.arc(0, 0, 36 + 104 * easeOutCubic(u), 0, TAU);
       ctx.stroke();
     }
-    glow(ctx, 0, 0, 120 + 100 * c.strength, c.hue, 0.5 * c.strength * Math.exp(-age / 0.18), 0.3);
+    glow(ctx, 0, 0, 164 + 136 * c.strength, c.hue, 0.5 * c.strength * Math.exp(-age / 0.18), 0.3);
     if (c.strength >= 0.65 && age < 1.3) {
       const w = age / 1.3;
-      ctx.lineWidth = 2 + 6 * (1 - w);
+      ctx.lineWidth = 2.6 + 8 * (1 - w);
       ctx.strokeStyle = hsla(c.hue, 0.45, 0.88, 0.5 * c.strength * (1 - w) ** 2);
       ctx.beginPath();
-      ctx.arc(0, 0, 40 + (DISC.rim - 46) * easeOutCubic(w), 0, TAU);
+      ctx.arc(0, 0, 54 + (DISC.rim - 64) * easeOutCubic(w), 0, TAU);
       ctx.stroke();
     }
     const fade = Math.exp(-age / 0.32) * c.strength;
     if (fade > 0.02 && c.rMax > c.rMin + 1) {
-      ctx.lineWidth = 2 + 2 * c.strength;
+      ctx.lineWidth = 2.6 + 2.6 * c.strength;
       ctx.strokeStyle = hsla(c.hue, 0.45, 0.92, 0.75 * fade);
       ctx.beginPath();
       ctx.moveTo(polarX(c.rMin, c.angle), polarY(c.rMin, c.angle));
       ctx.lineTo(polarX(c.rMax, c.angle), polarY(c.rMax, c.angle));
       ctx.stroke();
-      glow(ctx, polarX(c.rMin, c.angle), polarY(c.rMin, c.angle), 40 * (0.6 + c.strength), c.hue, 0.7 * fade);
-      glow(ctx, polarX(c.rMax, c.angle), polarY(c.rMax, c.angle), 40 * (0.6 + c.strength), c.hue, 0.7 * fade);
+      glow(ctx, polarX(c.rMin, c.angle), polarY(c.rMin, c.angle), 56 * (0.6 + c.strength), c.hue, 0.7 * fade);
+      glow(ctx, polarX(c.rMax, c.angle), polarY(c.rMax, c.angle), 56 * (0.6 + c.strength), c.hue, 0.7 * fade);
     }
   }
 }
@@ -366,7 +371,7 @@ function drawClimax(ctx: CanvasRenderingContext2D, model: OrbitModel, t: number)
   const age = t - climax.timeSec;
   const env = Math.exp(-age / 0.75) * climax.strength;
   glow(ctx, 0, 0, DISC.bloomDiameter * (0.62 + 0.38 * easeOutCubic(age / 0.5)), 38, 0.4 * env, 0.3);
-  glow(ctx, 0, 0, 300 + 160 * easeOutCubic(age / 0.7), 280, 0.42 * env);
+  glow(ctx, 0, 0, 410 + 220 * easeOutCubic(age / 0.7), 280, 0.42 * env);
   ctx.lineCap = "round";
   for (let k = 0; k < 3; k++) {
     const wave = shockwave(age, k);
@@ -407,18 +412,6 @@ function buildLegend(scene: MidiSceneData, model: OrbitModel): LegendEntry[] {
   return [...byTrack.values()].slice(0, 6);
 }
 
-/** Entries per row, wrapping greedily so a row is never wider than `maxWidth` (the reel safe area). */
-function legendRows(entries: LegendEntry[], gap: number, maxWidth: number): LegendEntry[][] {
-  const rows: LegendEntry[][] = [[]];
-  let used = 0;
-  for (const entry of entries) {
-    const row = rows[rows.length - 1];
-    if (row.length && used + gap + entry.width > maxWidth) { rows.push([entry]); used = entry.width; }
-    else { row.push(entry); used += (row.length > 1 ? gap : 0) + entry.width; }
-  }
-  return rows;
-}
-
 function drawLegend(ctx: CanvasRenderingContext2D, entries: LegendEntry[], t: number, appear: number) {
   if (!entries.length) return;
   const letterSpaced = ctx as CanvasRenderingContext2D & { letterSpacing?: string };
@@ -427,34 +420,74 @@ function drawLegend(ctx: CanvasRenderingContext2D, entries: LegendEntry[], t: nu
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
   letterSpaced.letterSpacing = "3px";
-  const gap = 34, dot = 22;
+  const dot = 22;
   for (const entry of entries) if (!entry.width) entry.width = ctx.measureText(entry.name).width + dot;
-  const rows = legendRows(entries, gap, 760);
-  rows.forEach((row, rowIndex) => {
-    const total = row.reduce((sum, entry) => sum + entry.width, 0) + gap * (row.length - 1);
-    let x = DISC.cx - total / 2;
-    const y = 1496 + rowIndex * 38;
-    for (const entry of row) {
-      const first = entry.onsets[0];
-      const enter = smoothstep(first - 0.5, first + 0.3, t) * appear;
-      let lo = 0, hi = entry.onsets.length;
-      while (lo < hi) { const mid = (lo + hi) >> 1; if (entry.onsets[mid] <= t) lo = mid + 1; else hi = mid; }
-      const pulse = lo > 0 ? Math.exp(-(t - entry.onsets[lo - 1]) / 0.2) : 0;
-      if (enter > 0.01) {
-        ctx.globalCompositeOperation = "lighter";
-        glow(ctx, x + 5, y - 7, 26 + 14 * pulse, entry.hue, enter * (0.5 + 0.5 * pulse));
-        ctx.globalCompositeOperation = "source-over";
-        ctx.fillStyle = hsla(entry.hue, 0.9, 0.7, enter * (0.7 + 0.3 * pulse));
-        ctx.beginPath();
-        ctx.arc(x + 5, y - 7, 4.5 + 1.5 * pulse, 0, TAU);
-        ctx.fill();
-        ctx.fillStyle = hsla(228, 0.35, 0.82, enter * (0.42 + 0.4 * pulse));
-        ctx.fillText(entry.name, x + dot, y);
-      }
-      x += entry.width + gap;
-    }
-  });
+  for (const slot of legendLayout(entries.map((entry) => entry.width))) {
+    const entry = entries[slot.index];
+    const x = slot.x;
+    const y = LEGEND.y + slot.row * LEGEND.rowGap;
+    const first = entry.onsets[0];
+    const enter = smoothstep(first - 0.5, first + 0.3, t) * appear;
+    let lo = 0, hi = entry.onsets.length;
+    while (lo < hi) { const mid = (lo + hi) >> 1; if (entry.onsets[mid] <= t) lo = mid + 1; else hi = mid; }
+    const pulse = lo > 0 ? Math.exp(-(t - entry.onsets[lo - 1]) / 0.2) : 0;
+    if (enter <= 0.01) continue;
+    ctx.globalCompositeOperation = "lighter";
+    glow(ctx, x + 5, y - 7, 26 + 14 * pulse, entry.hue, enter * (0.5 + 0.5 * pulse));
+    ctx.globalCompositeOperation = "source-over";
+    ctx.fillStyle = hsla(entry.hue, 0.9, 0.7, enter * (0.7 + 0.3 * pulse));
+    ctx.beginPath();
+    ctx.arc(x + 5, y - 7, 4.5 + 1.5 * pulse, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = hsla(228, 0.35, 0.82, enter * (0.42 + 0.4 * pulse));
+    ctx.fillText(entry.name, x + dot, y);
+  }
   letterSpaced.letterSpacing = "0px";
+  ctx.restore();
+}
+
+/** Thin progress strip under the legend, centred on x = 540: voice entrances, strong unisons and the climax. */
+function drawTimeline(ctx: CanvasRenderingContext2D, model: OrbitModel, endSec: number, t: number, appear: number) {
+  const { y, left, right } = TIMELINE;
+  const span = Math.max(1, endSec);
+  const x = (time: number) => left + (right - left) * clamp01(time / span);
+  ctx.save();
+  ctx.globalCompositeOperation = "source-over";
+  ctx.lineCap = "round";
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = hsla(COOL_HUE, 0.4, 0.8, 0.16 * appear);
+  ctx.beginPath();
+  ctx.moveTo(left, y);
+  ctx.lineTo(right, y);
+  ctx.stroke();
+  if (t > 0) {
+    ctx.strokeStyle = hsla(COOL_HUE, 0.6, 0.86, 0.6 * appear);
+    ctx.beginPath();
+    ctx.moveTo(left, y);
+    ctx.lineTo(x(t), y);
+    ctx.stroke();
+  }
+  ctx.globalCompositeOperation = "lighter";
+  for (const marker of model.markers) {
+    const mx = x(marker.timeSec);
+    const passed = t >= marker.timeSec;
+    const pulse = passed ? Math.exp(-(t - marker.timeSec) / 0.35) : 0;
+    const radius = marker.kind === "climax" ? 7.5 : marker.kind === "align" ? 6 : 4.8;
+    glow(ctx, mx, y, 20 + 34 * pulse, marker.hue, ((passed ? 0.5 : 0.14) + 0.45 * pulse) * appear);
+    ctx.fillStyle = hsla(marker.hue, marker.sat, marker.light, (passed ? 0.95 : 0.4) * appear);
+    ctx.beginPath();
+    ctx.arc(mx, y, radius * (1 + 0.45 * pulse), 0, TAU);
+    ctx.fill();
+    if (marker.kind !== "voice") {
+      ctx.lineWidth = 2.4;
+      ctx.strokeStyle = hsla(marker.hue, marker.sat, marker.light, (passed ? 0.9 : 0.35) * appear);
+      ctx.beginPath();
+      ctx.moveTo(mx, y - 12);
+      ctx.lineTo(mx, y - 26);
+      ctx.stroke();
+    }
+  }
+  if (t > 0 && t < span) glow(ctx, x(t), y, 38, COOL_HUE, 0.75 * appear);
   ctx.restore();
 }
 
@@ -472,7 +505,7 @@ function drawKaleidoscope(
   h.clearRect(0, 0, HALO_SIZE, HALO_SIZE);
   h.globalCompositeOperation = "lighter";
   h.lineCap = "round";
-  const hk = (HALO_SIZE / 2) / DISC.rMax;
+  const hk = (HALO_SIZE / 2) / DISC.haloExtent;
   const half = HALO_SIZE / 2;
   const ringSpan = Math.max(1, DISC.rOut - DISC.rIn);
   const from = firstEventAtOrAfter(events, t - 1.6);
@@ -484,7 +517,7 @@ function drawKaleidoscope(
     if (level < 0.04) continue;
     budget--;
     const rr = (DISC.haloIn + (DISC.haloOut - DISC.haloIn) * clamp01((ev.radius - DISC.rIn) / ringSpan)) * hk;
-    h.lineWidth = Math.max(2, ev.thickness * 1.1 * hk);
+    h.lineWidth = Math.max(2, ev.thickness * 0.8 * hk);
     h.strokeStyle = hsla(ev.hue, ev.sat, ev.light, clamp01(level));
     const dash = Math.min(ev.length, ev.climax ? 0.6 : 0.26);
     const mid = ev.angle + ev.length / 2;
@@ -502,8 +535,8 @@ function drawKaleidoscope(
   ctx.globalCompositeOperation = "lighter";
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
-  ctx.globalAlpha = clamp01((0.55 + 0.5 * bloom + 0.15 * bar) * appear);
-  ctx.drawImage(canvas, -DISC.rMax, -DISC.rMax, DISC.rMax * 2, DISC.rMax * 2);
+  ctx.globalAlpha = clamp01((0.48 + 0.5 * bloom + 0.12 * bar) * appear);
+  ctx.drawImage(canvas, -DISC.haloExtent, -DISC.haloExtent, DISC.haloExtent * 2, DISC.haloExtent * 2);
   ctx.globalAlpha = 1;
 }
 
@@ -536,7 +569,8 @@ export function createOrbitPainter(scene: MidiSceneData, label: string): MidiPai
     const bloom = climaxEnvelope(model.climax, t, 0.75);
     const flare = climaxEnvelope(model.climax, t, 1.4);
     const dx = clamp(kick.dx, -11, 11), dy = clamp(kick.dy, -11, 11);
-    const zoom = clamp(kick.zoom + 0.011 * bar + 0.012 * Math.min(1, accent) + 0.012 * bloom, 0, DISC.maxZoom);
+    // framing standard: the breathing stays within 1.5 percent and the kick (capped at 3 percent by the kit) comes on top
+    const zoom = cameraZoom(kick.zoom, breathing(bar, accent, bloom));
     const scale = lerp(0.93, 1, appear) * (1 + zoom);
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -546,7 +580,7 @@ export function createOrbitPainter(scene: MidiSceneData, label: string): MidiPai
 
     // star dust and a few big soft bokeh discs, drifting slowly with a little parallax on the camera kick
     ctx.globalCompositeOperation = "lighter";
-    const dustBoost = (0.55 + 0.45 * appear) * (1 + 0.35 * bar + 1.2 * bloom);
+    const dustBoost = (0.55 + 0.45 * appear) * (1 + 0.35 * bar + 0.6 * bloom);
     for (let i = 0; i < DUST_COUNT; i++) {
       dustAt(i, t, width, height, dust);
       glow(ctx, dust.x + dx * dust.depth * 0.6, dust.y + dy * dust.depth * 0.6, dust.size * 3.2, dust.hue, dust.alpha * dustBoost * 0.8, 0.28);
@@ -613,7 +647,8 @@ export function createOrbitPainter(scene: MidiSceneData, label: string): MidiPai
     drawVignette(ctx, width, height, 0.55);
     drawSceneTitle(ctx, scene, label, frame);
     drawLegend(ctx, legend, t, appear);
-    const fade = endFade(frame, scene.totalFrames, scene.fps, 0.7);
+    drawTimeline(ctx, model, scene.endSec, t, appear);
+    const fade = endFade(frame, scene.totalFrames, scene.fps);
     if (fade > 0.001) {
       ctx.globalAlpha = fade;
       ctx.fillStyle = BG;

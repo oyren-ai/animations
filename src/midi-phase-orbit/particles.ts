@@ -19,16 +19,16 @@ export function sparkLife(ev: OrbitEvent, j: number): number {
 /**
  * Spark j of a note `age` seconds after its crossing, thrown outward along the radial direction with
  * linear drag (distance = v (1 - e^(-k age)) / k), a little tangential spread, then fading and shrinking.
- * The flight is scaled so the spark never travels past DISC.sparkReach, however close to the rim the ring is.
+ * The flight is scaled so the spark centre never travels past DISC.sparkReach, however close to the rim the ring is.
  * Writes into `out` and returns false when the spark is not alive.
  */
 export function sparkAt(ev: OrbitEvent, j: number, age: number, out: SparkPoint): boolean {
   const life = sparkLife(ev, j);
   if (age < 0 || age >= life) return false;
-  const speed = lerp(230, 560, hash01(ev.seed, j * 8 + 1)) * (0.55 + 0.65 * ev.vel) * ev.sparkPower;
+  const speed = lerp(315, 770, hash01(ev.seed, j * 8 + 1)) * (0.55 + 0.65 * ev.vel) * ev.sparkPower;
   const drag = lerp(3.2, 6.2, hash01(ev.seed, j * 8 + 3));
   const reach = speed / drag; // distance as age -> infinity
-  const room = Math.max(4, DISC.sparkReach - ev.radius - 3);
+  const room = Math.max(5, DISC.sparkReach - ev.radius - 4);
   const fit = Math.min(1, room / reach);
   const distance = fit * speed * (1 - Math.exp(-drag * age)) / drag;
   const spread = (hash01(ev.seed, j * 8 + 4) - 0.5) * 0.8;
@@ -40,7 +40,7 @@ export function sparkAt(ev: OrbitEvent, j: number, age: number, out: SparkPoint)
   out.y = ry * radial + rx * lateral;
   const k = clamp01(age / life);
   out.alpha = (1 - k) ** 1.5;
-  out.size = lerp(15, 4.5, k) * (0.8 + 0.5 * hash01(ev.seed, j * 8 + 5));
+  out.size = lerp(20, 6, k) * (0.8 + 0.5 * hash01(ev.seed, j * 8 + 5));
   return true;
 }
 

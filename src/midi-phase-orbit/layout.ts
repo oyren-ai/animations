@@ -1,4 +1,4 @@
-import { buildAccents, clamp, clamp01, hash01, smoothstep, type Accent } from "../midi/kit.ts";
+import { buildAccents, clamp, clamp01, smoothstep, type Accent } from "../midi/kit.ts";
 import { barSeconds, pieceTime, type MidiSceneData } from "../midi/timeline.ts";
 import type { MidiNote } from "../midi/types.ts";
 
@@ -15,28 +15,71 @@ export const TAU = Math.PI * 2;
 export const HALF_PI = Math.PI / 2;
 
 export const DISC = {
-  /** Hub of the disc on the 1080x1920 canvas (phone safe area: right edge <= 930, nothing below y = 1620). */
-  cx: 495, cy: 1010,
+  /** Hub of the disc: centred on x = 540 of 1080, slightly above the middle (framing standard). */
+  cx: 540, cy: 930,
   /** Playhead starts here (just outside the hub glow). */
-  rHub: 66,
+  rHub: 88,
   /** Centre line of the innermost and outermost pitch ring. */
-  rIn: 108, rOut: 336,
-  /** Outer rim circle and tick marks. */
-  rim: 358,
-  /** Nothing the disc draws (arcs with their glow, sparks, bloom, halo, ticks) reaches beyond this radius. */
-  rMax: 396,
-  /** Sparks stop their centre at this radius (a spark sprite is at most 12 px wide). */
-  sparkReach: 384,
-  /** Largest extra scale (breathing plus camera kick) and camera shift in px the painter applies. */
-  maxZoom: 0.055, maxShift: 16,
-  /** Distance from the hub to the nearest safe-area edge: right edge 930 - 495. */
-  safeRadius: 435,
+  rIn: 146, rOut: 448,
+  /** Outer rim circle; the tick marks sit just outside it, reaching rim + 4 + TICK_MAX. */
+  rim: 474,
+  /**
+   * The disc proper (arcs with their glow strokes at maximum pop, the rim, ticks and the plate) never reaches
+   * beyond this radius, so with the largest zoom and camera shift it still fits inside the frame (halfWidth).
+   */
+  rMax: 499,
+  /** Sparks keep their centre inside this radius; they, the corona and the shockwaves may pass the disc edge. */
+  sparkReach: 520,
+  /** Largest total scale beyond 1 (breathing plus camera kick) and camera shift in px the painter applies. */
+  maxZoom: 0.045, maxShift: 16,
+  /** Half the frame width: the disc, at the largest zoom and shift, must stay inside it. */
+  halfWidth: 540,
   /** One slow turn of the whole disc in this many seconds. */
   rotationSec: 90,
-  /** Kaleidoscope halo band (the mirrored copy of the outer rings) and the climax bloom stay inside these. */
-  haloIn: 345, haloOut: 381,
-  bloomDiameter: 2 * 384,
+  /** The corona band (mirrored fresh strikes just outside the outer ring) and the radius its offscreen canvas covers. */
+  haloIn: 466, haloOut: 492, haloExtent: 524,
+  /** Radius of the plate under the rings. */
+  plate: 488,
+  /** Diameter of the climax bloom. */
+  bloomDiameter: 2 * 480,
 } as const;
+
+/** Longest tick mark (the bar line) outside the rim circle, px. */
+export const TICK_MAX = 18;
+/** Arc pop (thickness spring), climax swell, glow stroke half width (in thicknesses) and radial bump limits. */
+export const POP_MAX = 1.5, FLARE_MAX = 1.18, GLOW_HALF = 1.1, BUMP = 4;
+
+/** Camera: the disc breathes by at most 1.5 percent; the kit's camera kick (at most 3 percent) comes on top. */
+export const breathing = (bar: number, accent: number, bloom: number) => 0.008 * bar + 0.004 * Math.min(1, accent) + 0.003 * bloom;
+/** Total extra scale; values below 0.001 percent snap to exactly 0 so the camera returns to a scale of exactly 1. */
+export const cameraZoom = (kickZoom: number, breath: number) => (kickZoom + breath < 1e-5 ? 0 : clamp(kickZoom + breath, 0, DISC.maxZoom));
+
+/** Voice legend under the disc and the timeline strip under it, both centred on the vertical axis. */
+export const LEGEND = { y: 1500, rowGap: 38, gap: 34, maxWidth: 780 } as const;
+export const TIMELINE = { y: 1648, left: 150, right: 930 } as const;
+
+export interface LegendSlot { index: number; row: number; x: number }
+
+/**
+ * Left edge of each legend entry given its width (dot plus name): entries wrap greedily into rows no wider
+ * than LEGEND.maxWidth and every row is centred on x = DISC.cx, so the legend is symmetric about the axis.
+ */
+export function legendLayout(widths: readonly number[]): LegendSlot[] {
+  const rows: number[][] = [[]];
+  let used = 0;
+  widths.forEach((width, index) => {
+    const row = rows[rows.length - 1];
+    if (row.length && used + LEGEND.gap + width > LEGEND.maxWidth) { rows.push([index]); used = width; }
+    else { row.push(index); used += (row.length > 1 ? LEGEND.gap : 0) + width; }
+  });
+  const slots: LegendSlot[] = [];
+  rows.forEach((row, rowIndex) => {
+    const total = row.reduce((sum, index) => sum + widths[index], 0) + LEGEND.gap * (row.length - 1);
+    let x = DISC.cx - total / 2;
+    for (const index of row) { slots.push({ index, row: rowIndex, x }); x += widths[index] + LEGEND.gap; }
+  });
+  return slots;
+}
 
 /** Window of notes shown around the playhead, in revolutions. */
 export const WINDOW_BEHIND = 0.4;
@@ -189,6 +232,15 @@ export interface Climax {
   lastIndex: number;
 }
 
+/** A landmark on the timeline strip under the disc: a voice entering, a strong unison, or the climax chord. */
+export interface TimelineMarker {
+  timeSec: number;
+  kind: "voice" | "align" | "climax";
+  hue: number;
+  sat: number;
+  light: number;
+}
+
 export interface OrbitModel {
   period: number;
   events: OrbitEvent[];
@@ -199,6 +251,8 @@ export interface OrbitModel {
   /** Longest visual duration of any arc, seconds. */
   maxVisualSec: number;
   trackCount: number;
+  /** Voice entrances, strong unisons (3+ voices) and the climax, by time. */
+  markers: TimelineMarker[];
 }
 
 /**
@@ -263,8 +317,8 @@ export function buildOrbit(scene: MidiSceneData): OrbitModel {
   const trackIds = [...new Set(notes.map((n) => n.track))].sort((a, b) => a - b);
   const slotOf = new Map(trackIds.map((id, slot) => [id, slot] as const));
   const climax = findClimax(notes, scene.endSec);
-  const baseThickness = clamp(ringMap.minGap * 0.86, 4, 20);
-  const laneStep = clamp(ringMap.minGap * 0.2, 0, 4.5);
+  const baseThickness = clamp(ringMap.minGap * 0.86, 5, 27);
+  const laneStep = clamp(ringMap.minGap * 0.2, 0, 6);
   const maxVisual = period * 0.96;
   let maxVisualSec = 0;
 
@@ -298,11 +352,24 @@ export function buildOrbit(scene: MidiSceneData): OrbitModel {
     lastOfTrack.set(ev.track, ev.index);
   }
 
+  const coincidences = findCoincidences(events, climax);
+  const markers: TimelineMarker[] = [];
+  const firstOfTrack = new Map<number, OrbitEvent>();
+  for (const ev of events) if (!firstOfTrack.has(ev.track)) firstOfTrack.set(ev.track, ev);
+  for (const ev of [...firstOfTrack.values()].slice(0, 6)) markers.push({ timeSec: ev.timeSec, kind: "voice", hue: ev.hue, sat: ev.sat, light: ev.light });
+  // the strongest unisons (four or more voices on the same pitch), at least 2 s apart, at most three
+  const unisons = coincidences.filter((c) => c.voices >= 3 && c.strength >= 0.99)
+    .sort((a, b) => b.strength - a.strength || b.voices - a.voices || a.timeSec - b.timeSec);
+  const chosen: Coincidence[] = [];
+  for (const c of unisons) if (chosen.length < 3 && chosen.every((other) => Math.abs(other.timeSec - c.timeSec) >= 2)) chosen.push(c);
+  for (const c of chosen) markers.push({ timeSec: c.timeSec, kind: "align", hue: 48, sat: 0.9, light: 0.82 });
+  if (climax) markers.push({ timeSec: climax.timeSec, kind: "climax", hue: 40, sat: 0.95, light: 0.86 });
+  markers.sort((a, b) => a.timeSec - b.timeSec);
+
   return {
     period, events, ringMap,
     accents: buildAccents(notes, 0.13, 0.9, 2.2),
-    coincidences: findCoincidences(events, climax),
-    climax, maxVisualSec, trackCount: trackIds.length,
+    coincidences, climax, maxVisualSec, trackCount: trackIds.length, markers,
   };
 }
 
@@ -408,23 +475,19 @@ export function shockwave(age: number, k: number): { radius: number; alpha: numb
   const u = (age - 0.16 * k) / 1.7;
   if (u < 0 || u >= 1) return null;
   const eased = 1 - (1 - u) ** 3;
-  const width = 14 - 12 * u;
-  return { radius: 36 + (DISC.rMax - 20 - width / 2 - 36) * eased, alpha: (1 - u) ** 1.7, width };
+  const width = 18 - 15 * u;
+  return { radius: 48 + (DISC.rMax - 14 - width / 2 - 48) * eased, alpha: (1 - u) ** 1.7, width };
 }
 
-/** Diameter of the glow where the playhead strikes an arc. */
-export const strikeGlowDiameter = (vel: number) => 44 + 70 * vel;
+/** Diameter of the glow where the playhead strikes an arc (a soft sprite: it may pass the disc edge a little). */
+export const strikeGlowDiameter = (vel: number) => 56 + 72 * vel;
 
 /**
- * Largest radius from the hub any arc (its glow stroke at maximum pop and flare, or the strike glow) can
- * reach, disc units.
+ * Largest radius from the hub any arc can reach, disc units: the arc at maximum pop and climax swell with its
+ * glow stroke and radial bump.
  */
 export function maxArcExtent(events: readonly OrbitEvent[]): number {
   let extent = 0;
-  for (const ev of events) {
-    const thickness = ev.thickness * (1 + 0.6) * 1.25; // spring pop and climax swell
-    const stroke = ev.radius + 3 + thickness * 1.3; // radial bump 3 px, glow stroke 2.5x = 1.25x the half width
-    extent = Math.max(extent, stroke, ev.radius + strikeGlowDiameter(ev.vel) / 2);
-  }
+  for (const ev of events) extent = Math.max(extent, ev.radius + BUMP + GLOW_HALF * ev.thickness * POP_MAX * FLARE_MAX);
   return extent;
 }

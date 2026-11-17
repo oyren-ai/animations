@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  accentPulse, buildAccents, cameraKick, clamp01, easeOutBack, endFade, hash01, hslToRgb, lowerBound, mulberry32, pitchClassHue, smoothstep,
+  accentPulse, buildAccents, cameraKick, clamp01, drawCenteredText, drawSceneTitle, easeOutBack, endFade, hash01, hslToRgb, lowerBound,
+  mulberry32, pitchClassHue, smoothstep,
 } from "./kit.ts";
 import { barSeconds, buildSceneData, midiAudioFile, pieceTime, prettifyFileName, sceneFrameCount } from "./timeline.ts";
 import type { MidiNote, ParsedMidi } from "./types.ts";
@@ -94,4 +95,37 @@ test("buildSceneData derives title, range, timing and the bar length", () => {
   assert.equal(pieceTime(scene, 0), -1);
   assert.equal(barSeconds(scene), 3);
   assert.equal(buildSceneData(parsed, "x.mid", { fps: 60, leadFrames: 0, tailSec: 0 }, { width: 1, height: 1 }, "Custom").title, "Custom");
+});
+
+function textContext(): CanvasRenderingContext2D {
+  let font = "600 20px sans-serif";
+  const target: Record<string, unknown> = {
+    get font() { return font; },
+    set font(value: string) { font = value; },
+    measureText(text: string) { return { width: text.length * Number(/(\d+(?:\.\d+)?)px/.exec(font)?.[1] ?? 20) * 0.55 }; },
+  };
+  return new Proxy(target, {
+    get: (obj, prop) => (prop in obj ? obj[prop as string] : () => undefined),
+    set: (obj, prop, value) => { obj[prop as string] = value; return true; },
+  }) as unknown as CanvasRenderingContext2D;
+}
+
+test("framing standard: titles are centred on x = 540 inside the central 840 px, camera kicks stay under 3 percent", () => {
+  const scene = buildSceneData({
+    format: 1, ticksPerQuarter: 480, tempoMap: [], timeSignature: { numerator: 4, denominator: 4 },
+    tracks: [{ index: 0, name: "A very long piece name that has to shrink to fit the central column of the frame", programs: [], channels: [], noteCount: 0 }],
+    notes: [note(0)], durationSec: 1,
+  }, "x.mid", { fps: 60, leadFrames: 60, tailSec: 1 }, { width: 1080, height: 1920 });
+  for (const title of [scene.title, "Ode to Joy"]) {
+    const boxes = drawSceneTitle(textContext(), { ...scene, title }, "Ball Piano", 120);
+    assert.equal(boxes.length, 2);
+    for (const box of boxes) {
+      assert.ok(Math.abs((box.left + box.right) / 2 - 540) < 1, `${box.label} is centred`);
+      assert.ok(box.left >= 120 && box.right <= 960, `${box.label} stays in the central 840 px`);
+      assert.ok(box.top >= 150 && box.bottom <= 330, `${box.label} sits at y 150-330`);
+    }
+  }
+  assert.throws(() => drawCenteredText(textContext(), "x".repeat(10), 200, { centerX: 100 }), /central 840/);
+  const accents = buildAccents(Array.from({ length: 12 }, (_, i) => note(1 + i * 0.01, 60 + i, 127)));
+  for (let t = 0.9; t < 3; t += 0.01) assert.ok(cameraKick(accents, t).zoom <= 0.03 + 1e-12);
 });

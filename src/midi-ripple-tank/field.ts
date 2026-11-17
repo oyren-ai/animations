@@ -8,26 +8,33 @@ import type { RippleEvent } from "./events.ts";
  * ring's radius is touched, and sources whose wave has faded are culled. DOM-free, runs unchanged in Node.
  */
 
-export const WORLD_WIDTH = 1080;
-export const WORLD_HEIGHT = 1920;
+/**
+ * The tank: a glass box whose four walls the waves bounce off. Framing standard: centred on x = 540 (equal 48 px side
+ * margins) and on y = 940, with the title above it (y 150-260) and nothing within 320 px of the bottom edge.
+ */
+export const TANK = { left: 48, right: 1032, top: 280, bottom: 1600, radius: 58 } as const;
 
 export interface FieldGeometry {
   cols: number;
   rows: number;
   /** Canvas px per field cell. */
   scale: number;
-  /** Canvas position of the top-left corner of cell (0, 0): negative, the field overdraws the canvas so camera kicks never show an edge. */
+  /** Canvas position of the top-left corner of cell (0, 0). The grid is centred on the tank with a spare cell around it. */
   originX: number;
   originY: number;
-  /** Tank (canvas) size in px: the walls the waves reflect from are its four edges. */
-  width: number;
-  height: number;
+  /** The walls (canvas px) the waves reflect from: the tank edges. The mirror images are symmetric about the tank centre. */
+  wallLeft: number;
+  wallRight: number;
+  wallTop: number;
+  wallBottom: number;
 }
 
-export function fieldGeometry(width = WORLD_WIDTH, height = WORLD_HEIGHT, scale = 4, margin = 64): FieldGeometry {
+export function fieldGeometry(scale = 3, tank: Pick<typeof TANK, "left" | "right" | "top" | "bottom"> = TANK): FieldGeometry {
+  const cols = Math.ceil((tank.right - tank.left) / scale) + 2, rows = Math.ceil((tank.bottom - tank.top) / scale) + 2;
   return {
-    cols: Math.ceil((width + 2 * margin) / scale), rows: Math.ceil((height + 2 * margin) / scale),
-    scale, originX: -margin, originY: -margin, width, height,
+    cols, rows, scale,
+    originX: (tank.left + tank.right) / 2 - (cols * scale) / 2, originY: (tank.top + tank.bottom) / 2 - (rows * scale) / 2,
+    wallLeft: tank.left, wallRight: tank.right, wallTop: tank.top, wallBottom: tank.bottom,
   };
 }
 
@@ -48,12 +55,12 @@ function makePacket(back: number, sigmaBack: number): PacketShape {
   }
   return { back, offset: back * PACKET_RES, size, table };
 }
-export const PACKETS: readonly PacketShape[] = [makePacket(2.7, 0.9), makePacket(3.5, 1.3), makePacket(4.4, 1.75)];
+export const PACKETS: readonly PacketShape[] = [makePacket(2.4, 0.85), makePacket(3.1, 1.2), makePacket(3.9, 1.55)];
 
 /** Radius (canvas px) over which a ring's amplitude has fallen to 1/sqrt(2) (the ~1/sqrt(r) spreading loss). */
 const FALLOFF_R0 = 200;
 /** Fraction of the amplitude that survives a bounce off a wall: sides, top and bottom. */
-const REFLECT_SIDE = 0.62, REFLECT_END = 0.5;
+const REFLECT_SIDE = 0.72, REFLECT_END = 0.62;
 /** Active sources are capped per frame (the loudest and youngest are kept) and faint ones are culled. */
 export const MAX_SOURCES = 48;
 const MIN_PEAK = 0.022;
@@ -63,6 +70,16 @@ export function lifeEnvelope(age: number, life: number): number {
   if (age < 0 || age >= life) return 0;
   const x = age / life;
   return Math.exp(-1.6 * x) * (1 - smoothstep(0.6, 1, x));
+}
+
+/** Largest radius (canvas px) at which a note's front crest is still clearly visible (height above `threshold` after spreading loss). */
+export function visibleRadius(ev: Pick<RippleEvent, "amplitude" | "speed" | "life">, threshold = 0.1): number {
+  let reach = 0;
+  for (let age = 0; age < ev.life; age += 0.02) {
+    const radius = ev.speed * age;
+    if (ev.amplitude * lifeEnvelope(age, ev.life) / Math.sqrt(1 + radius / FALLOFF_R0) >= threshold) reach = radius;
+  }
+  return reach;
 }
 
 const maxLifeCache = new WeakMap<readonly RippleEvent[], number>();
@@ -76,9 +93,12 @@ function maxLifeOf(events: readonly RippleEvent[]): number {
   return value;
 }
 
-/** Light direction (towards the light, x right, y down, z out of the screen) and its half vector with a top-down view. */
+/**
+ * Light direction (towards the light, x right, y down, z out of the screen) and its half vector with a top-down view.
+ * The light stands straight above the tank (x = 0) so the lighting is mirror-symmetric about the vertical axis.
+ */
 const LIGHT: readonly [number, number, number] = (() => {
-  const x = -0.5, y = -0.62, z = 0.6, n = Math.hypot(x, y, z);
+  const x = 0, y = -0.78, z = 0.62, n = Math.hypot(x, y, z);
   return [x / n, y / n, z / n];
 })();
 const HALF: readonly [number, number, number] = (() => {
@@ -111,7 +131,8 @@ export class RippleField {
       for (let gx = 0; gx < geo.cols; gx++) {
         const px = geo.originX + (gx + 0.5) * geo.scale, py = geo.originY + (gy + 0.5) * geo.scale;
         // Deep navy, a little lighter and bluer around the middle of the tank, darker towards the corners.
-        const d = Math.hypot((px - geo.width / 2) / geo.width, (py - geo.height * 0.5) / geo.height * 0.7);
+        const w = geo.wallRight - geo.wallLeft, h = geo.wallBottom - geo.wallTop;
+        const d = Math.hypot((px - (geo.wallLeft + geo.wallRight) / 2) / w, (py - (geo.wallTop + geo.wallBottom) / 2) / h * 0.62);
         const glow = Math.max(0, 1 - d * 1.5) ** 2;
         const o = (gy * geo.cols + gx) * 3;
         this.rest[o] = 0.010 + 0.016 * glow;
@@ -131,7 +152,6 @@ export class RippleField {
     const count = this.select(events, frame, t, cap);
     this.activeCount = count;
     const { geo } = this;
-    const scale = geo.scale;
     for (let k = 0; k < count; k++) {
       const ev = events[this.selected[k]];
       const age = Math.max(0, t - ev.timeSec);
@@ -140,11 +160,12 @@ export class RippleField {
       const R = ev.speed * age; // canvas px
       const reach = R + PACKET_FRONT * ev.wavelength;
       this.addRing(ev, ev.x, ev.y, R, amp);
-      // Mirror images in the four walls: the bounced wave is the same ring from the image source, a bit weaker.
-      if (reach > ev.x) this.addRing(ev, -ev.x, ev.y, R, amp * REFLECT_SIDE);
-      if (reach > geo.width - ev.x) this.addRing(ev, 2 * geo.width - ev.x, ev.y, R, amp * REFLECT_SIDE);
-      if (reach > ev.y) this.addRing(ev, ev.x, -ev.y, R, amp * REFLECT_END);
-      if (reach > geo.height - ev.y) this.addRing(ev, ev.x, 2 * geo.height - ev.y, R, amp * REFLECT_END);
+      // Mirror images in the four tank walls: the bounced wave is the same ring from the image source, a bit weaker.
+      // The walls are symmetric about the tank centre, so the images are too.
+      if (reach > ev.x - geo.wallLeft) this.addRing(ev, 2 * geo.wallLeft - ev.x, ev.y, R, amp * REFLECT_SIDE);
+      if (reach > geo.wallRight - ev.x) this.addRing(ev, 2 * geo.wallRight - ev.x, ev.y, R, amp * REFLECT_SIDE);
+      if (reach > ev.y - geo.wallTop) this.addRing(ev, ev.x, 2 * geo.wallTop - ev.y, R, amp * REFLECT_END);
+      if (reach > geo.wallBottom - ev.y) this.addRing(ev, ev.x, 2 * geo.wallBottom - ev.y, R, amp * REFLECT_END);
     }
     return count;
   }
@@ -247,7 +268,8 @@ export class RippleField {
     const { cols, rows, acc, rest, geo } = this;
     const scale = geo.scale;
     const exposure = 1.45 + 0.35 * pulse;
-    const CELL = 108, DOT = 0.075;
+    // Dot lattice: 9 x 12 cells, one dot in the middle of each, so it is symmetric about the tank's vertical axis.
+    const cellX = (geo.wallRight - geo.wallLeft) / 9, cellY = (geo.wallBottom - geo.wallTop) / 12, dotRadius2 = 30 * 30;
     for (let gy = 0; gy < rows; gy++) {
       const up = gy > 0 ? -cols : 0, down = gy < rows - 1 ? cols : 0;
       const py = geo.originY + (gy + 0.5) * scale;
@@ -259,10 +281,10 @@ export class RippleField {
         const sy = (acc[(i + down) * 5] - acc[(i + up) * 5]) * 0.5;
         const px = geo.originX + (gx + 0.5) * scale;
         // Dot lattice seen through the water: refracted by the surface slope.
-        const lx = (px + sx * 90) / CELL, ly = (py + sy * 90) / CELL;
-        const fx = lx - Math.round(lx), fy = ly - Math.round(ly);
-        const d2 = fx * fx + fy * fy;
-        const dot = d2 < DOT ? (1 - d2 / DOT) ** 2 : 0;
+        const lx = (px + sx * 90 - geo.wallLeft) / cellX, ly = (py + sy * 90 - geo.wallTop) / cellY;
+        const fx = (lx - Math.floor(lx) - 0.5) * cellX, fy = (ly - Math.floor(ly) - 0.5) * cellY;
+        const d2 = (fx * fx + fy * fy) / dotRadius2;
+        const dot = d2 < 1 ? (1 - d2) ** 2 : 0;
         let r = rest[rc], g = rest[rc + 1], b = rest[rc + 2];
         let tr = 0.5, tg = 0.7, tb = 1;
         let body = 0, spec = 0, dark = 1;
@@ -272,7 +294,7 @@ export class RippleField {
           const hs = h / (1 + 0.85 * Math.abs(h)); // soft clip: tall chord waves stay coloured instead of blowing out to white
           const crest = hs > 0 ? hs : 0;
           const trough = hs < 0 ? -hs : 0;
-          const lit = (sx * 0.62 + sy * 0.78) * 1.7;
+          const lit = sy * 1.9; // light from straight above: slopes facing up are lit, left and right are treated alike
           const litPos = lit > 0 ? lit / (1 + lit) : 0;
           const nx = -sx * 2.6, ny = -sy * 2.6;
           const nd = (nx * HALF[0] + ny * HALF[1] + HALF[2]) / Math.sqrt(nx * nx + ny * ny + 1);

@@ -4,7 +4,7 @@ import { pieceTime, type MidiSceneData } from "../midi/timeline.ts";
 import {
   ballPose, buildBallEvents, keyLight, moodAt, SPARK_LIFE_SEC, sparkState, visibleRange, type BallEvent,
 } from "./events.ts";
-import { isBlackKey, planKeyboard, type KeyboardLayout } from "./layout.ts";
+import { isBlackKey, planKeyboard, STAGE_TOP, type KeyboardLayout } from "./layout.ts";
 
 const STAR_COUNT = 70;
 
@@ -24,7 +24,7 @@ function drawBall(ctx: CanvasRenderingContext2D, event: BallEvent, t: number) {
   ctx.globalCompositeOperation = "lighter";
   if (!pose.landed) {
     // Tapered motion streak behind a falling ball, plus a faint line down to its key.
-    const length = Math.min(120, pose.speed * 0.05);
+    const length = Math.min(110, pose.speed * 0.075);
     const top = pose.y - r * pose.sy;
     const trail = ctx.createLinearGradient(0, pose.y, 0, pose.y - length);
     trail.addColorStop(0, hsla(hue, 0.9, 0.72, 0.5 * pose.alpha));
@@ -210,7 +210,7 @@ export function createBallPianoPainter(scene: MidiSceneData, label: string): Mid
     const kick = cameraKick(accents, t);
     const pulse = accentPulse(accents, t, 0.2);
     ctx.save();
-    const cx = W / 2, cy = 1250;
+    const cx = W / 2, cy = 960; // zoom about the frame centre
     ctx.translate(cx + kick.dx, cy + kick.dy);
     ctx.rotate(kick.rotation);
     ctx.scale(1 + kick.zoom, 1 + kick.zoom);
@@ -225,9 +225,10 @@ export function createBallPianoPainter(scene: MidiSceneData, label: string): Mid
     ctx.globalCompositeOperation = "lighter";
     const energy = Math.min(1, mood.energy / 2.2);
     const drift = seconds * 0.12;
-    drawSoft(ctx, 190 + 60 * Math.sin(drift), 820 + 60 * Math.cos(drift * 1.3), 1500, hue - 28, 0.1 + 0.3 * energy);
-    drawSoft(ctx, 900 + 50 * Math.cos(drift * 0.8), 620 + 70 * Math.sin(drift), 1400, hue + 34, 0.08 + 0.26 * energy);
-    drawSoft(ctx, 520, 1420, 1800, hue, 0.12 + 0.4 * energy + 0.12 * Math.min(1, pulse));
+    // Light pools are mirrored about the vertical axis (x = 540) so the frame stays symmetric.
+    drawSoft(ctx, 250 + 50 * Math.sin(drift), 800 + 60 * Math.cos(drift * 1.3), 1400, hue - 28, 0.1 + 0.3 * energy);
+    drawSoft(ctx, 830 - 50 * Math.sin(drift), 800 + 60 * Math.cos(drift * 1.3), 1400, hue + 34, 0.08 + 0.26 * energy);
+    drawSoft(ctx, 540, 1420, 1800, hue, 0.12 + 0.4 * energy + 0.12 * Math.min(1, pulse));
     ctx.globalCompositeOperation = "source-over";
 
     // Slowly drifting, twinkling star dust.
@@ -240,15 +241,30 @@ export function createBallPianoPainter(scene: MidiSceneData, label: string): Mid
     ctx.globalAlpha = 1;
 
     // Lanes: faint verticals at the white-key boundaries, fading in towards the keyboard.
-    const lane = ctx.createLinearGradient(0, 330, 0, layout.top);
-    lane.addColorStop(0, "rgba(160,175,255,0)");
-    lane.addColorStop(1, "rgba(160,175,255,0.14)");
+    // A faint stage frame marks the fall zone (x 50..1030, from STAGE_TOP down to the keys), so the art is a centred,
+    // full-width block and the frame never reads as empty between notes.
+    const panel = ctx.createLinearGradient(0, STAGE_TOP, 0, layout.top);
+    panel.addColorStop(0, "rgba(150,165,255,0.03)");
+    panel.addColorStop(1, "rgba(150,165,255,0.10)");
+    ctx.fillStyle = panel;
+    ctx.fillRect(layout.left, STAGE_TOP, layout.right - layout.left, layout.top - STAGE_TOP);
+    ctx.fillStyle = "rgba(175,190,255,0.34)";
+    ctx.fillRect(layout.left, STAGE_TOP - 1, layout.right - layout.left, 2); // ceiling
+    const rail = ctx.createLinearGradient(0, STAGE_TOP, 0, layout.top);
+    rail.addColorStop(0, "rgba(175,190,255,0.30)");
+    rail.addColorStop(1, "rgba(175,190,255,0.55)");
+    ctx.fillStyle = rail;
+    ctx.fillRect(layout.left - 1, STAGE_TOP, 2, layout.top - STAGE_TOP); // left rail
+    ctx.fillRect(layout.right - 1, STAGE_TOP, 2, layout.top - STAGE_TOP); // right rail
+    const lane = ctx.createLinearGradient(0, STAGE_TOP, 0, layout.top);
+    lane.addColorStop(0, "rgba(160,175,255,0.10)");
+    lane.addColorStop(1, "rgba(160,175,255,0.24)");
     ctx.strokeStyle = lane;
     ctx.lineWidth = 1;
     ctx.beginPath();
     for (let i = 0; i <= layout.whiteCount; i++) {
       const x = Math.round(layout.left + i * layout.keyWidth) + 0.5;
-      ctx.moveTo(x, 330);
+      ctx.moveTo(x, STAGE_TOP);
       ctx.lineTo(x, layout.top);
     }
     ctx.stroke();

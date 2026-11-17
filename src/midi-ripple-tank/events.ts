@@ -12,8 +12,8 @@ import type { MidiNote } from "../midi/types.ts";
 /** Frames of lead-in before the first note-on: the title fades in over calm, dark water. */
 export const RIPPLE_LEAD_FRAMES = 36;
 
-/** Phone safe area for source points (canvas px): nothing important within 150 px of the right edge or 300 px of the bottom. */
-export const SOURCE_AREA = { xMin: 160, xMax: 920, yMin: 430, yMax: 1520 } as const;
+/** Where source points may fall (canvas px), symmetric about x = 540 with its centre at y = 940 (framing standard); inside the tank (walls at x 48 and 1032, y 280 and 1600). */
+export const SOURCE_AREA = { xMin: 110, xMax: 970, yMin: 380, yMax: 1500 } as const;
 
 export interface RippleEvent {
   /** Index of the note in scene.notes (events are in the same order, one per note). */
@@ -159,24 +159,50 @@ export function buildRippleEvents(scene: Pick<MidiSceneData, "notes" | "pitchMin
   // Colour follows pitch monotonically, but most of it is the pitch's rank among the piece's notes, so a piece that
   // lives in a narrow register still uses the whole palette instead of one muddy corner of it.
   const rank = pitchRanks(notes);
+  const rankValues = [...rank.values()];
+  const rankLo = rankValues.length ? Math.min(...rankValues) : 0, rankSpan = Math.max(1e-6, (rankValues.length ? Math.max(...rankValues) : 1) - rankLo);
+  // Horizontal placement: mostly the pitch's position inside its own voice's range (so every voice spreads over the whole
+  // width instead of the bass piling up on the left and the melody on the right), plus a mild tilt from the pitch's global
+  // rank so low notes still lean left and high notes right (the voice's median pitch sits on the centre line). Then stretched so the lowest and highest notes of the piece
+  // sit at the two ends of the source area: the layout is symmetric about x = 540.
+  const trackPitches = new Map<number, number[]>();
+  for (const n of notes) {
+    const list = trackPitches.get(n.track);
+    if (list) list.push(n.pitch); else trackPitches.set(n.track, [n.pitch]);
+  }
+  const trackRange = new Map<number, { lo: number; hi: number; median: number }>();
+  for (const [track, pitches] of trackPitches) {
+    pitches.sort((a, b) => a - b);
+    trackRange.set(track, { lo: pitches[0], hi: pitches[pitches.length - 1], median: pitches[pitches.length >> 1] });
+  }
+  const rawX = notes.map((n) => {
+    const r = trackRange.get(n.track)!;
+    // The voice's median pitch is its centre, so half of each voice's notes fall either side of x = 540.
+    const local = 0.5 + (n.pitch - r.median) / (2 * Math.max(7, r.median - r.lo, r.hi - r.median));
+    const global = 0.25 * (pitchMax > pitchMin ? clamp01((n.pitch - pitchMin) / span) : 0.5) + 0.75 * clamp01(((rank.get(n.pitch) ?? 0.5) - rankLo) / rankSpan);
+    return 0.85 * local + 0.15 * global;
+  });
+  const rawLo = rawX.length ? Math.min(...rawX) : 0, rawHi = rawX.length ? Math.max(...rawX) : 1;
   return notes.map((note, index) => {
     const pitchNorm = pitchMax > pitchMin ? clamp01((note.pitch - pitchMin) / span) : 0.5;
     const hueNorm = 0.3 * pitchNorm + 0.7 * (rank.get(note.pitch) ?? 0.5);
+    const xNorm = rawHi - rawLo > 1e-9 ? (rawX[index] - rawLo) / (rawHi - rawLo) : 0.5;
     const vel = clamp01(note.velocity / 127);
     const e = emphasis[index];
     const role = roleOfTrack.get(note.track) ?? 0;
     // x from pitch, y from the voice (lowest voice at the bottom), plus a small seeded jitter so equal pitches do not stack.
-    const xBase = lerp(SOURCE_AREA.xMin + 12, SOURCE_AREA.xMax - 12, pitchNorm);
+    const xBase = lerp(SOURCE_AREA.xMin + 12, SOURCE_AREA.xMax - 12, xNorm);
     const yBase = SOURCE_AREA.yMax - (role + 0.5) * bandHeight;
     const x = clamp(xBase + (hash01(index, 1) - 0.5) * 24, SOURCE_AREA.xMin, SOURCE_AREA.xMax);
     const y = clamp(yBase + (hash01(index, 2) - 0.5) * 2 * jitterY, SOURCE_AREA.yMin, SOURCE_AREA.yMax);
     const hue = pitchHue(hueNorm);
     // Louder notes make longer, taller waves; low notes are a little broader than high ones.
-    const wavelength = lerp(54, 112, vel ** 0.9) * lerp(1.16, 0.88, pitchNorm) * (1 + 0.12 * e);
-    const speed = 36 * Math.sqrt(wavelength);
+    const wavelength = lerp(50, 104, vel ** 0.9) * lerp(1.14, 0.88, pitchNorm) * (1 + 0.12 * e);
+    // Slower, shorter-lived rings than a free surface: they spread across the tank, bounce off its glass walls and fade there.
+    const speed = 26 * Math.sqrt(wavelength);
     const holdSec = clamp(note.durationSec, 0.12, 2);
     const amplitude = (0.5 + 1.0 * vel ** 1.3) * (1 + 0.5 * e);
-    const life = 1.1 + 2.1 * vel ** 1.2 + 0.4 * holdSec + 1.5 * e;
+    const life = 0.95 + 1.7 * vel ** 1.2 + 0.3 * holdSec + 0.9 * e;
     const wake = (vel + 0.35 * e < 0.46 ? 0 : vel + 0.35 * e < 0.74 ? 1 : 2) as 0 | 1 | 2;
     return {
       index, timeSec: note.timeSec,
