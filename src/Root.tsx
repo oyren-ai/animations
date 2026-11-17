@@ -7,6 +7,8 @@ import { getReelArenaTiming, ReelArenaShell } from "./components/ReelArenaShell.
 import { COUNTRY_MAPS } from "./country-maps/fourier.ts";
 import { DROP_STYLES } from "./drop-arenas/sim.ts";
 import { GPU_AUDIO_COMPOSITIONS } from "./gpu-scenes/index.ts";
+import { HitShell } from "./components/HitShell.tsx";
+import { HIT_COMPOSITIONS } from "./hits/index.ts";
 import { PATATE_COMPOSITIONS, PATATE_TOTAL_FRAMES } from "./patate/themes.ts";
 import { STRING_ROUNDS } from "./string-arena/sim.ts";
 import { TOTAL_FRAMES, VIDEO } from "./settings.ts";
@@ -98,6 +100,19 @@ export function Root() {
         fps={VIDEO.fps}
         durationInFrames={gpuScene.totalFrames}
         defaultProps={{ slug: gpuScene.slug }}
+      />
+    ))}
+
+    {HIT_COMPOSITIONS.map((hit) => (
+      <Composition
+        key={hit.spec.id}
+        id={hit.spec.id}
+        component={HitShell}
+        width={VIDEO.width}
+        height={VIDEO.height}
+        fps={VIDEO.fps}
+        durationInFrames={hit.spec.totalFrames}
+        defaultProps={{ slug: hit.spec.slug }}
       />
     ))}
   </>;
