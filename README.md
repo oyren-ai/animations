@@ -8,7 +8,7 @@
 
 Twenty-five animations built from TypeScript, WebGL2 shaders, a canvas, and a clock: five foundational physics scenes, five complex-Fourier country-border reconstructions, four zero-gravity wall-bounce string-arena compositions, five bouncy arcade ball-drop and funnel-merge compositions, three Suika-style Patate Merge boiling-flask compositions with pitch-coupled French voice announcements, and three edge-to-edge full-screen (`1080 × 1920`) GPU shader and 48 kHz stereo audio-reactive compositions. Change the equations, shaders, or physics, scrub to any frame, and render the result as a 60 fps video.
 
-Every composition renders at 1080 × 1920 and 60 fps, closing with a code end card pointing to `github.com/oyren-ai/animations`. Shapes, sovereign map contours, cartoon potato costumes, and geometric vector emblems are drawn procedurally. Sound is synthesized and mixed locally from simulation events and self-generated voice stems. No stock footage, third-party logo files, or music downloads are needed.
+Every composition renders at 1080 × 1920 and 60 fps, closing with a code end card pointing to `github.com/oyren-ai/animations`. Shapes, sovereign map contours, cartoon potato costumes, and geometric vector emblems are drawn procedurally. Sound is synthesized and mixed locally from simulation events and self-generated voice stems. No stock footage, third-party logo files, or music downloads are needed. The one exception to "self-generated" is the `AnimationsRepoShowcase` voiceover, which is AI-generated with Speechify and says so on its end card; see `docs/REPO-SHOWCASE.md`.
 
 ## A few frames
 
@@ -81,6 +81,7 @@ Every composition renders at 1080 × 1920 and 60 fps, closing with a code end ca
 | `CyberSynthShaderTunnel` | Full-bleed `1080 × 1920` WebGL2 `#version 300 es` raymarched octagonal synthwave tunnel whose ribs, chromatic dispersion, and shock rings pulse to a 124 BPM 48 kHz stereo score. | Change the GLSL distance field or chord progression in `src/gpu-scenes/cyberTunnel.ts`. |
 | `PolyphonicWallCascade` | Fourteen luminous orbs bounce edge-to-edge across the entire `0..1080 × 0..1920` acoustic chamber, plucking eight full-span harmonic strings with stereo-panned FM chords. | Retune `HARMONIC_STRINGS` or orb count in `src/gpu-scenes/wallCascade.ts`. |
 | `HarmonicSortingMatrix` | Full-bleed three-band `1080 × 1920` race comparing LSD Radix Sort, Median-of-3 Quick Sort, and Max-Heap Sort over 96 channels with stereo Lydian-pentatonic arpeggios. | Swap sorting algorithms or scale intervals in `src/gpu-scenes/harmonicSorting.ts`. |
+| `AnimationsRepoShowcase` | A 24-second short that introduces this repo with an English AI voiceover (Speechify). Cuts, word-highlight captions and a remix demo follow the measured voice clips; the footage is this repo's own pendulum, ball-drop, string-arena and Fourier-map scenes. | Edit the lines in `src/repo-showcase/script.ts`, regenerate the voice with `scripts/generate-showcase-voice.ts`, and re-render. |
 
 ## Run locally
 
@@ -194,6 +195,10 @@ The full-screen GPU and stereo audio-reactive scenes (`CyberSynthShaderTunnel`, 
 | `src/audio.ts` | Event-to-tone mapping, harmonic map chords, arena soundtracks, and PCM synthesis |
 | `src/encoding.ts` | Explicit PNG-to-BT.709 conversion for the pinned renderer |
 | `src/components/GetTheCodeEndCard.tsx` | Shared closing copy and repository link |
+| `src/repo-showcase/script.ts` | Spoken lines, caption phrases, scene plan and on-screen copy for the repo showcase |
+| `src/repo-showcase/timing.ts` | Cuts, captions and remix steps derived from the measured voice clips |
+| `src/repo-showcase/overlay.ts` | Hook headline, word-highlight captions, remix window and end card, safe-zone checked |
+| `scripts/generate-showcase-voice.ts` | Generates the English voice clips and word timings with Speechify (needs `SPEECHIFY_API_KEY`) |
 
 ## Verify a remix
 
