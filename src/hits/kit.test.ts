@@ -4,6 +4,7 @@ import { measureStereoLufsAndPeak } from "../audio-reactive/synth.ts";
 import { assertReelSafeBox, REEL_SAFE_BOUNDS, type ReelBox } from "../shared/reelUtils.ts";
 import {
   CTA_LINES,
+  chromeLayout,
   clamp,
   createRng,
   digestNumbers,
@@ -120,6 +121,19 @@ test("drawChrome draws the hook, the rule, the CTA and the seed inside the reel 
   for (const box of boxes) assertReelSafeBox(box);
   assert.ok(layout.counterY > layout.ruleY);
   assert.ok(layout.counterY < REEL_SAFE_BOUNDS.bottom - 400, "counters leave room above the CTA block");
+});
+
+test("chromeLayout predicts exactly where drawChrome puts the counters", () => {
+  const cases = [
+    ["Will it overflow?", "Every hit splits the ball."],
+    ["Will it merge into its final form?", "Two of the same tier merge into the next. Only tier 1 drops."],
+    ["Which colour takes the board?", "Balls paint. Every 5 s the smallest colour doubles its balls."],
+  ] as const;
+  for (const [question, rule] of cases) {
+    const spec = makeHitSpec({ id: "P", slug: "p", question, rule, sceneSeconds: 20, description: "d" });
+    const { ctx } = createMockCanvas();
+    assert.deepEqual(chromeLayout(spec), drawChrome(ctx, [], spec), question);
+  }
 });
 
 test("fillBackdrop covers the whole 1080x1920 canvas", () => {

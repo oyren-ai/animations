@@ -190,6 +190,18 @@ export interface ChromeLayout {
 }
 
 /**
+ * Where the chrome ends, without drawing anything. A painter that needs to place its HUD (or a
+ * keep-clear zone) before it draws the chrome can ask for this; `drawChrome` returns the same numbers.
+ */
+export function chromeLayout(spec: HitSpec): ChromeLayout {
+  const hookLines = wrapQuestion(spec.question);
+  const ruleLines = wrapQuestion(spec.rule, HUD.ruleWrapChars);
+  const firstRuleY = HUD.hookFirstY + (hookLines.length - 1) * HUD.hookLineGap + 58;
+  const ruleY = firstRuleY + (ruleLines.length - 1) * HUD.ruleLineGap;
+  return { ruleY, counterY: ruleY + 84 };
+}
+
+/**
  * Draws the frame-0 hook question, the rule line, the CTA and the seed footer.
  * Everything goes through `drawReelText`, so the safe-bounds assertion runs on every box.
  */

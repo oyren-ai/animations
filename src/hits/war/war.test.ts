@@ -300,7 +300,7 @@ test("frame 0 shows the question, the rule, a 0:22 clock, four colour labels and
   const trace = getTrace();
   const { drawn, boxes } = paintFrame(trace, 0);
   assert.ok(drawn.join(" ").includes(WAR_SPEC.question));
-  assert.ok(drawn.includes(WAR_SPEC.rule));
+  assert.ok(drawn.join(" ").includes(WAR_SPEC.rule), "the rule may wrap onto two lines");
   assert.ok(drawn.includes(CTA_LINES[0]) && drawn.includes(CTA_LINES[1]));
   assert.ok(drawn.includes("0:22"));
   for (const name of TEAM_NAMES) assert.ok(drawn.includes(`${name} 0%`), `${name} label at frame 0`);
