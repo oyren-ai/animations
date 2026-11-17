@@ -13,7 +13,8 @@ import { TIER_COUNT, TIERS } from "./tiers.ts";
  */
 
 export const WORLD_W = 1080;
-export const FLOOR_Y = 1540;
+/** The floor is the top edge of the deck that carries the CTA lines (y 1478 to 1548 are fixed by the kit), so the pile never sits behind text. */
+export const FLOOR_Y = 1448;
 /** The tube mouth. Pieces leave it, so the container below starts empty. */
 export const MOUTH_X = 540;
 export const MOUTH_Y = 632;
@@ -77,7 +78,7 @@ export const TUNING: MergeTuning = {
   gravity: 2600,
   restitution: 0.25,
   restThreshold: 150,
-  frictionFloor: 0.18,
+  frictionFloor: 0.25,
   frictionPair: 0.1,
   frictionWall: 0.05,
   iterations: 8,
@@ -87,14 +88,14 @@ export const TUNING: MergeTuning = {
   immunitySec: 0.08,
   firstDropSec: 0.1,
   dropStartSec: 0.3,
-  dropEndSec: 0.15,
-  dropRampSec: 18,
-  speedMin: 520,
-  speedMax: 980,
+  dropEndSec: 0.16,
+  dropRampSec: 16,
+  speedMin: 420,
+  speedMax: 1100,
   tanMax: 0.70021,
   impactMin: 420,
-  rampRun: 340,
-  rampRise: 320,
+  rampRun: 330,
+  rampRise: 360,
   radii: TIERS.map((t) => t.radius),
 };
 

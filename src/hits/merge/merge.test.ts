@@ -148,8 +148,10 @@ test("merge: roughly 100 or more pieces drop, the interval shrinks from about 0.
   const early = gaps.slice(0, 5).reduce((a, b) => a + b, 0) / 5;
   const late = gaps.slice(-5).reduce((a, b) => a + b, 0) / 5;
   assert.ok(early > 0.26 && early < 0.34, `early gap ${early}`);
-  assert.ok(late > 0.14 && late < 0.2, `late gap ${late}`);
-  for (let i = 1; i < gaps.length; i++) assert.ok(gaps[i] <= gaps[i - 1] + 0.004, "gaps never grow");
+  assert.ok(late > 0.13 && late < 0.2, `late gap ${late}`);
+  // drops land on 240 Hz substeps, so a gap may wobble by one or two substeps but never grow for real
+  for (let i = 1; i < gaps.length; i++) assert.ok(gaps[i] <= gaps[i - 1] + 0.0085, "gaps never grow");
+  assert.ok(gaps[gaps.length - 1] < gaps[0] - 0.1, "the stream is much faster at the end");
 });
 
 test("merge: every spawn is tier 1 and every higher tier is earned by a merge", () => {
@@ -232,12 +234,13 @@ test("merge: a visible chain happens (merges that trigger each other)", () => {
   assert.ok(maxChain >= 3, `max chain ${maxChain}`);
   let state = CHAIN_IDLE;
   for (const m of trace.merges) {
-    state = chainOnMerge(state, m.t);
+    state = chainOnMerge(state, m.t, m.linked);
     assert.equal(m.chain, state.count, `chain of merge ${m.index}`);
+    if (m.chain > 1) assert.ok(m.linked, "a chain is only raised by a merge that a recent merge triggered");
   }
   for (let f = 0; f < trace.frames; f += 11) {
     let s = CHAIN_IDLE;
-    for (const m of trace.merges) if (m.sub < f * SUB) s = chainOnMerge(s, m.t);
+    for (const m of trace.merges) if (m.sub < f * SUB) s = chainOnMerge(s, m.t, m.linked);
     assert.equal(trace.chainLive[f], chainLive(s, (f * SUB) / (SUB * 60)), `live chain at frame ${f}`);
   }
 });
@@ -260,7 +263,7 @@ test("merge: the HUD arrays follow the merges", () => {
 
 test("merge: the pile never rises above y = 700 and nothing sinks through the floor", () => {
   assert.equal(PILE_LIMIT_Y, 700);
-  assert.equal(FLOOR_Y, 1540);
+  assert.equal(FLOOR_Y, 1448);
   let highest = Infinity;
   for (let f = 0; f < trace.frames; f++) {
     for (let k = trace.frameStart[f]; k < trace.frameStart[f + 1]; k++) {

@@ -21,13 +21,13 @@ export interface TierInfo {
 }
 
 export const TIERS: readonly TierInfo[] = [
-  { tier: 1, name: "bit", radius: 38, color: "#38bdf8", dark: "#0b4a6f", light: "#c4ecff" },
-  { tier: 2, name: "byte", radius: 51, color: "#2dd4bf", dark: "#0f5f58", light: "#a6f7ea" },
-  { tier: 3, name: "line", radius: 68, color: "#4ade80", dark: "#14632f", light: "#c5fbd8" },
-  { tier: 4, name: "func", radius: 90, color: "#facc15", dark: "#85500c", light: "#fff0a0" },
-  { tier: 5, name: "file", radius: 118, color: "#fb923c", dark: "#9a3410", light: "#ffd9b8" },
-  { tier: 6, name: "repo", radius: 154, color: "#fb7185", dark: "#9f1239", light: "#ffd0d8" },
-  { tier: 7, name: "agent", radius: 200, color: "#c8ff00", dark: "#4a7a00", light: "#f4ffc2" },
+  { tier: 1, name: "bit", radius: 44, color: "#38bdf8", dark: "#0b4a6f", light: "#c4ecff" },
+  { tier: 2, name: "byte", radius: 58, color: "#2dd4bf", dark: "#0f5f58", light: "#a6f7ea" },
+  { tier: 3, name: "line", radius: 76, color: "#4ade80", dark: "#14632f", light: "#c5fbd8" },
+  { tier: 4, name: "func", radius: 100, color: "#facc15", dark: "#85500c", light: "#fff0a0" },
+  { tier: 5, name: "file", radius: 132, color: "#fb923c", dark: "#9a3410", light: "#ffd9b8" },
+  { tier: 6, name: "repo", radius: 172, color: "#fb7185", dark: "#9f1239", light: "#ffd0d8" },
+  { tier: 7, name: "agent", radius: 224, color: "#c8ff00", dark: "#4a7a00", light: "#f4ffc2" },
 ];
 
 /** Text of the payoff banner, drawn in lime once the first tier-7 piece exists. */

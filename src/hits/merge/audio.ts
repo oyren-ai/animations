@@ -24,9 +24,10 @@ import { TIER_COUNT } from "./tiers.ts";
  * Everything is a sum of sines or low-passed noise, so the mix stays warm and band-limited.
  */
 
+/** Merge bells and chain notes together never exceed this many per second, in any 1 s window. */
 export const BELL_CAP_PER_SEC = 10;
-/** Main merge bells are thinned a little tighter so chain notes have room under the total cap. */
-const MAIN_BELL_CAP_PER_SEC = 8;
+/** Merges closer than this are one gesture: a loose `thinEvents` pass drops the near-duplicates (50 ms). */
+const BELL_DUPLICATE_RATE = 20;
 export const TICK_CAP_PER_SEC = 8;
 export const THUD_CAP_PER_SEC = 6;
 export const CHAIN_NOTE_STAGGER_SEC = 0.04;
@@ -100,14 +101,18 @@ function insertSorted(times: number[], t: number): void {
 }
 
 export function buildMergeSchedule(trace: MergeTrace): MergeSchedule {
-  // bells: one per merge, thinned to the main cap, then chain notes where the total cap allows
-  const mains = thinEvents(
+  // bells: one per merge (a loose thin pass, then the 1 s window cap), then chain notes where the cap still has room
+  const merged = thinEvents(
     trace.merges.map((m) => ({ t: m.t, m })),
-    MAIN_BELL_CAP_PER_SEC,
+    BELL_DUPLICATE_RATE,
   );
   const bells: BellEvent[] = [];
   const times: number[] = [];
-  for (const { t, m } of mains) {
+  const mains: { t: number; m: (typeof trace.merges)[number] }[] = [];
+  for (const { t, m } of merged) {
+    if (!fitsCap(times, t, BELL_CAP_PER_SEC)) continue;
+    mains.push({ t, m });
+    insertSorted(times, t);
     bells.push({
       t,
       midi: bellMidi(m.tier),
@@ -118,7 +123,6 @@ export function buildMergeSchedule(trace: MergeTrace): MergeSchedule {
       decay: 8.5 - 0.8 * (m.tier - 2),
       durSec: 0.5 + 0.17 * (m.tier - 2),
     });
-    insertSorted(times, t);
   }
   for (const { t, m } of mains) {
     const extras = Math.min(2, m.chain - 1);

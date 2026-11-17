@@ -1,14 +1,19 @@
-import { makeStubHit } from "../stub.ts";
-import { makeHitSpec } from "../types.ts";
+import { digestMerge, simulateMerge, type MergeTrace } from "./sim.ts";
+import { HIT_SEED, type HitComposition } from "../types.ts";
+import { buildMergeAudio } from "./audio.ts";
+import { paintMerge } from "./paint.ts";
+import { MERGE_SPEC } from "./spec.ts";
 
-export const MERGE_SPEC = makeHitSpec({
-  id: "FunnelMerge",
-  slug: "funnel-merge",
-  question: "Will it merge into its final form?",
-  rule: "Two of the same tier merge into the next. Only tier 1 drops.",
-  sceneSeconds: 24,
-  description:
-    "Full-screen funnel: only tier-1 pieces drop, same-tier pieces merge into the next tier, chains stack a multiplier, and the final form appears.",
-});
+export { MERGE_SPEC };
 
-export const funnelMerge = makeStubHit(MERGE_SPEC);
+/**
+ * FunnelMerge: pieces leave a top tube at random angles, only tier 1 drops, two of the same tier merge
+ * into the next, chains stack a CHAIN multiplier, and the first tier-7 piece is the final form.
+ */
+export const funnelMerge: HitComposition<MergeTrace> = {
+  spec: MERGE_SPEC,
+  simulate: (seed: number = HIT_SEED) => simulateMerge(seed),
+  digest: digestMerge,
+  buildAudio: buildMergeAudio,
+  paint: paintMerge,
+};
