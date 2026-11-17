@@ -26,10 +26,6 @@ function built(comp: AnyHitComposition): { trace: unknown } {
   return { trace: traceCache.get(comp.spec.slug) };
 }
 
-function isReady(comp: AnyHitComposition): boolean {
-  return (comp.status ?? "ready") === "ready";
-}
-
 test("the registry lists exactly four hit compositions with unique ids and slugs", () => {
   assert.equal(HIT_COMPOSITIONS.length, 4);
   assert.equal(new Set(HIT_COMPOSITIONS.map((c) => c.spec.id)).size, 4);
@@ -84,7 +80,7 @@ for (const comp of HIT_COMPOSITIONS) {
       const boxes: ReelBox[] = comp.paint(mock.ctx, trace, f);
       for (const box of boxes) assertReelSafeBox(box);
       assert.ok(mock.fillRects.some((r) => r.w >= 1080 && r.h >= 1920), `frame ${f} paints a full backdrop`);
-      if (isReady(comp) && f >= spec.sceneFrames * 0.5) {
+      if (f >= spec.sceneFrames * 0.5) {
         const coverage = mock.coverageGrid(6, 10);
         assert.ok(coverage >= 0.5, `frame ${f}: action reaches only ${(coverage * 100).toFixed(0)}% of a 6x10 grid`);
       }

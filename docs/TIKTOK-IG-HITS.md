@@ -22,8 +22,23 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | `OverflowArena` | `overflow-arena` | Will it overflow? | Every hit splits the ball. | BALLS 1 -> 10,000 | the walls crack and the balls spill out | each split plays a bell on a rising pentatonic scale, rate-capped; a low boom at the burst |
 | `BrickEscape` | `brick-escape` | Will it get out in time? | Every bounce lays a brick. Every brick shrinks the exit. | BRICKS and EXIT width | IT GOT OUT or WALLED IN | each bounce plays the next note of a public-domain tune (name the song) |
-| `FunnelMerge` | `funnel-merge` | Will it merge into its final form? | Two of the same tier merge into the next. Only tier 1 drops. | TIER n of 8, CHAIN x | the final form appears and holds | the note of the merged tier; chains stack as a chord |
-| `ColourWarV4` | `colour-war-v4` | Which colour takes the board? | Balls paint. Every 5 s the smallest colour doubles its balls. | four share bars | the colour with the biggest share at 24 s | a soft tick per captured cell, panned by x; a rising whoosh when the underdog rule fires |
+| `FunnelMerge` | `funnel-merge` | Will it merge into its final form? | Two of the same tier merge into the next. Only tier 1 drops. | TIER n of 7, MERGES, CHAIN x | the final form (agent) appears and holds | the note of the merged tier; chains stack as a chord |
+| `ColourWarV4` | `colour-war-v4` | Which colour takes the board? | Balls paint. Every 5 s the smallest colour doubles its balls. | four share bars and a clock | the colour with the biggest share when the clock reaches 0:00 | a soft tick per captured cell, panned by x; a rising whoosh when the underdog rule fires |
+
+## Pacing is tuned, not found
+
+Every video lands its payoff on a story beat (a close escape, an overflow, a final form, a close finish). The runs are chaotic, so the beat comes from tuning constants and the starting layout, scanned and written down here. The seed `20261117` was never changed, it is shown on screen, and the footer says "seeded physics, not a benchmark": the numbers are what the physics produced, not a measurement of anything.
+
+| Composition | Tuned constants | What was scanned | Result with the fixed seed |
+| --- | --- | --- | --- |
+| `OverflowArena` | ball speed 720 px/s | 11 speeds from 600 to 780 px/s (600 and 620 never reach 10,000 in time; the overflow time is not monotonic in speed) | overflow at 18.5 s, chamber clear by the end |
+| `BrickEscape` | speed 2,110 px/s, launch angle 43.474 degrees, door 600 px shrinking 10.65 px per brick | about 300,000 combinations of angle, speed and shrink | the ball gets out at 21.3 s through a 78 px door (ball 60 px); a 0.004 degree nudge gives the same escape |
+| `FunnelMerge` | tier radii 44 to 224 px, ramps and floor, gravity, restitution, friction, drop interval 0.30 to 0.16 s | hand tuning with measured timelines | first tier 7 at 19.8 s; 24 other seeds were tried once and only 4 reached tier 7 in the window |
+| `ColourWarV4` | ball speed 900 px/s, start inset 160 px, heading scatter, which colour starts in which corner | about 1,100 runs | top two within 1.6 points at 0:00, three lead changes in the last 10 s |
+
+## Same picture in Node and in the render browser
+
+The audio is built in Node and the picture is simulated again in the render browser, so the simulations must agree to the bit. `FunnelMerge` and `ColourWarV4` use only exact IEEE operations (+ - * / and square root). `OverflowArena` and `BrickEscape` round the few math-library results that feed their dynamics to 4 to 6 decimals. `src/hits/golden.test.ts` pins one digest per composition, so a platform that computes a different trajectory fails the test instead of drifting out of sync with its sound.
 
 ## Files
 

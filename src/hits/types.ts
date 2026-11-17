@@ -35,8 +35,6 @@ export interface HitAudio {
 
 export interface HitComposition<Trace = unknown> {
   readonly spec: HitSpec;
-  /** `stub` is a placeholder that only satisfies the structural contract; `ready` must pass every check. Default `ready`. */
-  readonly status?: "stub" | "ready";
   /** Deterministic: the same seed must give the same trace on every run and machine. */
   simulate(seed?: number): Trace;
   /** Short stable hash of the trace, used to prove determinism. */

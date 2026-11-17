@@ -31,7 +31,6 @@ test("brick: the spec keeps its id, slug, question and scene length, and is a re
   assert.equal(BRICK_SPEC.sceneFrames, 24 * 60);
   assert.equal(BRICK_SPEC.sceneFrames, SCENE_FRAMES);
   assert.ok(BRICK_SPEC.rule.length <= 64);
-  assert.notEqual(brickEscape.status, "stub");
   assert.equal(brickEscape.spec, BRICK_SPEC);
 });
 

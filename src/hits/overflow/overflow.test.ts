@@ -18,9 +18,9 @@ import {
 
 const trace = simulateOverflow(HIT_SEED);
 
-test("the composition is a real one, not the stub", () => {
-  assert.notEqual(overflowArena.status, "stub");
+test("the composition keeps its spec", () => {
   assert.equal(overflowArena.spec, OVERFLOW_SPEC);
+  assert.equal(OVERFLOW_SPEC.id, "OverflowArena");
 });
 
 test("frame 0 holds exactly one big ball and the first split lands within 1 s", () => {

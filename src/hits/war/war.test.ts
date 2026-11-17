@@ -73,7 +73,6 @@ test("the spec keeps its id, slug, question and scene length, and the rule line 
   assert.equal(WAR_SPEC.sceneFrames, 24 * 60);
   assert.equal(SCENE_FRAMES, WAR_SPEC.sceneFrames);
   assert.ok(WAR_SPEC.rule.length <= 64);
-  assert.notEqual(colourWarV4.status, "stub");
   assert.equal(COLS * ROWS, CELLS);
   assert.equal(COLS * CELL, W);
   assert.equal(ROWS * CELL, H);

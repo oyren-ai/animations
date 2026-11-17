@@ -15,7 +15,6 @@ export const WAR_SPEC = makeHitSpec({
 
 export const colourWarV4: HitComposition<WarTrace> = {
   spec: WAR_SPEC,
-  status: "ready",
   simulate: (seed = HIT_SEED) => simulateWar(seed),
   digest: digestWar,
   buildAudio: buildWarAudio,

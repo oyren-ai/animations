@@ -20,7 +20,6 @@ function cachedTrace(seed: number): OverflowTrace {
 
 export const overflowArena: HitComposition<OverflowTrace> = {
   spec: OVERFLOW_SPEC,
-  status: "ready",
   simulate: (seed = HIT_SEED) => cachedTrace(seed),
   digest: (trace) => fnv1a(digestOverflow(trace)),
   buildAudio: (trace) => buildOverflowAudio(trace),

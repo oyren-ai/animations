@@ -86,7 +86,6 @@ test("merge: seven tiers, radii growing, names climb bit to agent, spec keeps it
   assert.equal(MERGE_SPEC.question, "Will it merge into its final form?");
   assert.equal(MERGE_SPEC.sceneFrames, 24 * 60);
   assert.ok(MERGE_SPEC.rule.length <= 64);
-  assert.notEqual(funnelMerge.status, "stub");
 });
 
 /* ---------- chain (pure) ---------- */
