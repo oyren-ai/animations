@@ -34,6 +34,8 @@ export function createMockCanvas(): MockCanvas {
   const fillRects: MockCanvas["fillRects"] = [];
   const texts: MockText[] = [];
   const shapes: MockShape[] = [];
+  /** Individual arc and rect primitives, so batched paths still count where each piece sits. */
+  const prims: MockShape[] = [];
   let paints = 0;
   let font = "600 24px Inter";
   let pathMinX = Infinity;
@@ -105,14 +107,17 @@ export function createMockCanvas(): MockCanvas {
     arc(x: number, y: number, r: number) {
       addPoint(x - r, y - r);
       addPoint(x + r, y + r);
+      prims.push({ kind: "arc", cx: x, cy: y, hw: r, hh: r });
     },
     rect(x: number, y: number, w: number, h: number) {
       addPoint(x, y);
       addPoint(x + w, y + h);
+      prims.push({ kind: "rect", cx: x + w / 2, cy: y + h / 2, hw: w / 2, hh: h / 2 });
     },
     roundRect(x: number, y: number, w: number, h: number) {
       addPoint(x, y);
       addPoint(x + w, y + h);
+      prims.push({ kind: "rect", cx: x + w / 2, cy: y + h / 2, hw: w / 2, hh: h / 2 });
     },
     fill() {
       paints++;
@@ -171,7 +176,7 @@ export function createMockCanvas(): MockCanvas {
 
   const coverageGrid = (cols: number, rows: number, width = 1080, height = 1920): number => {
     const hit = new Set<number>();
-    for (const s of shapes) {
+    for (const s of [...shapes, ...prims]) {
       // Skip full-width bands (backdrops and HUD scrims); they are not the action.
       if (s.kind === "rect" && s.hw * 2 >= width * 0.9) continue;
       const c = Math.floor((s.cx / width) * cols);
