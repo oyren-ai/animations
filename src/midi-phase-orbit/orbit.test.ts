@@ -6,7 +6,7 @@ import { parseMidi } from "../midi/parse.ts";
 import { barSeconds, buildSceneData, pieceTime, type MidiSceneData } from "../midi/timeline.ts";
 import type { MidiNote, ParsedMidi } from "../midi/types.ts";
 import {
-  angleDiff, arcState, barPulse, breathing, buildOrbit, buildRingMap, cameraZoom, climaxEnvelope, discRotation, DISC, LEGEND, legendLayout,
+  angleDiff, arcState, barPulse, breathing, buildOrbit, buildRingMap, cameraZoom, climaxEnvelope, discRotation, DISC, LEGEND, legendLayout, legendPositions,
   MAX_ARCS, maxArcExtent, onsetFrame, orbitPeriod, PALETTE, pickVisible, playheadAngle, shockwave, strikeGlowDiameter, TAU, TICK_MAX,
   TIMELINE, visibleRange, WINDOW_AHEAD, WINDOW_BEHIND, wrapAngle,
 } from "./layout.ts";
@@ -249,6 +249,36 @@ test("framing: a 1000 px disc centred on (540, 930) with equal 40-60 px margins,
   assert.ok(legendLayout([210, 160, 120, 130, 140]).some((slot) => slot.row === 1), "five long names wrap to a second row");
   assert.equal((TIMELINE.left + TIMELINE.right) / 2, 540);
   assert.ok(TIMELINE.left >= 120 && TIMELINE.right <= 960 && TIMELINE.y < 1920 - 200 && TIMELINE.y > LEGEND.y + LEGEND.rowGap + 40);
+});
+
+test("legend entries stay centred on x = 540 while voices join one by one (every subset, and half-visible entries)", () => {
+  const widths = [150, 128, 96, 88];
+  for (let mask = 1; mask < 16; mask++) {
+    const enters = widths.map((_, i) => ((mask >> i) & 1 ? 1 : 0));
+    const slots = legendPositions(widths, enters);
+    const visible = widths.map((_, i) => i).filter((i) => enters[i] > 0);
+    assert.deepEqual(slots.map((slot) => slot.index), visible, `only the visible entries are placed (mask ${mask})`);
+    const left = Math.min(...slots.map((slot) => slot.x));
+    const right = Math.max(...slots.map((slot) => slot.x + widths[slot.index]));
+    near((left + right) / 2, 540, 0.5, `visible legend centre for subset ${mask.toString(2)}`);
+  }
+  // A voice fading in: the weighted group stays centred and entries never jump (positions are continuous in the weight).
+  let previous: number | undefined;
+  for (let e = 0.02; e <= 1; e += 0.02) {
+    const slots = legendPositions(widths, [1, 1, e, 0]);
+    const first = slots[0].x, last = slots[slots.length - 1];
+    near((first + last.x + e * widths[2]) / 2, 540, 0.5, "weighted centre while the third voice enters");
+    if (previous !== undefined) assert.ok(Math.abs(first - previous) < 12, "the first entry glides, it does not jump");
+    previous = first;
+  }
+  assert.deepEqual(legendPositions(widths, [0, 0, 0, 0]), []);
+  // Wrapping rows are centred independently, also with hidden entries.
+  const long = [300, 300, 300, 300];
+  const rows = legendPositions(long, [1, 1, 1, 1]);
+  for (const row of new Set(rows.map((slot) => slot.row))) {
+    const inRow = rows.filter((slot) => slot.row === row);
+    near((Math.min(...inRow.map((slot) => slot.x)) + Math.max(...inRow.map((slot) => slot.x + 300))) / 2, 540, 0.5, `wrapped row ${row}`);
+  }
 });
 
 test("camera budget: breathing at most 1.5 percent, kicks at most 3 percent on top, everything returns to exactly 1.0", () => {

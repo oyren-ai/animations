@@ -81,6 +81,33 @@ export function legendLayout(widths: readonly number[]): LegendSlot[] {
   return slots;
 }
 
+/**
+ * Left edge of every legend entry that is currently visible (`enters` runs from 0 to 1 as a voice fades in; entries at 0 are
+ * omitted). The rows come from `legendLayout` on the full widths, but the VISIBLE entries of each row are centred on
+ * x = DISC.cx, so the legend stays centred while voices join one by one: later entries glide into place as they appear.
+ */
+export function legendPositions(widths: readonly number[], enters: readonly number[]): LegendSlot[] {
+  const rows = new Map<number, LegendSlot[]>();
+  for (const slot of legendLayout(widths)) {
+    const group = rows.get(slot.row);
+    if (group) group.push(slot); else rows.set(slot.row, [slot]);
+  }
+  const out: LegendSlot[] = [];
+  for (const [row, group] of rows) {
+    const visible = group.filter((slot) => (enters[slot.index] ?? 0) > 0.001);
+    if (!visible.length) continue;
+    let total = 0;
+    for (const slot of visible) total += enters[slot.index] * (widths[slot.index] + LEGEND.gap);
+    total -= LEGEND.gap * enters[visible[visible.length - 1].index]; // no trailing gap after the last visible entry
+    let x = DISC.cx - total / 2;
+    for (const slot of visible) {
+      out.push({ index: slot.index, row, x });
+      x += enters[slot.index] * (widths[slot.index] + LEGEND.gap);
+    }
+  }
+  return out;
+}
+
 /** Window of notes shown around the playhead, in revolutions. */
 export const WINDOW_BEHIND = 0.4;
 export const WINDOW_AHEAD = 0.6;

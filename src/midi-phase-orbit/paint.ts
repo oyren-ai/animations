@@ -5,7 +5,7 @@ import {
 import { pieceTime, type MidiSceneData } from "../midi/timeline.ts";
 import {
   arcState, barPulse, breathing, BUMP, buildOrbit, cameraZoom, climaxEnvelope, DISC, discRotation, firstEventAfter, firstEventAtOrAfter,
-  FLARE_MAX, GLOW_HALF, HALF_PI, LEGEND, legendLayout, pickVisible, playheadAngle, polarX, polarY, POP_MAX, shockwave, strikeGlowDiameter,
+  FLARE_MAX, GLOW_HALF, HALF_PI, LEGEND, legendPositions, pickVisible, playheadAngle, polarX, polarY, POP_MAX, shockwave, strikeGlowDiameter,
   TAU, TICK_MAX, TIMELINE, type ArcState, type OrbitEvent, type OrbitModel,
 } from "./layout.ts";
 import { DUST_COUNT, dustAt, SPARK_MAX_LIFE, sparkAt, type DustPoint, type SparkPoint } from "./particles.ts";
@@ -421,13 +421,14 @@ function drawLegend(ctx: CanvasRenderingContext2D, entries: LegendEntry[], t: nu
   ctx.textBaseline = "alphabetic";
   letterSpaced.letterSpacing = "3px";
   const dot = 22;
-  for (const entry of entries) if (!entry.width) entry.width = ctx.measureText(entry.name).width + dot;
-  for (const slot of legendLayout(entries.map((entry) => entry.width))) {
+  // Visible text extent: the dot, the name, and no trailing letter-spacing gap after the last glyph.
+  for (const entry of entries) if (!entry.width) entry.width = ctx.measureText(entry.name).width - 3 + dot;
+  const enters = entries.map((entry) => smoothstep(entry.onsets[0] - 0.5, entry.onsets[0] + 0.3, t) * appear);
+  for (const slot of legendPositions(entries.map((entry) => entry.width), enters)) {
     const entry = entries[slot.index];
     const x = slot.x;
     const y = LEGEND.y + slot.row * LEGEND.rowGap;
-    const first = entry.onsets[0];
-    const enter = smoothstep(first - 0.5, first + 0.3, t) * appear;
+    const enter = enters[slot.index];
     let lo = 0, hi = entry.onsets.length;
     while (lo < hi) { const mid = (lo + hi) >> 1; if (entry.onsets[mid] <= t) lo = mid + 1; else hi = mid; }
     const pulse = lo > 0 ? Math.exp(-(t - entry.onsets[lo - 1]) / 0.2) : 0;
