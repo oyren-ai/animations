@@ -52,6 +52,14 @@ Every composition renders at 1080 × 1920 and 60 fps, closing with a code end ca
 | --- | --- |
 | <img src="docs/previews/HarmonicSortingMatrix.png" width="270" alt="Full-bleed three-band Radix, Quick, and Max-Heap Sort race over 96 neon channels"> | <img src="docs/previews/code-end-card.png" width="270" alt="Get the code for this animation at github.com/oyren-ai/animations"> |
 
+| Tower: linear vs exponential | Titan hammer vs swarm |
+| --- | --- |
+| <img src="docs/previews/TowerLinearVsExponential.png" width="270" alt="Twin vaults: 5,000 balls at +600 per second against one ball that multiplies by ten every 4.5 seconds"> | <img src="docs/previews/TitanHammerVsSwarm.png" width="270" alt="A 4,000-ball swarm against one Titan orb that doubles its damage on every bounce"> |
+
+| Splitter wall escape | Afterburner lap comeback |
+| --- | --- |
+| <img src="docs/previews/SplitterWallEscape.png" width="270" alt="A steady laser against a splitter that triples its balls at every wall"> | <img src="docs/previews/AfterburnerLapComeback.png" width="270" alt="A steady 900 km/h cruiser against a racer that gains 18 percent speed on every bounce"> |
+
 ## The compositions
 
 | Composition ID | What happens | Good first remix |
