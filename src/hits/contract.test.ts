@@ -64,7 +64,7 @@ for (const comp of HIT_COMPOSITIONS) {
     const boxes = comp.paint(mock.ctx, trace, 0);
     const drawn = mock.texts.map((t) => t.text);
     assert.ok(drawn.join(" ").includes(spec.question), "question is drawn at frame 0");
-    assert.ok(drawn.includes(spec.rule), "rule line is drawn at frame 0");
+    assert.ok(drawn.join(" ").includes(spec.rule), "rule is drawn at frame 0 (it may wrap onto two lines)");
     assert.ok(drawn.includes(CTA_LINES[0]) && drawn.includes(CTA_LINES[1]), "small CTA line is drawn");
     assert.ok(drawn.some((t) => t.includes(`seed ${HIT_SEED}`)), "seed is shown");
     assert.ok(

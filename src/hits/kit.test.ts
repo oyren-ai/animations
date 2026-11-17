@@ -83,6 +83,22 @@ test("wrapQuestion keeps short questions whole and splits long ones into two bal
   assert.ok(Math.abs(lines[0].length - lines[1].length) <= 8);
 });
 
+test("wrapQuestion prefers one sentence per line for the rule text", () => {
+  assert.deepEqual(wrapQuestion("Every bounce lays a brick. Every brick shrinks the exit.", 40), [
+    "Every bounce lays a brick.",
+    "Every brick shrinks the exit.",
+  ]);
+  assert.deepEqual(wrapQuestion("Balls paint. Every 5 s the smallest colour doubles its balls.", 40), [
+    "Balls paint.",
+    "Every 5 s the smallest colour doubles its balls.",
+  ]);
+  assert.deepEqual(wrapQuestion("Two of the same tier merge into the next. Only tier 1 drops.", 40), [
+    "Two of the same tier merge into the next.",
+    "Only tier 1 drops.",
+  ]);
+  assert.deepEqual(wrapQuestion("Every hit splits the ball.", 40), ["Every hit splits the ball."]);
+});
+
 test("drawChrome draws the hook, the rule, the CTA and the seed inside the reel safe bounds", () => {
   const spec = makeHitSpec({
     id: "KitProbe",
@@ -97,7 +113,7 @@ test("drawChrome draws the hook, the rule, the CTA and the seed inside the reel 
   const layout = drawChrome(ctx, boxes, spec);
   const drawn = texts.map((t) => t.text);
   assert.ok(drawn.join(" ").includes(spec.question), "question is on screen");
-  assert.ok(drawn.includes(spec.rule), "rule line is on screen");
+  assert.ok(drawn.join(" ").includes(spec.rule), "rule is on screen (it may wrap onto two lines)");
   assert.ok(drawn.includes(CTA_LINES[0]) && drawn.includes(CTA_LINES[1]), "CTA lines are on screen");
   assert.ok(drawn.some((t) => t.includes(`seed ${HIT_SEED}`)), "seed footer is on screen");
   assert.ok(boxes.length >= 5);

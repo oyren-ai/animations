@@ -23,7 +23,7 @@
 | `OverflowArena` | `overflow-arena` | Will it overflow? | Every hit splits the ball. | BALLS 1 -> 10,000 | the walls crack and the balls spill out | each split plays a bell on a rising pentatonic scale, rate-capped; a low boom at the burst |
 | `BrickEscape` | `brick-escape` | Will it get out in time? | Every bounce lays a brick. Every brick shrinks the exit. | BRICKS and EXIT width | IT GOT OUT or WALLED IN | each bounce plays the next note of a public-domain tune (name the song) |
 | `FunnelMerge` | `funnel-merge` | Will it merge into its final form? | Two of the same tier merge into the next. Only tier 1 drops. | TIER n of 8, CHAIN x | the final form appears and holds | the note of the merged tier; chains stack as a chord |
-| `ColourWarV4` | `colour-war-v4` | Which colour takes the board? | Balls paint what they touch. The smallest colour gets double balls every 5 s. | four share bars | the colour with the biggest share at 24 s | a soft tick per captured cell, panned by x; a rising whoosh when the underdog rule fires |
+| `ColourWarV4` | `colour-war-v4` | Which colour takes the board? | Balls paint. Every 5 s the smallest colour doubles its balls. | four share bars | the colour with the biggest share at 24 s | a soft tick per captured cell, panned by x; a rising whoosh when the underdog rule fires |
 
 ## Files
 

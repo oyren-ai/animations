@@ -31,9 +31,12 @@ export const CTA_LINES = [
 
 export const HUD = {
   hookFirstY: 292,
-  hookLineGap: 74,
-  hookSize: 68,
-  ruleSize: 30,
+  hookLineGap: 94,
+  hookSize: 86,
+  ruleSize: 34,
+  /** Rules longer than this wrap onto two balanced lines so they stay readable. */
+  ruleWrapChars: 40,
+  ruleLineGap: 42,
   ctaY1: 1478,
   ctaY2: 1514,
   ctaSize: 27,
@@ -152,12 +155,17 @@ function withShadow<T>(ctx: CanvasRenderingContext2D, draw: () => T): T {
   return out;
 }
 
-/** Split a question into at most two balanced lines. */
-export function wrapQuestion(text: string, maxCharsPerLine = 22): string[] {
+/**
+ * Split text into at most two balanced lines. A split right after a sentence end ("." or "?") is
+ * preferred when both halves stay short, because a rule reads better one sentence per line.
+ */
+export function wrapQuestion(text: string, maxCharsPerLine = 22, sentenceMax = 50): string[] {
   if (text.length <= maxCharsPerLine) return [text];
   const words = text.split(" ");
   let best: string[] = [text];
   let bestScore = Number.POSITIVE_INFINITY;
+  let bestSentence: string[] | null = null;
+  let bestSentenceScore = Number.POSITIVE_INFINITY;
   for (let i = 1; i < words.length; i++) {
     const a = words.slice(0, i).join(" ");
     const b = words.slice(i).join(" ");
@@ -166,12 +174,16 @@ export function wrapQuestion(text: string, maxCharsPerLine = 22): string[] {
       bestScore = score;
       best = [a, b];
     }
+    if (/[.?]$/.test(words[i - 1]) && score <= sentenceMax && score < bestSentenceScore) {
+      bestSentenceScore = score;
+      bestSentence = [a, b];
+    }
   }
-  return best;
+  return bestSentence ?? best;
 }
 
 export interface ChromeLayout {
-  /** Baseline y of the rule line. Counters go below this. */
+  /** Baseline y of the LAST rule line. Counters go below this. */
   ruleY: number;
   /** First free baseline y under the rule line for counters. */
   counterY: number;
@@ -201,14 +213,19 @@ export function drawChrome(
       y += HUD.hookLineGap;
     }
   });
-  const ruleY = y - HUD.hookLineGap + 56;
+  const firstRuleY = y - HUD.hookLineGap + 58;
+  const ruleLines = wrapQuestion(spec.rule, HUD.ruleWrapChars);
+  let ruleY = firstRuleY;
   withShadow(ctx, () => {
-    drawReelText(ctx, boxes, spec.rule, SAFE_CENTER_X, ruleY, {
-      size: HUD.ruleSize,
-      weight: 600,
-      align: "center",
-      maxWidth: SAFE_WIDTH,
-      color: extra.ruleColor ?? PALETTE.limeSoft,
+    ruleLines.forEach((line, i) => {
+      ruleY = firstRuleY + i * HUD.ruleLineGap;
+      drawReelText(ctx, boxes, line, SAFE_CENTER_X, ruleY, {
+        size: HUD.ruleSize,
+        weight: 600,
+        align: "center",
+        maxWidth: SAFE_WIDTH,
+        color: extra.ruleColor ?? PALETTE.limeSoft,
+      });
     });
   });
   withShadow(ctx, () => {
