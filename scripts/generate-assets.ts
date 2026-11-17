@@ -16,6 +16,7 @@ import {
 } from "../src/drop-arenas/sim.ts";
 import { PATATE_COMPOSITIONS, simulatePatate } from "../src/patate/sim.ts";
 import { synthesizePatateWav } from "../src/patate/audio.ts";
+import { GPU_AUDIO_COMPOSITIONS, synthesizeGpuAudioSceneWav } from "../src/gpu-scenes/index.ts";
 import {
   synthesize,
   synthesizeCountryMapWav,
@@ -146,6 +147,24 @@ for (const patate of PATATE_COMPOSITIONS) {
   });
   console.log(
     `${patate.id}: ${trace.events.length} events; bossFrame=${trace.bossMergeFrame}; ${trace.totalFrames} frames (${(trace.totalFrames / VIDEO.fps).toFixed(2)}s)`,
+  );
+}
+
+for (const gpuScene of GPU_AUDIO_COMPOSITIONS) {
+  const wav = synthesizeGpuAudioSceneWav(gpuScene.slug);
+  writeFileSync(
+    new URL("../public/generated/" + gpuScene.slug + ".wav", import.meta.url),
+    wav,
+  );
+  results.push({
+    id: gpuScene.id,
+    frames: gpuScene.totalFrames,
+    channels: 2,
+    sampleRate: 48000,
+    audioDigest: createHash("sha256").update(wav).digest("hex"),
+  });
+  console.log(
+    `${gpuScene.id}: 48 kHz stereo audio synthesized; ${gpuScene.totalFrames} frames (${(gpuScene.totalFrames / VIDEO.fps).toFixed(2)}s)`,
   );
 }
 

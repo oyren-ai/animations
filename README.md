@@ -6,7 +6,7 @@
 
 # animations
 
-Twenty-two animations built from TypeScript, a canvas, and a clock: five foundational physics scenes, five complex-Fourier country-border reconstructions, four zero-gravity wall-bounce string-arena compositions, five bouncy arcade ball-drop and funnel-merge compositions, and three Suika-style Patate Merge boiling-flask compositions with pitch-coupled French voice announcements. Change the equations or physics, scrub to any frame, and render the result as a 60 fps video.
+Twenty-five animations built from TypeScript, WebGL2 shaders, a canvas, and a clock: five foundational physics scenes, five complex-Fourier country-border reconstructions, four zero-gravity wall-bounce string-arena compositions, five bouncy arcade ball-drop and funnel-merge compositions, three Suika-style Patate Merge boiling-flask compositions with pitch-coupled French voice announcements, and three edge-to-edge full-screen (`1080 × 1920`) GPU shader and 48 kHz stereo audio-reactive compositions. Change the equations, shaders, or physics, scrub to any frame, and render the result as a 60 fps video.
 
 Every composition renders at 1080 × 1920 and 60 fps, closing with a code end card pointing to `github.com/oyren-ai/animations`. Shapes, sovereign map contours, cartoon potato costumes, and geometric vector emblems are drawn procedurally. Sound is synthesized and mixed locally from simulation events and self-generated voice stems. No stock footage, third-party logo files, or music downloads are needed.
 
@@ -44,9 +44,13 @@ Every composition renders at 1080 × 1920 and 60 fps, closing with a code end ca
 | --- | --- |
 | <img src="docs/previews/PatateMergeWorldToCode.png" width="270" alt="World-cuisine potatoes merging into AI coding agents inside a rainbow-rimmed flask"> | <img src="docs/previews/PatateMergeLanguages.png" width="270" alt="Programming-language potatoes merging up to Lean 4 inside a rainbow-rimmed flask"> |
 
-| Shared closing beat |  |
+| Cyber synth shader tunnel (WebGL2) | Polyphonic wall cascade |
 | --- | --- |
-| <img src="docs/previews/code-end-card.png" width="270" alt="Get the code for this animation at github.com/oyren-ai/animations"> |  |
+| <img src="docs/previews/CyberSynthShaderTunnel.png" width="270" alt="Full-bleed 1080x1920 WebGL2 raymarched octagonal synthwave tunnel pulsing to a 124 BPM stereo score"> | <img src="docs/previews/PolyphonicWallCascade.png" width="270" alt="Full-screen 1080x1920 acoustic chamber with glowing outer rails, eight harmonic strings, and luminous orbs"> |
+
+| Harmonic sorting matrix | Shared closing beat |
+| --- | --- |
+| <img src="docs/previews/HarmonicSortingMatrix.png" width="270" alt="Full-bleed three-band Radix, Quick, and Max-Heap Sort race over 96 neon channels"> | <img src="docs/previews/code-end-card.png" width="270" alt="Get the code for this animation at github.com/oyren-ai/animations"> |
 
 ## The compositions
 
@@ -74,6 +78,9 @@ Every composition renders at 1080 × 1920 and 60 fps, closing with a code end ca
 | `PatateMergeCodingAgents` | Costumed coding-agent potatoes drop down a glass neck and merge up an 8-tier rainbow flask (*copilotienne* → *codexienne* → *claude-codienne* → *oyrenienne*) with pitch-scaled French voice callouts. | Swap tier playback rates, radii, or costumes in `src/patate/themes.ts`. |
 | `PatateMergeWorldToCode` | Classic world-patate progression (*turque*, *mexicaine*, *italienne*, *française*) plot-twisting at Tier 6 into *codexienne*, *claude-codienne*, and *oyrenienne*. | Change drop cadence or chain-reaction radial impulse in `src/patate/sim.ts`. |
 | `PatateMergeLanguages` | Eight-tier programming-language patate evolution (*bashienne* → *javascriptienne* → *pythonienne* → *typescriptienne* → *go-langienne* → *rustienne* → *lean-quatrienne*). | Add a new language costume in `src/patate/paint.ts` or adjust interrupt timing in `src/patate/audio.ts`. |
+| `CyberSynthShaderTunnel` | Full-bleed `1080 × 1920` WebGL2 `#version 300 es` raymarched octagonal synthwave tunnel whose ribs, chromatic dispersion, and shock rings pulse to a 124 BPM 48 kHz stereo score. | Change the GLSL distance field or chord progression in `src/gpu-scenes/cyberTunnel.ts`. |
+| `PolyphonicWallCascade` | Fourteen luminous orbs bounce edge-to-edge across the entire `0..1080 × 0..1920` acoustic chamber, plucking eight full-span harmonic strings with stereo-panned FM chords. | Retune `HARMONIC_STRINGS` or orb count in `src/gpu-scenes/wallCascade.ts`. |
+| `HarmonicSortingMatrix` | Full-bleed three-band `1080 × 1920` race comparing LSD Radix Sort, Median-of-3 Quick Sort, and Max-Heap Sort over 96 channels with stereo Lydian-pentatonic arpeggios. | Swap sorting algorithms or scale intervals in `src/gpu-scenes/harmonicSorting.ts`. |
 
 ## Run locally
 
@@ -155,6 +162,8 @@ The four-stage arcade ball-drop scenes pair 480 Hz fixed-step collision resoluti
 
 The Patate Merge scenes integrate 240 Hz rigid-body circle dynamics with rotational friction inside a narrow top neck chute joined to a circular boiling flask (`R = 462 px`). Identical tiers (`1` through `7`) merge into the next tier (`32 px` up to `178 px`), triggering concentric shockwaves, radial impulses, 8-slot portrait unlocks, and Catmull-Rom coupled pitch-and-speed resampled French announcements (`1.38×` down to `0.64×`) with chain-merge vocal interrupts.
 
+The full-screen GPU and stereo audio-reactive scenes (`CyberSynthShaderTunnel`, `PolyphonicWallCascade`, and `HarmonicSortingMatrix`) synthesize 48 kHz 2-channel PCM16 WAV soundtracks calibrated via ITU-R BS.1770-4 gated loudness (`-14 LUFS`, `<= -1.8 dBTP` 4× oversampled true peak) and extract deterministic 32-band Goertzel spectra directly from the stereo buffer so WebGL2 GLSL fragment shaders and full-bleed `0..1080 × 0..1920` canvases stay frame-exact under arbitrary scrubbing.
+
 ## Where to change things
 
 | File | Responsibility |
@@ -176,6 +185,11 @@ The Patate Merge scenes integrate 240 Hz rigid-body circle dynamics with rotatio
 | `src/patate/sim.ts` | 240 Hz boiling-flask + chute rigid-body solver, rolling spin, and Suika chain merges |
 | `src/patate/paint.ts` | Rotating rainbow flask wall, 23 cartoon potato costumes, shockwaves, and 8-slot HUD |
 | `src/patate/audio.ts` | Coupled `asetrate` French voice resampler, chain-interrupt fades, and tactile SFX mixer |
+| `src/audio-reactive/synth.ts` | 48 kHz stereo PCM16 synthesizer, constant-power panner, BS.1770-4 LUFS/true-peak limiter, and 32-band Goertzel frame extractor |
+| `src/gpu-scenes/cyberTunnel.ts` | WebGL2 `#version 300 es` raymarched octagonal synthwave tunnel, 124 BPM stereo score, and safe-zone HUD |
+| `src/gpu-scenes/wallCascade.ts` | Full-screen `1080 × 1920` 480 Hz wall + 8-string acoustic chamber solver and stereo-panned chord engine |
+| `src/gpu-scenes/harmonicSorting.ts` | Full-bleed 3-band Radix, Quick, and Heap Sort showdown and Lydian-pentatonic arpeggio sonifier |
+| `docs/VIDEO-AUDIO-STACK.md` | Evaluation of open-source video agent skills, WebGL2 shader pipeline, and audio DSP stack |
 | `src/shared/reelUtils.ts` | Reel safe-zone bounds assertions and procedural geometric emblem renderer |
 | `src/audio.ts` | Event-to-tone mapping, harmonic map chords, arena soundtracks, and PCM synthesis |
 | `src/encoding.ts` | Explicit PNG-to-BT.709 conversion for the pinned renderer |
