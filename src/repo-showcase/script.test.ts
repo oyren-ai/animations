@@ -50,6 +50,8 @@ test("every scene in the plan is a composition that exists on main", () => {
     if (entry.scene === "country-map") assert.ok(countryMaps.has(entry.variant ?? ""), `${entry.variant}`);
     if (entry.scene === "pendulum") assert.equal(entry.variant, null);
     assert.ok(entry.sceneStartFrame >= 0 && entry.speed > 0);
+    assert.ok(entry.scale >= 0.85 && entry.scale <= 1, `${entry.scene} scale ${entry.scale}`);
+    assert.ok(entry.offsetY >= 0 && entry.offsetY <= 200, `${entry.scene} offset ${entry.offsetY}`);
   }
   const first = SCENE_PLAN.find((entry) => entry.line === "l1");
   assert.equal(first?.atWord, null, "the hook scene must start with the beat, not on a word");

@@ -61,6 +61,8 @@ export interface SceneSegment {
   readonly toFrame: number;
   readonly sceneStartFrame: number;
   readonly speed: number;
+  readonly scale: number;
+  readonly offsetY: number;
 }
 
 export interface ShowcaseTiming {
@@ -170,6 +172,8 @@ export function buildShowcaseTiming(
       toFrame: nextInBeat >= 0 ? planFrom[nextInBeat] : beat.toFrame,
       sceneStartFrame: entry.sceneStartFrame,
       speed: entry.speed,
+      scale: entry.scale,
+      offsetY: entry.offsetY,
     };
   });
 

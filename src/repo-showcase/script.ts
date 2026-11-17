@@ -60,16 +60,20 @@ export interface ScenePlanEntry {
   readonly sceneStartFrame: number;
   /** Source frames advanced per video frame. */
   readonly speed: number;
+  /** Scale about the top safe edge, so the arena clears the caption panel. */
+  readonly scale: number;
+  /** Vertical shift in pixels, so the arena clears the hook headline plate. */
+  readonly offsetY: number;
 }
 
 // Every scene here is a composition that lives on main, so a viewer can find each one in the repo.
 export const SCENE_PLAN: readonly ScenePlanEntry[] = [
-  { line: "l1", atWord: null, scene: "string-arena", variant: "string-arena-coding-clis", sceneStartFrame: 120, speed: 1 },
-  { line: "l2", atWord: null, scene: "pendulum", variant: null, sceneStartFrame: 200, speed: 1 },
-  { line: "l2", atWord: "Ball", scene: "ball-drop", variant: "vortex-spiral-bowl", sceneStartFrame: 150, speed: 1 },
-  { line: "l2", atWord: "String", scene: "string-arena", variant: "string-arena-languages", sceneStartFrame: 200, speed: 1 },
-  { line: "l2", atWord: "all", scene: "ball-drop", variant: "pinball-bumper-matrix", sceneStartFrame: 210, speed: 1 },
-  { line: "l3", atWord: null, scene: "country-map", variant: "map-of-india", sceneStartFrame: 60, speed: 2 },
+  { line: "l1", atWord: null, scene: "string-arena", variant: "string-arena-coding-clis", sceneStartFrame: 120, speed: 1, scale: 1, offsetY: 150 },
+  { line: "l2", atWord: null, scene: "pendulum", variant: null, sceneStartFrame: 200, speed: 1, scale: 0.92, offsetY: 0 },
+  { line: "l2", atWord: "Ball", scene: "ball-drop", variant: "vortex-spiral-bowl", sceneStartFrame: 150, speed: 1, scale: 0.9, offsetY: 0 },
+  { line: "l2", atWord: "String", scene: "string-arena", variant: "string-arena-languages", sceneStartFrame: 200, speed: 1, scale: 0.94, offsetY: 0 },
+  { line: "l2", atWord: "all", scene: "ball-drop", variant: "pinball-bumper-matrix", sceneStartFrame: 210, speed: 1, scale: 0.9, offsetY: 0 },
+  { line: "l3", atWord: null, scene: "country-map", variant: "map-of-india", sceneStartFrame: 60, speed: 2, scale: 0.9, offsetY: 0 },
 ];
 
 export const SHOWCASE_COPY = {

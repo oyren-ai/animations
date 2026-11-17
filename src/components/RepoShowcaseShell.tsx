@@ -93,7 +93,16 @@ function SceneLayer({ segment }: { segment: SceneSegment }) {
   // Screen blend lets the aurora glow through the dark margins of each scene while its bright shapes stay intact.
   return (
     <AbsoluteFill style={{ mixBlendMode: "screen" }}>
-      <canvas ref={canvasRef} width={VIDEO.width} height={VIDEO.height} style={{ width: "100%", height: "100%", display: "block" }} />
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          transform: `translateY(${segment.offsetY}px) scale(${segment.scale})`,
+          transformOrigin: "50% 11.5%",
+        }}
+      >
+        <canvas ref={canvasRef} width={VIDEO.width} height={VIDEO.height} style={{ width: "100%", height: "100%", display: "block" }} />
+      </div>
     </AbsoluteFill>
   );
 }

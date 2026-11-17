@@ -116,15 +116,16 @@ function drawCaptionWords(
 }
 
 function paintHook(ctx: CanvasRenderingContext2D, boxes: ReelBox[]): void {
-  const scrim = ctx.createLinearGradient(0, 200, 0, 980);
-  scrim.addColorStop(0, `rgba(${NAVY},0)`);
-  scrim.addColorStop(0.14, `rgba(${NAVY},0.78)`);
-  scrim.addColorStop(0.78, `rgba(${NAVY},0.78)`);
-  scrim.addColorStop(1, `rgba(${NAVY},0)`);
-  ctx.fillStyle = scrim;
-  ctx.fillRect(0, 200, VIDEO.width, 780);
+  // A near-opaque plate hides the scene's own header and cards so the headline is the only text up here.
+  const plate = ctx.createLinearGradient(0, 190, 0, 880);
+  plate.addColorStop(0, `rgba(${NAVY},0)`);
+  plate.addColorStop(0.06, `rgba(${NAVY},0.95)`);
+  plate.addColorStop(0.72, `rgba(${NAVY},0.95)`);
+  plate.addColorStop(1, `rgba(${NAVY},0)`);
+  ctx.fillStyle = plate;
+  ctx.fillRect(0, 190, VIDEO.width, 690);
   ctx.fillStyle = LIME;
-  ctx.fillRect(80, 330, 120, 6);
+  ctx.fillRect(80, 300, 120, 6);
 
   const { lines, sub } = SHOWCASE_COPY.hook;
   const size = Math.min(...lines.map((line) => fitSize(ctx, line, 820, 124, 800)));
@@ -149,7 +150,7 @@ function paintCaption(ctx: CanvasRenderingContext2D, boxes: ReelBox[], frame: nu
   const fadeOut = index === lineCues.length - 1 ? clamp01((cue.toFrame - frame) / 5) : 1;
   ctx.save();
   ctx.globalAlpha = Math.min(fadeIn, fadeOut);
-  roundedPanel(ctx, CAPTION_PANEL, 40, `rgba(${NAVY},0.8)`, "rgba(200,255,133,0.38)");
+  roundedPanel(ctx, CAPTION_PANEL, 40, `rgba(${NAVY},0.94)`, "rgba(200,255,133,0.38)");
   const words = cue.words.map((word) => ({
     text: word.text,
     color: frame < word.startFrame ? MUTED : frame < word.endFrame ? LIME : WHITE,
