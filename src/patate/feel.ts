@@ -2,28 +2,31 @@
 // Owner note: "these la patate videos can be slowed down and we can make la patates squishy and bouncy".
 // Pure constants and math with no Node imports, so the sim, the painter and the tests share one source of truth.
 
+/** Sub-steps the 240 Hz solver takes in one 60 fps frame of the original 24 s version. The solver itself never changes. */
+export const PATATE_SOLVER_SUBSTEPS_PER_FRAME = 4;
+
 /**
- * Pacing knobs. The seeds, the 24 s length and the 8-tier ladder are unchanged.
+ * The one pacing knob.
  *
- * The first three change the physics and stay at their original values. The ladder fills the 24 s almost
- * exactly (the boss merge lands at frames 1047, 1103 and 1056 of the 1152 the tests allow) and the chain is
- * chaotic: across 17 nudged combinations (gravity 0.7 to 0.95, bounce 0.30 to 0.42, drop gap 1.03 to 1.08;
- * 51 composition runs) only 5 runs reached the boss merge at all, 3 inside the window, and no combination
- * worked for all three compositions. Any change here must be checked against the boss window in
- * sim.test.ts and the timing lock in feel.test.ts before it ships. A slower video needs a longer one.
+ * The merge ladder is chaotic: across 17 nudged combinations of gravity, bounce and drop spacing (51 composition
+ * runs) only 5 runs reached the boss merge and no combination worked for all three compositions. So the physics are
+ * left alone and the pace changes instead: the same 240 Hz solver is stepped fewer times per video frame. Every
+ * potato, merge and bounce is exactly where it was, just reached later on screen, so the chain is identical.
+ * Keep this an integer; a fraction would change the solver step and break the chain.
+ *
+ *   4 sub-steps per frame = the original 24 s video.
+ *   3 sub-steps per frame = motion 25% slower, scene 1680 frames, video 1860 frames = 31 s.
  */
 export const PATATE_PACE = {
-  /** Multiplier on gravity (1 = the original fall). */
-  gravityScale: 1,
-  /** Multiplier on the scripted gap between drops (1 = the original gap). */
-  dropGapScale: 1,
-  /** Bounciness of the flask walls and of potato-on-potato contacts. */
-  restitution: 0.28,
-  /** How much longer merge banners, shockwaves and sparkles stay on screen. Moves no merge, so it is safe. */
-  effectLingerScale: 1.35,
+  substepsPerFrame: 3,
 } as const;
 
-/** Volume-preserving squash-and-stretch. All "log" amounts are natural-log scale factors. */
+/** Video frames per solver frame (4/3 at 3 sub-steps). Lengths and effect lifetimes are scaled by this. */
+export const PATATE_FRAME_STRETCH = PATATE_SOLVER_SUBSTEPS_PER_FRAME / PATATE_PACE.substepsPerFrame;
+/** Solver frames per video frame (0.75 at 3 sub-steps). Motion in sim time per video time. */
+export const PATATE_TIME_SCALE = PATATE_PACE.substepsPerFrame / PATATE_SOLVER_SUBSTEPS_PER_FRAME;
+
+/** Volume-preserving squash-and-stretch. All "log" amounts are natural-log scale factors. Timing follows the pace. */
 export const PATATE_SQUASH = {
   /** Contacts slower than this (px/s) leave no mark. */
   minImpactSpeed: 90,
@@ -33,16 +36,16 @@ export const PATATE_SQUASH = {
   maxLogSquash: 0.3,
   /** Cap for several impacts landing on one potato at once. */
   maxTotalLogSquash: 0.36,
-  /** Spring frequency in Hz. */
-  frequencyHz: 3.2,
-  /** Spring decay rate in 1/s. */
-  decayPerSecond: 5.0,
-  /** Frames after an impact before its spring is gone. */
-  settleFrames: 48,
-  /** Frames over which the end of the spring is faded to exactly nothing. */
-  taperFrames: 10,
-  /** Frames before a hit during which the potato stretches along its path. */
-  anticipationFrames: 4,
+  /** Spring frequency in Hz (3.2 Hz at the original pace). */
+  frequencyHz: 3.2 * PATATE_TIME_SCALE,
+  /** Spring decay rate in 1/s (5.0 at the original pace). */
+  decayPerSecond: 5.0 * PATATE_TIME_SCALE,
+  /** Frames after an impact before its spring is gone (48 at the original pace). */
+  settleFrames: Math.round(48 * PATATE_FRAME_STRETCH),
+  /** Frames over which the end of the spring is faded to exactly nothing (10 at the original pace). */
+  taperFrames: Math.round(10 * PATATE_FRAME_STRETCH),
+  /** Frames before a hit during which the potato stretches along its path (4 at the original pace). */
+  anticipationFrames: Math.round(4 * PATATE_FRAME_STRETCH),
   /** Strength of that pre-impact stretch, as a share of the impact's own squash. */
   anticipationStretch: 0.35,
   /** Pop speed (px/s equivalent) of a freshly merged potato. */
