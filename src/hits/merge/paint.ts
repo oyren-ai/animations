@@ -90,6 +90,8 @@ interface PaintCache {
   impactFrames: Uint16Array;
   madeByMerge: Uint8Array;
   finalFrame: number;
+  /** Id of the first tier-7 piece, or 0. */
+  finalId: number;
 }
 
 const caches = new WeakMap<MergeTrace, PaintCache>();
@@ -107,6 +109,7 @@ function cacheOf(trace: MergeTrace): PaintCache {
     impactFrames: Uint16Array.from(trace.impacts, (e) => Math.floor(e.sub / 4) + 1),
     madeByMerge,
     finalFrame: firstFinal ? firstFinal.frame : -1,
+    finalId: firstFinal ? firstFinal.newId : 0,
   };
   caches.set(trace, c);
   return c;
@@ -497,6 +500,27 @@ function drawAura(ctx: CanvasRenderingContext2D, x: number, y: number, r: number
   ctx.stroke();
 }
 
+/** Lime embers drifting off the final form during the hold. Deterministic from the frame number. */
+function drawEmbers(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, sinceSec: number): void {
+  const n = 44;
+  const fadeIn = clamp01(sinceSec / 0.5);
+  for (let band = 0; band < 3; band++) {
+    ctx.fillStyle = rgba("#e8ff66", (0.85 - 0.25 * band) * fadeIn);
+    ctx.beginPath();
+    for (let k = band; k < n; k += 3) {
+      const life = (sinceSec * 0.55 + hash01(k * 7.3) + k / n) % 1;
+      const ang = hash01(k * 3.1 + 5) * TWO_PI;
+      const dist = r * (0.95 + 0.9 * life) + 20 * hash01(k * 1.7);
+      const px = x + Math.cos(ang) * dist + 14 * Math.sin(sinceSec * 2 + k);
+      const py = y + Math.sin(ang) * dist - 140 * life;
+      const rr = (2.4 + 3.4 * hash01(k * 9.9)) * (1 - life * 0.6);
+      ctx.moveTo(px + rr, py);
+      ctx.arc(px, py, rr, 0, TWO_PI);
+    }
+    ctx.fill();
+  }
+}
+
 function drawLabel(
   ctx: CanvasRenderingContext2D,
   boxes: ReelBox[],
@@ -577,7 +601,11 @@ function drawPieces(
     const id = trace.pid[k];
     const age = f - trace.bornFrame[id];
     const sc = popScale(age, cache.madeByMerge[id] === 1);
-    drawAura(ctx, trace.px[k] / POS_SCALE, trace.py[k] / POS_SCALE, (trace.pr[k] / POS_SCALE) * sc, t, 0.65 + 0.35 * finalGlow);
+    const ax = trace.px[k] / POS_SCALE;
+    const ay = trace.py[k] / POS_SCALE;
+    const ar = (trace.pr[k] / POS_SCALE) * sc;
+    drawAura(ctx, ax, ay, ar, t, 0.65 + 0.35 * finalGlow);
+    if (id === cache.finalId) drawEmbers(ctx, ax, ay, ar, (f - cache.finalFrame) / FPS);
   }
 
   drawTrails(ctx, trace, f);
@@ -837,11 +865,17 @@ function chainColor(c: number): string {
 function drawPopups(ctx: CanvasRenderingContext2D, boxes: ReelBox[], trace: MergeTrace, cache: PaintCache, f: number): void {
   const to = countAtOrBefore(cache.mergeFrames, f);
   let shown = 0;
+  let lastX = -9999;
+  let lastChain = -1;
   for (let i = to - 1; i >= 0 && shown < 2; i--) {
     const m = trace.merges[i];
     const ageF = f - m.frame;
     if (ageF > 52) break;
     if (m.chain < 2 || ageF < 0) continue;
+    // two popups with the same count side by side say nothing new: keep the newer one
+    if (m.chain === lastChain && Math.abs(m.x - lastX) < 180) continue;
+    lastX = m.x;
+    lastChain = m.chain;
     shown++;
     const p = ageF / 52;
     const size = 42 + 9 * Math.min(m.chain - 2, 4);

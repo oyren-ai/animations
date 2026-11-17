@@ -154,14 +154,20 @@ export function buildMergeSchedule(trace: MergeTrace): MergeSchedule {
       t: e.t,
       gain: clamp(0.03 + e.speed / 22000, 0.03, 0.12),
       pan: pan(e.x),
-      hz: 150 - 14 * e.tier,
+      hz: Math.max(72, 150 - 12 * e.tier),
     })),
     THUD_CAP_PER_SEC,
   );
 
+  // the riser starts about when the second tier-6 piece appears (both halves of the final merge exist) and ends on the merge
   let final: FinalCue | null = null;
   const first = trace.merges.find((m) => m.tier === TIER_COUNT);
-  if (first) final = { t: first.t, riserStart: Math.max(0, first.t - 1.6), chordMidi: [72, 76, 79, 86] };
+  if (first) {
+    const sixes = trace.merges.filter((m) => m.tier === TIER_COUNT - 1);
+    const second = sixes.length >= 2 ? sixes[1].t : first.t - 1.6;
+    const riserStart = Math.max(0, first.t - 2.4, Math.min(second - 0.6, first.t - 1.2));
+    final = { t: first.t, riserStart, chordMidi: [72, 76, 79, 86] };
+  }
 
   return { bells, ticks, thuds, final };
 }

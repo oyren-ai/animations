@@ -15,6 +15,7 @@ import {
   POS_SCALE,
   simulateMerge,
   SUBSTEPS_PER_FRAME,
+  TUNING,
   WORLD_W,
   type MergeTrace,
 } from "./sim.ts";
@@ -296,6 +297,28 @@ test("merge: penetration at sampled frames is at most 6 px (pieces, walls, floor
   assert.ok(worst <= 6, `worst penetration ${worst.toFixed(2)} px`);
 });
 
+test("merge: the two corner ramps of the funnel hold the pieces up (no piece sinks into a ramp)", () => {
+  const run = TUNING.rampRun;
+  const rise = TUNING.rampRise;
+  assert.ok(run > 0 && rise > 0, "the funnel has ramps");
+  const len = Math.hypot(run, rise);
+  const y0 = FLOOR_Y - rise;
+  let worst = 0;
+  let onRamp = 0;
+  for (let f = 0; f < trace.frames; f += 9) {
+    for (const r of records(trace, f)) {
+      // signed distance from the ramp lines; the playfield is on the positive side
+      const left = (r.x * rise + (r.y - y0) * -run) / len;
+      const right = ((WORLD_W - r.x) * rise + (r.y - y0) * -run) / len;
+      worst = Math.max(worst, r.r - left, r.r - right);
+      if (Math.abs(left - r.r) < 3 || Math.abs(right - r.r) < 3) onRamp++;
+    }
+  }
+  assert.ok(worst <= 6, `worst ramp penetration ${worst.toFixed(2)} px`);
+  assert.ok(onRamp >= 20, "pieces really rest on the ramps");
+  assert.ok(trace.stats.maxOverlap <= 6, `worst overlap at any frame ${trace.stats.maxOverlap.toFixed(2)} px`);
+});
+
 test("merge: pieces stay inside the canvas and the world is not frozen", () => {
   for (let f = 0; f < trace.frames; f += 29) {
     for (const r of records(trace, f)) {
@@ -371,6 +394,7 @@ test("merge: the painter keeps every text box safe on sampled frames, including 
     frames.add(m.frame + 12);
     frames.add(m.frame + 30);
   }
+  for (let f = 0; f < MERGE_SPEC.sceneFrames; f += 5) frames.add(f);
   for (const f of frames) {
     if (f >= MERGE_SPEC.sceneFrames) continue;
     const mock = createMockCanvas();

@@ -242,11 +242,11 @@ export function simulateMerge(seed: number = HIT_SEED, overrides: Partial<MergeT
   // trace outputs
   const frameStart = new Uint32Array(frames + 1);
   let cap = frames * 64;
-  let oPid = new Uint16Array(cap);
-  let oTier = new Uint8Array(cap);
-  let oX = new Uint16Array(cap);
-  let oY = new Uint16Array(cap);
-  let oR = new Uint16Array(cap);
+  let oPid: Uint16Array = new Uint16Array(cap);
+  let oTier: Uint8Array = new Uint8Array(cap);
+  let oX: Uint16Array = new Uint16Array(cap);
+  let oY: Uint16Array = new Uint16Array(cap);
+  let oR: Uint16Array = new Uint16Array(cap);
   let nRec = 0;
   const bornFrame = new Uint16Array(MAX_IDS);
   const topTierArr = new Uint8Array(frames);
