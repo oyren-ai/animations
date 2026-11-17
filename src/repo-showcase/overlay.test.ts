@@ -4,7 +4,7 @@ import test from "node:test";
 import { VIDEO } from "../settings.ts";
 import { assertReelSafeBox, REEL_SAFE_BOUNDS, type ReelBox } from "../shared/reelUtils.ts";
 import { paintAurora } from "./backdrop.ts";
-import { CAPTION_PANEL, paintShowcaseOverlay, REMIX_WINDOW } from "./overlay.ts";
+import { CAPTION_PANEL, paintShowcaseOverlay, REMIX_WINDOW, SHOWCASE_SURFACES } from "./overlay.ts";
 import { SHOWCASE_COPY } from "./script.ts";
 import { cueAtFrame, SHOWCASE_TIMING } from "./timing.ts";
 
@@ -68,6 +68,17 @@ test("panels are inside the safe zone", () => {
     assert.ok(panel.top >= REEL_SAFE_BOUNDS.top && panel.bottom <= REEL_SAFE_BOUNDS.bottom);
   }
   assert.ok(REMIX_WINDOW.bottom < CAPTION_PANEL.top, "the remix window never covers the caption panel");
+});
+
+test("no UI surface is near-black, so the pixel-fill gate (max channel above 8) holds even inside panels", () => {
+  const darkestAurora = 13; // the backdrop base #05080d has a max channel of 13
+  for (const [name, fill] of Object.entries(SHOWCASE_SURFACES)) {
+    const match = /rgba\((\d+),(\d+),(\d+),([\d.]+)\)/.exec(fill);
+    assert.ok(match, `${name} is not an rgba() fill`);
+    const alpha = Number(match[4]);
+    const worst = alpha * Math.max(Number(match[1]), Number(match[2]), Number(match[3])) + (1 - alpha) * darkestAurora;
+    assert.ok(worst > 9, `${name} blends to a max channel of ${worst.toFixed(1)}, which the gate counts as empty`);
+  }
 });
 
 test("the caption shows the spoken phrase while it is spoken, word by word", () => {
