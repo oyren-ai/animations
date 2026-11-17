@@ -6,7 +6,7 @@
 
 # animations
 
-Twenty-five animations built from TypeScript, WebGL2 shaders, a canvas, and a clock: five foundational physics scenes, five complex-Fourier country-border reconstructions, four zero-gravity wall-bounce string-arena compositions, five bouncy arcade ball-drop and funnel-merge compositions, three Suika-style Patate Merge boiling-flask compositions with pitch-coupled French voice announcements, and three edge-to-edge full-screen (`1080 × 1920`) GPU shader and 48 kHz stereo audio-reactive compositions. Change the equations, shaders, or physics, scrub to any frame, and render the result as a 60 fps video.
+Twenty-nine animations built from TypeScript, WebGL2 shaders, a canvas, and a clock: five foundational physics scenes, five complex-Fourier country-border reconstructions, four zero-gravity wall-bounce string-arena compositions, five bouncy arcade ball-drop and funnel-merge compositions, three Suika-style Patate Merge boiling-flask compositions with pitch-coupled French voice announcements, three edge-to-edge full-screen (`1080 × 1920`) GPU shader and 48 kHz stereo audio-reactive compositions, and four full-screen photo-finish comeback races verified by mathematical catchup invariants (`docs/COMEBACK-SHORTS.md`). Change the equations, shaders, or physics, scrub to any frame, and render the result as a 60 fps video.
 
 Every composition renders at 1080 × 1920 and 60 fps, closing with a code end card pointing to `github.com/oyren-ai/animations`. Shapes, sovereign map contours, cartoon potato costumes, and geometric vector emblems are drawn procedurally. Sound is synthesized and mixed locally from simulation events and self-generated voice stems. No stock footage, third-party logo files, or music downloads are needed.
 
@@ -81,6 +81,10 @@ Every composition renders at 1080 × 1920 and 60 fps, closing with a code end ca
 | `CyberSynthShaderTunnel` | Full-bleed `1080 × 1920` WebGL2 `#version 300 es` raymarched octagonal synthwave tunnel whose ribs, chromatic dispersion, and shock rings pulse to a 124 BPM 48 kHz stereo score. | Change the GLSL distance field or chord progression in `src/gpu-scenes/cyberTunnel.ts`. |
 | `PolyphonicWallCascade` | Fourteen luminous orbs bounce edge-to-edge across the entire `0..1080 × 0..1920` acoustic chamber, plucking eight full-span harmonic strings with stereo-panned FM chords. | Retune `HARMONIC_STRINGS` or orb count in `src/gpu-scenes/wallCascade.ts`. |
 | `HarmonicSortingMatrix` | Full-bleed three-band `1080 × 1920` race comparing LSD Radix Sort, Median-of-3 Quick Sort, and Max-Heap Sort over 96 channels with stereo Lydian-pentatonic arpeggios. | Swap sorting algorithms or scale intervals in `src/gpu-scenes/harmonicSorting.ts`. |
+| `TowerLinearVsExponential` | Full-bleed twin 10-floor vaults (`5,000` balls `+600/s` vs `1` ball `x10 every 4.5s`) where compounding overtakes in the final seconds. | Retune floor hit-point scaling or multiplication cadence in `src/comebacks/towerVaults.ts`. |
+| `TitanHammerVsSwarm` | Full-bleed twin armored vaults (`4,000` micro balls `1 dmg` vs `1` Titan orb `x2 dmg/bounce`) ending in a multi-floor overkill cleave. | Adjust Titan bounce acceleration or armor curve in `src/comebacks/towerVaults.ts`. |
+| `SplitterWallEscape` | Ten-layer neon brick fortress (`450 bricks/s` sweeping dual lasers vs `1` Splitter orb `x3 balls per wall`) ending in a `19,683`-ball avalanche. | Change `FORTRESS_WALL_BRICKS` or split factor in `src/comebacks/splitterFortress.ts`. |
+| `AfterburnerLapComeback` | Vertical 100-lap speedway (`900 km/h` steady cruiser vs `+18%` speed per gate bounce) with relativistic wake blur and Shepard riser. | Adjust `RIGHT_BOUNCE_MULTIPLIER` or overdrive ceiling in `src/comebacks/afterburnerLaps.ts`. |
 
 ## Run locally
 

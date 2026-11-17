@@ -16,6 +16,7 @@ import {
 } from "../src/drop-arenas/sim.ts";
 import { PATATE_COMPOSITIONS, simulatePatate } from "../src/patate/sim.ts";
 import { synthesizePatateWav } from "../src/patate/audio.ts";
+import { COMEBACK_COMPOSITIONS, simulateComeback, synthesizeComebackWav } from "../src/comebacks/index.ts";
 import { GPU_AUDIO_COMPOSITIONS, synthesizeGpuAudioSceneWav } from "../src/gpu-scenes/index.ts";
 import {
   synthesize,
@@ -165,6 +166,28 @@ for (const gpuScene of GPU_AUDIO_COMPOSITIONS) {
   });
   console.log(
     `${gpuScene.id}: 48 kHz stereo audio synthesized; ${gpuScene.totalFrames} frames (${(gpuScene.totalFrames / VIDEO.fps).toFixed(2)}s)`,
+  );
+}
+
+for (const comeback of COMEBACK_COMPOSITIONS) {
+  const trace = simulateComeback(comeback.slug);
+  const wav = synthesizeComebackWav(comeback.slug);
+  writeFileSync(
+    new URL("../public/generated/" + comeback.slug + ".wav", import.meta.url),
+    wav,
+  );
+  results.push({
+    id: comeback.id,
+    seed: trace.seed,
+    frames: comeback.totalFrames,
+    overtakeFrame: trace.overtakeFrame,
+    victoryFrame: trace.victoryFrame,
+    channels: 2,
+    sampleRate: 48000,
+    audioDigest: createHash("sha256").update(wav).digest("hex"),
+  });
+  console.log(
+    `${comeback.id}: overtake=${trace.overtakeFrame}/${trace.raceFrames}; victory=${trace.victoryFrame}/${trace.raceFrames}; ${comeback.totalFrames} frames (${(comeback.totalFrames / VIDEO.fps).toFixed(2)}s)`,
   );
 }
 
