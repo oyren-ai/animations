@@ -92,7 +92,7 @@ export function resampleCoupledPitchSpeed(
   return out;
 }
 
-interface ScheduledVoiceClip {
+export interface ScheduledVoiceClip {
   startSample: number;
   endSample: number; // exclusive
   fadeOutSamples: number;
@@ -121,6 +121,85 @@ function encodeMonoPcm16Wav(samples: Float32Array): Buffer {
     wav.writeInt16LE(Math.round(clamped * 32767), 44 + i * 2);
   }
   return wav;
+}
+
+/**
+ * Decides which French announcement plays when. A line that is interrupted by the next merge is cut after at least
+ * 0.28 s ("La patate—") and ends exactly where the next line starts, with its fade inside it, so two voices never
+ * play over each other. Exported so the schedule can be checked.
+ */
+export function scheduleFrenchVoices(trace: PatateTrace): (ScheduledVoiceClip & { isFirstUnlock: boolean })[] {
+  const sceneEndSample = trace.sceneFrames * SAMPLES_PER_FRAME;
+  const minSpokenSamples = Math.round(0.28 * SAMPLE_RATE); // >= 0.28s ("La patate—") before interrupt!
+  const interruptFadeSamples = Math.round(0.035 * SAMPLE_RATE); // 35ms click-free fade
+  const maxVoiceEndSample = sceneEndSample - Math.round(0.05 * SAMPLE_RATE);
+
+  const scheduledVoices: (ScheduledVoiceClip & { isFirstUnlock: boolean })[] = [];
+  for (const ev of trace.events) {
+    if (ev.type !== "merge") continue;
+    // Once Boss Tier 8 merges, let the Boss announcement own the spotlight cleanly!
+    if (
+      trace.bossMergeFrame !== null &&
+      ev.frame > trace.bossMergeFrame &&
+      ev.tier < 8
+    ) {
+      continue;
+    }
+    const triggerSample = ev.frame * SAMPLES_PER_FRAME + Math.round(0.012 * SAMPLE_RATE);
+    if (triggerSample >= maxVoiceEndSample - minSpokenSamples) continue;
+
+    const basePcm = loadFrenchStemPcm(ev.stem);
+    const pitchedPcm = resampleCoupledPitchSpeed(
+      basePcm,
+      ev.playbackRate,
+      ev.tier === 8,
+    );
+
+    const prev =
+      scheduledVoices.length > 0
+        ? scheduledVoices[scheduledVoices.length - 1]
+        : null;
+
+    let startSample = triggerSample;
+    if (prev && prev.endSample > triggerSample) {
+      // Protect Tiers 6..8 (Codexienne, Claude-Codienne, Oyrenienne) and first-time tier unlocks
+      // from being cut short by strictly lower-tier background merges; ascending chains (ev.tier >= prev.tier) still stutter!
+      if ((prev.tier >= 6 || prev.isFirstUnlock) && ev.tier < prev.tier) {
+        continue;
+      }
+      // Enforce >= 0.28s of the previous phrase before interrupting ("La patate— La patate—"). The cut line ends
+      // exactly where the next one starts (its fade is inside it), so two voices never overlap.
+      const earliestCut = prev.startSample + minSpokenSamples;
+      const cutAt = Math.max(triggerSample, earliestCut);
+      if (cutAt < prev.endSample) {
+        prev.endSample = cutAt;
+        prev.fadeOutSamples = Math.min(interruptFadeSamples, cutAt - prev.startSample);
+      }
+      startSample = cutAt;
+    }
+
+    if (startSample >= maxVoiceEndSample - Math.round(0.18 * SAMPLE_RATE)) {
+      continue;
+    }
+
+    const naturalEnd = startSample + pitchedPcm.length;
+    const clampedEnd = Math.min(maxVoiceEndSample, naturalEnd);
+    const tierGain = ev.tier === 8 ? 1.06 : ev.tier >= 6 ? 0.98 : 0.92;
+
+    scheduledVoices.push({
+      startSample,
+      endSample: clampedEnd,
+      fadeOutSamples:
+        clampedEnd < naturalEnd
+          ? Math.round(0.045 * SAMPLE_RATE)
+          : Math.round(0.02 * SAMPLE_RATE),
+      tier: ev.tier,
+      isFirstUnlock: ev.isFirstUnlock,
+      pcm: pitchedPcm,
+      gain: tierGain,
+    });
+  }
+  return scheduledVoices;
 }
 
 export function synthesizePatateWav(trace: PatateTrace): Buffer {
@@ -197,74 +276,7 @@ export function synthesizePatateWav(trace: PatateTrace): Buffer {
   }
 
   // 2. Comedic French Pitch-Scaled Voice Announcements + Chain-Interrupt Stutter Engine
-  const minSpokenSamples = Math.round(0.24 * SAMPLE_RATE); // >= 0.24s ("La patate—") before interrupt!
-  const interruptFadeSamples = Math.round(0.035 * SAMPLE_RATE); // 35ms click-free fade
-  const maxVoiceEndSample = sceneEndSample - Math.round(0.05 * SAMPLE_RATE);
-
-  const scheduledVoices: (ScheduledVoiceClip & { isFirstUnlock: boolean })[] = [];
-  for (const ev of trace.events) {
-    if (ev.type !== "merge") continue;
-    // Once Boss Tier 8 merges, let the Boss announcement own the spotlight cleanly!
-    if (
-      trace.bossMergeFrame !== null &&
-      ev.frame > trace.bossMergeFrame &&
-      ev.tier < 8
-    ) {
-      continue;
-    }
-    const triggerSample = ev.frame * SAMPLES_PER_FRAME + Math.round(0.012 * SAMPLE_RATE);
-    if (triggerSample >= maxVoiceEndSample - minSpokenSamples) continue;
-
-    const basePcm = loadFrenchStemPcm(ev.stem);
-    const pitchedPcm = resampleCoupledPitchSpeed(
-      basePcm,
-      ev.playbackRate,
-      ev.tier === 8,
-    );
-
-    const prev =
-      scheduledVoices.length > 0
-        ? scheduledVoices[scheduledVoices.length - 1]
-        : null;
-
-    let startSample = triggerSample;
-    if (prev && prev.endSample > triggerSample) {
-      // Protect Tiers 6..8 (Codexienne, Claude-Codienne, Oyrenienne) and first-time tier unlocks
-      // from being cut short by strictly lower-tier background merges; ascending chains (ev.tier >= prev.tier) still stutter!
-      if ((prev.tier >= 6 || prev.isFirstUnlock) && ev.tier < prev.tier) {
-        continue;
-      }
-      // Enforce >= 0.24s of previous phrase before interrupting ("La patate— La patate—")
-      const earliestCut = prev.startSample + minSpokenSamples;
-      const cutAt = Math.max(triggerSample, earliestCut);
-      if (cutAt + interruptFadeSamples < prev.endSample) {
-        prev.endSample = cutAt + interruptFadeSamples;
-        prev.fadeOutSamples = interruptFadeSamples;
-      }
-      startSample = Math.max(triggerSample, earliestCut);
-    }
-
-    if (startSample >= maxVoiceEndSample - Math.round(0.18 * SAMPLE_RATE)) {
-      continue;
-    }
-
-    const naturalEnd = startSample + pitchedPcm.length;
-    const clampedEnd = Math.min(maxVoiceEndSample, naturalEnd);
-    const tierGain = ev.tier === 8 ? 1.06 : ev.tier >= 6 ? 0.98 : 0.92;
-
-    scheduledVoices.push({
-      startSample,
-      endSample: clampedEnd,
-      fadeOutSamples:
-        clampedEnd < naturalEnd
-          ? Math.round(0.045 * SAMPLE_RATE)
-          : Math.round(0.02 * SAMPLE_RATE),
-      tier: ev.tier,
-      isFirstUnlock: ev.isFirstUnlock,
-      pcm: pitchedPcm,
-      gain: tierGain,
-    });
-  }
+  const scheduledVoices = scheduleFrenchVoices(trace);
 
   // Render scheduled French voices into mix
   const fadeInSamples = Math.round(0.008 * SAMPLE_RATE);
@@ -285,7 +297,7 @@ export function synthesizePatateWav(trace: PatateTrace): Buffer {
     }
   }
 
-  // 3. Shared Closing End-Card Warm Major-Ninth Chord (21.0s – 24.0s)
+  // 3. Shared Closing End-Card Warm Major-Ninth Chord (the last 3 s of the video)
   const root = trace.spec.closingRootHz;
   const chordRatios = [1, 5 / 4, 3 / 2, 2, 9 / 4];
   chordRatios.forEach((ratio, idx) => {
