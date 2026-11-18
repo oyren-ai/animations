@@ -9,6 +9,7 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
+import { OyrenBrandLayer } from "../brand/OyrenBrand.tsx";
 import { VIDEO } from "../settings.ts";
 import { theme } from "../theme.ts";
 import { paintSwarmFrame } from "../swarm/paint.ts";
@@ -68,6 +69,7 @@ export function SwarmShell({ slug }: { slug: SwarmSlug }) {
         <>
           <SwarmCanvas slug={slug} />
           <Audio src={staticFile("generated/" + slug + ".wav")} volume={1} />
+          <OyrenBrandLayer />
         </>
       )}
     </AbsoluteFill>
