@@ -10,6 +10,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { VIDEO } from "../settings.ts";
+import { OyrenBrandLayer } from "../brand/OyrenBrand.tsx";
 import { paintCarpetLoomFrame } from "../music-carpet/paint.ts";
 import { simulateCarpetLoom } from "../music-carpet/sim.ts";
 import { paintFireworkKingFrame } from "../music-fireworks/paint.ts";
@@ -43,7 +44,9 @@ function ensureMusicFontsLoaded() {
   musicFontsPromise ??= Promise.all([
     document.fonts.load(`500 22px ${family}`, FONT_PRELOAD_SAMPLE),
     document.fonts.load(`600 24px ${family}`, FONT_PRELOAD_SAMPLE),
+    document.fonts.load(`600 30px ${family}`, FONT_PRELOAD_SAMPLE),
     document.fonts.load(`700 38px ${family}`, FONT_PRELOAD_SAMPLE),
+    document.fonts.load(`700 40px ${family}`, FONT_PRELOAD_SAMPLE),
   ]);
   return musicFontsPromise;
 }
@@ -116,6 +119,7 @@ export function MusicShell({ slug }: { slug: MusicCompositionSlug }) {
         <>
           <MusicCanvas slug={slug} />
           <Audio src={staticFile(`generated/${slug}.wav`)} volume={1} />
+          <OyrenBrandLayer />
         </>
       )}
     </AbsoluteFill>
