@@ -16,6 +16,8 @@ import {
 } from "../src/drop-arenas/sim.ts";
 import { PATATE_COMPOSITIONS, simulatePatate } from "../src/patate/sim.ts";
 import { synthesizePatateWav } from "../src/patate/audio.ts";
+import { synthesizeSwarmWav } from "../src/swarm/audio.ts";
+import { SWARM_DEFINITIONS, simulateSwarmDefinition } from "../src/swarm/themes.ts";
 import {
   synthesize,
   synthesizeCountryMapWav,
@@ -146,6 +148,21 @@ for (const patate of PATATE_COMPOSITIONS) {
   });
   console.log(
     `${patate.id}: ${trace.events.length} events; bossFrame=${trace.bossMergeFrame}; ${trace.totalFrames} frames (${(trace.totalFrames / VIDEO.fps).toFixed(2)}s)`,
+  );
+}
+
+for (const swarm of SWARM_DEFINITIONS) {
+  const trace = simulateSwarmDefinition(swarm.slug);
+  const wav = synthesizeSwarmWav(trace, swarm);
+  writeFileSync(new URL("../public/generated/" + swarm.slug + ".wav", import.meta.url), wav);
+  results.push({
+    id: swarm.id,
+    seed: swarm.config.seed,
+    frames: trace.totalFrames,
+    audioDigest: createHash("sha256").update(wav).digest("hex"),
+  });
+  console.log(
+    `${swarm.id}: ${trace.events.length} events; winFrame=${trace.winFrame}; ${trace.totalFrames} frames (${(trace.totalFrames / VIDEO.fps).toFixed(2)}s)`,
   );
 }
 
