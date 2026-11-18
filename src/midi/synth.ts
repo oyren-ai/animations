@@ -15,7 +15,7 @@ import type { MidiNote, ParsedMidi } from "./types.ts";
  */
 
 export const SYNTH_SAMPLE_RATE = 48000;
-export type Instrument = "piano" | "bell" | "marimba" | "kalimba";
+export type Instrument = "piano" | "bell" | "marimba" | "kalimba" | "strings" | "musicbox";
 
 export interface SynthOptions {
   /** Output sample rate in Hz (default 48000). */
@@ -57,11 +57,13 @@ export interface StereoAudio {
   sampleRate: number;
 }
 
-/** General MIDI program number to one of the four voices (everything not listed is a piano). */
+/** General MIDI program number to one of the six voices (everything not listed is a piano). */
 export function instrumentForProgram(program: number): Instrument {
   const p = Math.trunc(program);
-  if ((p >= 8 && p <= 10) || p === 14 || p === 98 || (p >= 112 && p <= 119)) return "bell";
+  if (p === 10) return "musicbox";
+  if ((p >= 8 && p <= 9) || p === 14 || p === 98 || (p >= 112 && p <= 119)) return "bell";
   if (p >= 11 && p <= 13) return "marimba";
+  if ((p >= 40 && p <= 44) || (p >= 48 && p <= 51)) return "strings";
   if (p >= 105 && p <= 108) return "kalimba";
   return "piano";
 }
@@ -80,7 +82,14 @@ const DEFAULT_CEILING = 0.84; // leaves about 1 dB of headroom for AAC overshoot
 const DEFAULT_TARGET_PEAK = 0.8;
 const DEFAULT_MAX_GAIN = 4;
 /** Per-voice trims so a note at the same velocity is about equally loud on every instrument (measured, see tests). */
-const VOICE_GAIN: Record<Instrument, number> = { piano: 0.2, bell: 0.2, marimba: 0.3, kalimba: 0.19 };
+const VOICE_GAIN: Record<Instrument, number> = {
+  piano: 0.2,
+  bell: 0.2,
+  marimba: 0.3,
+  kalimba: 0.19,
+  strings: 0.18,
+  musicbox: 0.21,
+};
 const DRUM_GAIN = 0.3;
 
 function clamp(x: number, lo: number, hi: number): number {
@@ -375,6 +384,77 @@ function renderKalimba(ws: Workspace, p: NoteParams): VoiceOut {
   addDecayingSine(buf, len, f * 1.0028, 0.4, t60 * 0.9, 0, sr); // slightly detuned twin: slow shimmer
   addDecayingSine(buf, len, 5.4 * f, 0.1 + 0.3 * Math.pow(vn, 1.5), t60 * 0.12, 0, sr); // inharmonic tine mode
   addNoiseBurst(buf, len, sr, rng, 260, 0.014, 0.3 * Math.pow(vn, 1.3)); // soft body thump
+  return { buf, len, hold: Math.round(hold * sr), release: Math.round(release * sr) };
+}
+
+/** Tuned cantilevered steel comb tooth: pure fundamental + fast-decaying inharmonic flexural partials + pin pluck. */
+function renderMusicBox(ws: Workspace, p: NoteParams): VoiceOut {
+  const { freq: f, sr, vn, rng } = p;
+  const t60 = clamp(2.05 * Math.pow(523.25 / f, 0.32), 0.85, 2.35);
+  const len = Math.max(2, Math.round(Math.min(3.0, t60 * 1.25) * sr));
+  const buf = ws.voice(len);
+  addDecayingSine(buf, len, f, 1, t60, 0, sr);
+  addDecayingSine(buf, len, f * 1.0018, 0.26, t60 * 0.85, 0.4, sr);
+  addDecayingSine(buf, len, 2 * f, 0.18 * (0.4 + 0.6 * vn), t60 * 0.45, 0, sr);
+  addDecayingSine(buf, len, 2.92 * f, 0.32 * (0.2 + 0.8 * vn * vn), t60 * 0.16, 0, sr);
+  addDecayingSine(buf, len, 5.65 * f, 0.16 * vn * vn, t60 * 0.06, 0, sr);
+  addNoiseBurst(buf, len, sr, rng, 4800, 0.0016, 0.16 * Math.pow(vn, 1.3));
+  addNoiseBurst(buf, len, sr, rng, 420, 0.008, 0.14 * vn);
+  return { buf, len, hold: len, release: 0 };
+}
+
+/** Bowed strings built from three symmetrically detuned band-limited sawtooth oscillators with delayed vibrato. */
+function renderStrings(ws: Workspace, p: NoteParams): VoiceOut {
+  const { freq: f, sr, vn, rng } = p;
+  const hold = Math.max(p.holdSec, 0.08);
+  const release = 0.22;
+  const len = Math.max(2, Math.round((hold + release) * sr));
+  const buf = ws.voice(len);
+
+  const maxFreq = Math.min(7200, 0.42 * sr);
+  const maxHarm = Math.min(18, Math.max(1, Math.floor(maxFreq / f)));
+  const rolloff = 1.42 - 0.42 * vn; // louder bow pressure excites brighter upper sawtooth harmonics
+  const harmAmp = new Float64Array(maxHarm + 1);
+  let norm = 0;
+  for (let k = 1; k <= maxHarm; k++) {
+    const fk = k * f;
+    // Wooden body formant peak near 650 Hz
+    const body = 1 + 0.45 * Math.exp(-Math.pow(Math.log2(fk / 650), 2) / 1.2);
+    const a = (body / Math.pow(k, rolloff)) * (k % 2 === 0 ? 0.88 : 1);
+    harmAmp[k] = a;
+    norm += a * a;
+  }
+  const scale = norm > 0 ? 0.78 / Math.sqrt(norm) : 0;
+  for (let k = 1; k <= maxHarm; k++) harmAmp[k] *= scale;
+
+  const detunes = [-4.2, 0, 4.2];
+  const weights = [0.3, 0.56, 0.3];
+  const phases = new Float64Array(detunes.length);
+  for (let v = 0; v < detunes.length; v++) phases[v] = rng() * TWO_PI * (v === 1 ? 0 : 1);
+  const vibRate = 5.3 + 0.35 * (rng() - 0.5);
+  const vibPhase0 = rng() * TWO_PI;
+
+  for (let i = 0; i < len; i++) {
+    const t = i / sr;
+    // Crisp bow articulation (0.42 immediate bite rising smoothly to 1.0 over ~42 ms)
+    const bowEnv = 0.42 + 0.58 * (1 - Math.exp(-t / 0.018));
+    const vibDepth = 0.0025 * clamp((t - 0.14) / 0.22, 0, 1);
+    const vibMul = 1 + vibDepth * Math.sin(TWO_PI * vibRate * t + vibPhase0);
+    let sample = 0;
+    for (let v = 0; v < detunes.length; v++) {
+      const fv = f * Math.pow(2, detunes[v] / 1200) * vibMul;
+      const ph = phases[v];
+      let voiceSum = 0;
+      for (let k = 1; k <= maxHarm; k++) {
+        voiceSum += harmAmp[k] * Math.sin(k * ph);
+      }
+      sample += weights[v] * voiceSum;
+      phases[v] = ph + (TWO_PI * fv) / sr;
+      if (phases[v] > TWO_PI * 64) phases[v] -= TWO_PI * 64;
+    }
+    buf[i] = bowEnv * sample;
+  }
+  addNoiseBurst(buf, len, sr, rng, 2400, 0.014, 0.12 * vn * vn);
   return { buf, len, hold: Math.round(hold * sr), release: Math.round(release * sr) };
 }
 
@@ -701,6 +781,8 @@ export function renderNotes(notes: readonly MidiNote[], options: SynthOptions = 
       : instrument === "bell" ? renderBell(ws, params)
       : instrument === "marimba" ? renderMarimba(ws, params)
       : instrument === "kalimba" ? renderKalimba(ws, params)
+      : instrument === "musicbox" ? renderMusicBox(ws, params)
+      : instrument === "strings" ? renderStrings(ws, params)
       : renderPiano(ws, params);
     const buf = voice.buf;
     const len = Math.min(shapeEnvelope(buf, voice.len, voice.hold, voice.release, sr), frames - start);

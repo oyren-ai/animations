@@ -13,7 +13,7 @@ import {
 import type { MidiNote, ParsedMidi } from "./types.ts";
 
 const SR = SYNTH_SAMPLE_RATE;
-const INSTRUMENTS: Instrument[] = ["piano", "bell", "marimba", "kalimba"];
+const INSTRUMENTS: Instrument[] = ["piano", "bell", "marimba", "kalimba", "strings", "musicbox"];
 
 function note(pitch: number, timeSec = 0.1, durationSec = 1.5, velocity = 100, track = 0, channel = 0): MidiNote {
   return { timeSec, durationSec, pitch, velocity, track, channel };
@@ -180,8 +180,15 @@ test("rendering is deterministic: identical WAV bytes across runs and across not
   assert.ok(a.length > 44);
 });
 
-test("pitch accuracy: A4, C3 and C6 are within 5 cents (piano) and 10 cents (bell, marimba, kalimba)", () => {
-  const cases: Array<[Instrument, number]> = [["piano", 5], ["marimba", 10], ["kalimba", 10], ["bell", 10]];
+test("pitch accuracy: A4, C3 and C6 are within 5 cents (piano) and 10 cents (bell, marimba, kalimba, strings, musicbox)", () => {
+  const cases: Array<[Instrument, number]> = [
+    ["piano", 5],
+    ["marimba", 10],
+    ["kalimba", 10],
+    ["bell", 10],
+    ["strings", 10],
+    ["musicbox", 10],
+  ];
   for (const [instrument, tolerance] of cases) {
     for (const pitch of [69, 48, 84]) {
       const audio = renderSingle(instrument, note(pitch, 0.1, 1.5), { tailSec: 1.5 });
@@ -360,10 +367,12 @@ test("the output has no DC offset and the General MIDI program map picks the rig
   }
   const expected: Array<[number, Instrument]> = [
     [0, "piano"], [1, "piano"], [7, "piano"], [24, "piano"], [127, "piano"],
-    [8, "bell"], [9, "bell"], [10, "bell"], [14, "bell"], [98, "bell"], [112, "bell"], [119, "bell"],
+    [8, "bell"], [9, "bell"], [14, "bell"], [98, "bell"], [112, "bell"], [119, "bell"],
+    [10, "musicbox"],
     [11, "marimba"], [12, "marimba"], [13, "marimba"],
+    [40, "strings"], [41, "strings"], [42, "strings"], [48, "strings"], [49, "strings"],
     [105, "kalimba"], [106, "kalimba"], [107, "kalimba"], [108, "kalimba"],
-    [15, "piano"], [97, "piano"], [99, "piano"], [104, "piano"], [109, "piano"], [111, "piano"], [120, "piano"],
+    [15, "piano"], [45, "piano"], [97, "piano"], [99, "piano"], [104, "piano"], [109, "piano"], [111, "piano"], [120, "piano"],
   ];
   for (const [program, instrument] of expected) assert.equal(instrumentForProgram(program), instrument, `program ${program}`);
 });

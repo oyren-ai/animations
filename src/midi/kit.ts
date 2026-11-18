@@ -238,17 +238,17 @@ export function drawCenteredText(
 }
 
 /**
- * The small, unobtrusive title shared by the MIDI scenes: the piece name and a "MIDI - <scene>" line, centred
- * on x = 540 near the top (baselines y = 196 and 240, above the art). Fades in over the first 0.8 s.
+ * The small, unobtrusive piece caption shared by the MIDI scenes: the piece name and composer/mechanism line,
+ * centred on x = 540 below the Oyren wordmark (baselines y = 208 and 244, top > 175, above y = 290 stage).
  */
-export function drawSceneTitle(ctx: CanvasRenderingContext2D, scene: MidiSceneData, label: string, frame: number): ReelBox[] {
+export function drawSceneTitle(ctx: CanvasRenderingContext2D, scene: MidiSceneData, label: string, _frame: number): ReelBox[] {
   const boxes: ReelBox[] = [];
-  const appear = smoothstep(0.1, 0.9, frame / scene.fps);
+  const subtitle = label.includes("\u00b7") ? label : "MIDI  \u00b7  " + label.toUpperCase();
   ctx.save();
-  ctx.globalAlpha = 0.92 * appear;
-  boxes.push(drawCenteredText(ctx, scene.title, 196, { size: 46, weight: 700, color: "#eef2ff", maxWidth: 780 }));
-  ctx.globalAlpha = 0.66 * appear;
-  boxes.push(drawCenteredText(ctx, "MIDI  \u00b7  " + label.toUpperCase(), 240, { size: 22, weight: 600, color: "#a9b4d6", maxWidth: 780, letterSpacing: 4 }));
+  ctx.globalAlpha = 0.95;
+  boxes.push(drawCenteredText(ctx, scene.title, 208, { size: 38, weight: 700, color: "#f1f5f9", maxWidth: 780 }));
+  ctx.globalAlpha = 0.74;
+  boxes.push(drawCenteredText(ctx, subtitle, 244, { size: 20, weight: 600, color: "#94a3b8", maxWidth: 780, letterSpacing: label.includes("\u00b7") ? 1.2 : 3 }));
   ctx.restore();
   return boxes;
 }

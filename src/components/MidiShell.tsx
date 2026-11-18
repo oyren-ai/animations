@@ -10,6 +10,7 @@ import {
   useCurrentFrame,
   type CalculateMetadataFunction,
 } from "remotion";
+import { OyrenBrandLayer } from "../brand/OyrenBrand.tsx";
 import { loadParsedMidi } from "../midi/load.ts";
 import { buildSceneData, midiAudioFile, sceneFrameCount, type MidiSceneData } from "../midi/timeline.ts";
 import { MIDI_TAIL_SEC } from "../midi/timeline.ts";
@@ -86,6 +87,7 @@ export function createMidiShell(spec: MidiSceneSpec) {
             </Sequence>
           </>
         )}
+        <OyrenBrandLayer />
       </AbsoluteFill>
     );
   };

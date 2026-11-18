@@ -5,7 +5,8 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { MIDI_COMPOSITION_DEFS } from "../src/midi/compositions.tsx";
-import { midiAudioFile } from "../src/midi/timeline.ts";
+import { parseMidi } from "../src/midi/parse.ts";
+import { MIDI_TAIL_SEC, midiAudioFile, sceneFrameCount } from "../src/midi/timeline.ts";
 import { VIDEO } from "../src/settings.ts";
 
 /**
@@ -47,12 +48,19 @@ try {
     cli, "render", "src/index.ts", composition, silent, "--codec=h264", "--pixel-format=yuv420p", "--crf=18", "--muted", ...extra,
   ], { stdio: "inherit", env: process.env, cwd: root });
   if (render.status !== 0) throw new Error("Remotion render failed");
-  // Audio placed at the lead-in with sample accuracy (800 samples per frame at 48 kHz / 60 fps). The WAV ends with
-  // the ring-out tail, so with the lead-in it reaches the end of the picture to within one frame.
-  const delay = Math.round(def.spec.leadFrames * 48000 / VIDEO.fps) + "S";
+  // Audio placed at the lead-in with sample accuracy (800 samples per frame at 48 kHz / 60 fps),
+  // padded/trimmed to exact totalSamples so audio and video durations match to the frame.
+  const midiBytes = readFileSync(fileURLToPath(new URL("../public/midi/" + midiFile, import.meta.url)));
+  const totalFrames = sceneFrameCount(parseMidi(midiBytes).durationSec, {
+    fps: VIDEO.fps,
+    leadFrames: def.spec.leadFrames,
+    tailSec: def.spec.tailSec ?? MIDI_TAIL_SEC,
+  });
+  const totalSamples = Math.round((totalFrames * 48000) / VIDEO.fps);
+  const delay = Math.round((def.spec.leadFrames * 48000) / VIDEO.fps) + "S";
   const mux = spawnSync(process.env.FFMPEG ?? "ffmpeg", [
     "-hide_banner", "-loglevel", "error", "-y", "-i", silent, "-i", wav,
-    "-filter_complex", `[1:a]adelay=${delay}|${delay}[audio]`,
+    "-filter_complex", `[1:a]adelay=${delay}|${delay},apad=whole_len=${totalSamples},atrim=end_sample=${totalSamples}[audio]`,
     "-map", "0:v", "-map", "[audio]", "-c:v", "copy", "-c:a", "aac", "-b:a", "256k", "-ar", "48000",
     "-movflags", "+faststart", muxed,
   ], { stdio: "inherit" });

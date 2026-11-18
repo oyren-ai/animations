@@ -1,95 +1,127 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { parseMidi } from "./parse.ts";
-import { builtInPieces, CANON_CHORDS, CANON_LINE, ODE_MELODY, PHASE_PATTERN_A, pieceBytes } from "./pieces.ts";
-import type { MidiNote } from "./types.ts";
+import {
+  builtInPieces,
+  BUMBLEBEE_INTRO_BARS,
+  BUMBLEBEE_TEMPOS,
+  bumblebeeWave16,
+  CANON_OPENING_QUARTERS,
+  CANON_PROGRESSION,
+  FUR_ELISE_OPENING_MOTIF,
+  pieceBytes,
+} from "./pieces.ts";
 
-const [ODE, CANON, PHASE] = builtInPieces();
-const parsedOf = (piece: typeof ODE) => parseMidi(pieceBytes(piece));
-const near = (actual: number, expected: number, epsilon: number) =>
-  assert.ok(Math.abs(actual - expected) <= epsilon, `${actual} vs ${expected} (+/- ${epsilon})`);
+const [BUMBLEBEE, CANON, FUR_ELISE] = builtInPieces();
+const parsedOf = (piece: typeof BUMBLEBEE) => parseMidi(pieceBytes(piece));
 
-/** Major-scale degree of a pitch relative to a tonic: "3" = mediant, "5," = dominant an octave below. */
-function degree(pitch: number, tonic: number): string {
-  const offset = pitch - tonic, octave = Math.floor(offset / 12);
-  const index = [0, 2, 4, 5, 7, 9, 11].indexOf(offset - 12 * octave);
-  assert.ok(index >= 0, `pitch ${pitch} is not in the major scale`);
-  return String(index + 1) + (octave < 0 ? "," : octave > 0 ? "'" : "");
-}
+test("Flight of the Bumblebee: authentic chromatic plunge, main wave, 4-stage accelerando, and 3-octave rocket", () => {
+  const parsed = parsedOf(BUMBLEBEE);
+  const lead = parsed.notes.filter((n) => n.track === 1);
+  assert.ok(lead.length >= 420, `expected dense chromatic lead, got ${lead.length}`);
+  assert.equal(lead[0].pitch, 88, "opens on E6");
+  // Followed by the two-octave chromatic plunge from E6 (88) down to E4 (64)
+  assert.deepEqual(
+    lead.slice(1, 1 + 4 + 8 + 8).map((n) => n.pitch),
+    [...BUMBLEBEE_INTRO_BARS[0], ...BUMBLEBEE_INTRO_BARS[1], ...BUMBLEBEE_INTRO_BARS[2]],
+  );
+  // Main A-minor wave starts right after the 6-bar intro
+  const waveStart = 1 + BUMBLEBEE_INTRO_BARS.reduce((s, b) => s + b.length, 0);
+  assert.deepEqual(lead.slice(waveStart, waveStart + 16).map((n) => n.pitch), bumblebeeWave16(69));
 
-test("Ode to Joy melody is the standard theme (checked as scale degrees, independent of the transposition)", () => {
-  const expected = [
-    "3 3 4 5 5 4 3 2 1 1 2 3 3 2 2", // bars 1-4
-    "3 3 4 5 5 4 3 2 1 1 2 3 2 1 1", // bars 5-8
-    "2 2 3 1 2 3 4 3 1 2 3 4 3 2 1 2 5,", // bars 9-12
-    "3 3 4 5 5 4 3 2 1 1 2 3 2 1 1", // bars 13-16
-  ].join(" ").split(" ");
-  const actual = ODE_MELODY.flat().map(([pitch]) => degree(pitch, 62));
-  assert.deepEqual(actual, expected);
-  assert.equal(ODE_MELODY.length, 16);
-  ODE_MELODY.forEach((bar, i) => assert.equal(bar.reduce((sum, [, beats]) => sum + beats, 0), 4, `bar ${i + 1} is 4 beats`));
-  // The written file contains that melody as its first-track notes, with an octave doubling in the last section.
-  const melody = parsedOf(ODE).notes.filter((n) => n.track === 1 && n.timeSec < 52 && n.pitch < 72).map((n) => n.pitch);
-  assert.deepEqual(melody.slice(0, 15), ODE_MELODY.slice(0, 4).flat().map(([pitch]) => pitch));
+  // Verify the 4-stage accelerando genuinely increases note density (notes per second) across the piece
+  assert.equal(parsed.tempoMap.length, BUMBLEBEE_TEMPOS.length);
+  const densityInWindow = (t0: number, t1: number) =>
+    parsed.notes.filter((n) => n.timeSec >= t0 && n.timeSec < t1).length / (t1 - t0);
+  const dEarly = densityInWindow(2, 12);
+  const dMid = densityInWindow(16, 26);
+  const dPayoff = densityInWindow(34, 42);
+  assert.ok(dMid > dEarly * 1.12, `mid density ${dMid.toFixed(1)} > early ${dEarly.toFixed(1)}`);
+  assert.ok(dPayoff > dMid * 1.15, `payoff density ${dPayoff.toFixed(1)} > mid ${dMid.toFixed(1)}`);
+
+  // Verify the unbroken 3-octave ascending chromatic rocket (A3 = 57 up to A6 = 93) near the finale
+  const pitchesStr = lead.map((n) => n.pitch).join(",");
+  const expectedRocket = Array.from({ length: 37 }, (_, i) => 57 + i).join(",");
+  assert.ok(pitchesStr.includes(expectedRocket), "contains full 3-octave chromatic rocket A3..A6");
 });
 
-test("Ode to Joy accompaniment only uses tones of the chord named for the bar", () => {
-  const parsed = parsedOf(ODE);
-  assert.equal(parsed.tracks[2].name, "Left hand");
-  const classes = new Set(parsed.notes.filter((n) => n.track === 2 && n.timeSec < 40).map((n) => n.pitch % 12));
-  // D major: D E F# A and the dominant chord A C# E G
-  for (const pc of classes) assert.ok([2, 4, 6, 9, 1, 7].includes(pc), `unexpected pitch class ${pc}`);
-  assert.ok(classes.has(2) && classes.has(9) && classes.has(1), "both tonic and dominant harmony are present");
-  assert.ok(parsed.tempoMap.length >= 5, "ends with a ritardando");
-});
-
-test("Canon in D: ground bass, chord tones and the canon line", () => {
+test("Canon in D: five voices enter one at a time, ground bass and D-major harmony are exact", () => {
   const parsed = parsedOf(CANON);
-  const bass = parsed.notes.filter((n) => n.track === 1 && n.pitch < 52).slice(0, 8).map((n) => n.pitch);
-  assert.deepEqual(bass, [50, 45, 47, 42, 43, 38, 43, 45]); // D A B F# G D G A
-  const line = parsed.notes.filter((n) => n.track === 3).slice(0, 8).map((n) => n.pitch);
-  assert.deepEqual(line, [...CANON_LINE]); // F# E D C# B A B C#
-  const roots = [2, 9, 11, 6, 7, 2, 7, 9];
-  const thirds = [[6, 9], [1, 4], [2, 6], [9, 1], [11, 2], [6, 9], [11, 2], [1, 4]]; // other chord tones above the root
-  CANON_CHORDS.forEach((chord, i) => {
-    assert.equal(chord.bass % 12, roots[i]);
-    for (const pitch of chord.up) assert.ok([roots[i], ...thirds[i]].includes(pitch % 12), `${chord.name} tone ${pitch}`);
-  });
-  for (const pitch of CANON_LINE) assert.ok([2, 4, 6, 7, 9, 11, 1].includes(pitch % 12)); // D major scale
-  assert.ok(parsed.notes.filter((n) => n.track === 2).length > 100, "arpeggio voice is busy");
+  assert.equal(parsed.tracks.length, 6, "conductor + 5 voice tracks");
+
+  const byVoice = [1, 2, 3, 4, 5].map((trackIdx) => parsed.notes.filter((n) => n.track === trackIdx));
+  for (let v = 0; v < 5; v++) assert.ok(byVoice[v].length >= 16, `voice ${v + 1} has notes`);
+
+  // Voice entrances strictly stagger one cycle (~7.74 s) apart: 1 -> 2 -> 3 -> 4 -> 5
+  const firstOnsets = byVoice.map((notes) => notes[0].timeSec);
+  assert.ok(Math.abs(firstOnsets[0]) < 1e-6, "Voice 1 starts immediately at t = 0");
+  for (let v = 1; v < 5; v++) {
+    const gap = firstOnsets[v] - firstOnsets[v - 1];
+    assert.ok(gap > 6.5 && gap < 9.0, `Voice ${v + 1} enters one cycle after Voice ${v} (gap ${gap.toFixed(2)}s)`);
+  }
+
+  // Opening melody is Pachelbel's unmistakable quarter-note theme in D major
+  assert.deepEqual(
+    byVoice[0].slice(0, 16).map((n) => n.pitch),
+    CANON_OPENING_QUARTERS.flat(),
+  );
+  // Ground bass plays D A B F# G D G A
+  assert.deepEqual(
+    byVoice[1].slice(0, 8).map((n) => n.pitch),
+    CANON_PROGRESSION.map((c) => c.bass),
+  );
+  // Every single note in all five voices belongs to the pure D-major scale {D, E, F#, G, A, B, C#}
+  const dMajor = new Set([2, 4, 6, 7, 9, 11, 1]);
+  for (const n of parsed.notes) {
+    assert.ok(dMajor.has(n.pitch % 12), `pitch ${n.pitch} is outside D major`);
+  }
+  // Payoff window (70% to 85% of the piece): all 5 voices are sounding simultaneously
+  const tPayoff0 = parsed.durationSec * 0.68;
+  const tPayoff1 = parsed.durationSec * 0.88;
+  for (let v = 0; v < 5; v++) {
+    const active = byVoice[v].filter((n) => n.timeSec >= tPayoff0 && n.timeSec <= tPayoff1);
+    assert.ok(active.length >= 4, `voice ${v + 1} active during 5-voice payoff`);
+  }
 });
 
-test("Pentatonic Phase: pentatonic pitches, realignment at 45 s and a drifting middle", () => {
-  const parsed = parsedOf(PHASE);
-  const pentatonic = [4, 7, 9, 11, 2];
-  for (const note of parsed.notes) assert.ok(pentatonic.includes(note.pitch % 12), `pitch ${note.pitch} outside E minor pentatonic`);
-  const voice = (track: number) => parsed.notes.filter((n) => n.track === track);
-  const [a, b, c] = [voice(1), voice(2), voice(3)];
-  const startsNear = (notes: MidiNote[], t: number) => notes.find((n) => Math.abs(n.timeSec - t) < 0.002);
-  assert.ok(startsNear(a, 45) && startsNear(b, 45) && startsNear(c, 45), "all three loops restart together at 45 s");
-  assert.ok(startsNear(a, 6) && startsNear(b, 6), "voice B enters in unison with voice A at 6 s");
-  // Voice B's n-th loop start drifts earlier than voice A's by 3 - 156/14/4 s per loop.
-  const loopStartsB = b.filter((n) => n.pitch === PHASE_PATTERN_A[0] && n.timeSec > 5.9).map((n) => n.timeSec);
-  const driftPerLoop = 3 - (156 / 14) * 0.25;
-  near(loopStartsB[1] - loopStartsB[0], (156 / 14) * 0.25, 0.01);
-  assert.ok(driftPerLoop > 0.2);
-  near(a.find((n) => n.timeSec >= 23.99)!.timeSec, 24, 0.002); // voice A's loops start on multiples of 3 s
-  assert.ok(parsed.durationSec > 48 && parsed.durationSec < 54);
+test("Für Elise: Beethoven WoO 59 motif, C-major episode, tuned comb pitch range, and music-box program", () => {
+  const parsed = parsedOf(FUR_ELISE);
+  const melody = parsed.notes.filter((n) => n.track === 1);
+  // First 9 melody notes are E5 D#5 E5 D#5 E5 B4 D5 C5 A4
+  assert.deepEqual(melody.slice(0, 9).map((n) => n.pitch), [...FUR_ELISE_OPENING_MOTIF]);
+  // All voice tracks select General MIDI program 10 (Music Box)
+  for (const track of parsed.tracks.slice(1)) {
+    assert.deepEqual(track.programs, [10], `${track.name} selects GM Music Box (10)`);
+  }
+  // Comb range stays cleanly inside E3 (52) .. F6 (89), matching a physical 2-to-3-octave steel comb
+  for (const n of parsed.notes) {
+    assert.ok(n.pitch >= 52 && n.pitch <= 89, `comb pitch ${n.pitch} inside E3..F6`);
+  }
+  const distinctTeeth = new Set(parsed.notes.map((n) => n.pitch));
+  assert.ok(distinctTeeth.size >= 16 && distinctTeeth.size <= 30, `realistic comb tooth count: ${distinctTeeth.size}`);
 });
 
-test("every built-in piece is deterministic, 30-60 s with lead and tail, and has no same-pitch overlaps", () => {
+test("every built-in piece is deterministic, 45-60 s as a video, sorted, with no gaps > 2 s and no overlaps", () => {
   for (const piece of builtInPieces()) {
     assert.deepEqual(pieceBytes(piece), pieceBytes(piece));
     const parsed = parsedOf(piece);
-    assert.ok(parsed.notes.length >= 150, piece.file);
-    const videoSeconds = parsed.durationSec + 3 + 1.5; // generous lead-in and the default 3 s tail
-    assert.ok(videoSeconds > 30 && videoSeconds < 60, `${piece.file}: ${videoSeconds.toFixed(1)} s`);
+    assert.ok(parsed.notes.length >= 240, `${piece.file}: ${parsed.notes.length} notes`);
+    const videoSeconds = 1.1 + parsed.durationSec + 2.1;
+    assert.ok(videoSeconds >= 45 && videoSeconds <= 60, `${piece.file}: video length ${videoSeconds.toFixed(2)} s outside 45..60 s`);
+
+    // Sorted by onset and no gap > 2.0 s between consecutive note onsets
+    let prevOnset = 0;
     const lastEnd = new Map<string, number>();
-    for (const note of parsed.notes) {
-      const key = `${note.track}:${note.pitch}`;
-      assert.ok(note.timeSec >= (lastEnd.get(key) ?? 0) - 1e-6, `${piece.file}: overlapping notes at ${note.timeSec.toFixed(3)} s pitch ${note.pitch}`);
-      lastEnd.set(key, note.timeSec + note.durationSec);
-      assert.ok(note.velocity >= 1 && note.velocity <= 127);
+    for (let i = 0; i < parsed.notes.length; i++) {
+      const n = parsed.notes[i];
+      assert.ok(n.timeSec >= prevOnset - 1e-9, `${piece.file}: notes must be sorted`);
+      assert.ok(n.timeSec - prevOnset <= 2.0, `${piece.file}: onset gap ${(n.timeSec - prevOnset).toFixed(2)} s > 2 s`);
+      prevOnset = n.timeSec;
+
+      const key = `${n.track}:${n.pitch}`;
+      assert.ok(n.timeSec >= (lastEnd.get(key) ?? 0) - 1e-4, `${piece.file}: overlap at ${n.timeSec.toFixed(3)} s pitch ${n.pitch}`);
+      lastEnd.set(key, n.timeSec + n.durationSec);
+      assert.ok(n.velocity >= 1 && n.velocity <= 127);
     }
   }
 });

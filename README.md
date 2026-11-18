@@ -212,3 +212,17 @@ A TypeScript MIDI kit reads and writes Standard MIDI Files and synthesises deter
 | `src/components/MidiShell.tsx` | Loads the MIDI file, sets the composition length, paints each frame and plays the matching WAV |
 | `scripts/generate-midi-assets.ts` | Writes built-in `.mid` files and one WAV per `.mid` in `public/midi` |
 | `scripts/render-midi.ts` | Muted Remotion render plus an ffmpeg audio mux for frame-exact sound (`pnpm render:midi`) |
+
+### MIDI scenes
+
+Three vertical compositions (`1080 × 1920`, `60 fps`) render public-domain scores authored as deterministic MIDI note arrays in `src/midi/pieces.ts`, synthesised offline (`piano`, `strings`, `musicbox`, `marimba`, `kalimba`, `bell`), and framed with the shared `OyrenBrandLayer`.
+
+| Flight of the Bumblebee | Canon in D (five voices) | Für Elise (music box) |
+| --- | --- | --- |
+| <img src="docs/previews/MidiBumblebee.jpg" width="270" alt="Falling MIDI note bars and a growing bumblebee swarm over a piano keyboard"> | <img src="docs/previews/MidiCanonVoices.jpg" width="270" alt="Five colour-coded horizontal voice lanes entering one at a time across a central playhead"> | <img src="docs/previews/MidiFurEliseMusicBox.jpg" width="270" alt="A rotating pinned brass cylinder plucking a tuned steel comb with a progress ring"> |
+
+| Composition ID | What happens | Good first remix |
+| --- | --- | --- |
+| `MidiBumblebee` | Rimsky-Korsakov, *Flight of the Bumblebee* (`public/midi/flight-of-the-bumblebee.mid`). Falling MIDI note bars land on a 4-octave keyboard across a 4-stage accelerando (`136` to `212 BPM`) while a bumblebee and growing swarm (`1` to `7` bees) trace the melody and a live notes-per-second meter climbs to the 3-octave chromatic finale. | Adjust `BUMBLEBEE_TEMPOS` in `src/midi/pieces.ts` or `FALL_SEC` in `src/midi-bumblebee/sim.ts`. |
+| `MidiCanonVoices` | Pachelbel, *Canon in D* (`public/midi/canon-in-d-five-voices.mid`). Five horizontal lanes centred on `x = 540` light up one voice per ground-bass cycle (`VOICES 1..5`), growing from a single violin line into five layered counter-lines (`strings`, `kalimba`, `piano`). | Change lane voice palettes or scrolling scale `PX_PER_SEC` in `src/midi-canon/sim.ts`. |
+| `MidiFurEliseMusicBox` | Beethoven, *Für Elise*, WoO 59 (`public/midi/fur-elise-music-box.mid`). A 3D orthographic pinned brass cylinder maps time to angle and pitch to comb position, deflecting and plucking tuned steel teeth (`musicbox` inharmonic cantilever tones) while a centred ring tracks progress. | Tune comb tooth count or `FRONT_HALF_SEC` cylinder lookahead in `src/midi-music-box/sim.ts`. |
