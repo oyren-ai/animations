@@ -20,7 +20,8 @@ function ensureSwarmFontsLoaded() {
   const family = JSON.stringify(theme.fontFamily);
   swarmFontsPromise ??= Promise.all([
     document.fonts.load("500 28px " + family),
-    document.fonts.load("700 30px " + family),
+    document.fonts.load("600 28px " + family),
+    document.fonts.load("800 66px " + family),
     document.fonts.load("900 124px " + family),
   ]);
   return swarmFontsPromise;
@@ -64,7 +65,7 @@ export function SwarmShell({ slug }: { slug: SwarmSlug }) {
   }, [handle]);
 
   return (
-    <AbsoluteFill style={{ background: "#070a0e" }}>
+    <AbsoluteFill style={{ background: "#03080a" }}>
       {ready && (
         <>
           <SwarmCanvas slug={slug} />

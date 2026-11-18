@@ -141,3 +141,31 @@ test("painting is a pure function of the frame", () => {
   const b = paintSwarmFrame(makeMockCanvasContext(), definition, trace, 123);
   assert.deepEqual(a, b);
 });
+
+test("restyle uses Oyren lime accents, team-coloured tabular counters, and no legacy cyan glow", () => {
+  for (const definition of SWARM_DEFINITIONS) {
+    const trace = simulateSwarmDefinition(definition.slug);
+    const seenFills = new Set<string>();
+    const seenStrokes = new Set<string>();
+    const baseCtx = makeMockCanvasContext();
+    const ctx = new Proxy(baseCtx as unknown as Record<string, unknown>, {
+      get(obj, prop) {
+        return obj[prop as string];
+      },
+      set(obj, prop, val) {
+        if (prop === "fillStyle" && typeof val === "string") seenFills.add(val.toLowerCase());
+        if (prop === "strokeStyle" && typeof val === "string") seenStrokes.add(val.toLowerCase());
+        obj[prop as string] = val;
+        return true;
+      },
+    }) as unknown as CanvasRenderingContext2D;
+
+    paintSwarmFrame(ctx, definition, trace, trace.winFrame + 10);
+    assert.ok(seenFills.has("#c8ff00"), `${definition.id}: expected Oyren lime fill (#c8ff00)`);
+    assert.ok(seenStrokes.has("#c8ff00"), `${definition.id}: expected Oyren lime border (#c8ff00)`);
+    assert.ok(!seenFills.has("#26e0ff") && !seenStrokes.has("#26e0ff"), "legacy cyan glow must be gone");
+    for (const skin of definition.skin.types) {
+      assert.ok(seenFills.has(skin.color.toLowerCase()), `${definition.id}: expected team colour ${skin.color}`);
+    }
+  }
+});

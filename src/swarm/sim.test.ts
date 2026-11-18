@@ -29,6 +29,124 @@ function assertSameTrace(a: SwarmTrace, b: SwarmTrace) {
   assert.deepEqual(a.type, b.type);
 }
 
+type Pt = { x: number; y: number };
+
+function cross(o: Pt, a: Pt, b: Pt): number {
+  return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+}
+
+function convexHull(pts: readonly Pt[]): Pt[] {
+  const sorted = [...pts].sort((a, b) => a.x - b.x || a.y - b.y);
+  if (sorted.length <= 1) return sorted;
+  const lower: Pt[] = [];
+  for (const p of sorted) {
+    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) lower.pop();
+    lower.push(p);
+  }
+  const upper: Pt[] = [];
+  for (let i = sorted.length - 1; i >= 0; i--) {
+    const p = sorted[i];
+    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0) upper.pop();
+    upper.push(p);
+  }
+  lower.pop();
+  upper.pop();
+  return [...lower, ...upper];
+}
+
+function hullsStrictlySeparated(a: readonly Pt[], b: readonly Pt[]): boolean {
+  for (const poly of [a, b]) {
+    for (let i = 0; i < poly.length; i++) {
+      const p0 = poly[i];
+      const p1 = poly[(i + 1) % poly.length];
+      const nx = -(p1.y - p0.y);
+      const ny = p1.x - p0.x;
+      let maxA = -Infinity;
+      let minA = Infinity;
+      for (const p of a) {
+        const v = p.x * nx + p.y * ny;
+        if (v > maxA) maxA = v;
+        if (v < minA) minA = v;
+      }
+      let maxB = -Infinity;
+      let minB = Infinity;
+      for (const p of b) {
+        const v = p.x * nx + p.y * ny;
+        if (v > maxB) maxB = v;
+        if (v < minB) minB = v;
+      }
+      if (maxA < minB - 1e-6 || maxB < minA - 1e-6) return true;
+    }
+  }
+  return false;
+}
+
+test("opening layout: armies start packed on their own sides, centroids >= 600 px apart, symmetric, disjoint, with a fast charge", () => {
+  for (const definition of SWARM_DEFINITIONS) {
+    const trace = simulateSwarmDefinition(definition.slug);
+    const { count, types, config } = trace;
+    const W = config.arena.width;
+    const r = config.radius;
+    assert.equal(W, 980);
+
+    const byType: Pt[][] = Array.from({ length: types }, () => []);
+    for (let i = 0; i < count; i++) {
+      byType[trace.type[i]].push({ x: trace.x[i], y: trace.y[i] });
+      for (let j = i + 1; j < count; j++) {
+        const d = Math.hypot(trace.x[i] - trace.x[j], trace.y[i] - trace.y[j]);
+        assert.ok(d >= 2 * r - 0.01, `${definition.id}: initial overlap (${d.toFixed(2)} px)`);
+      }
+    }
+
+    for (const pts of byType) {
+      for (let i = 0; i < pts.length; i++) {
+        let nearest = Infinity;
+        for (let j = 0; j < pts.length; j++) {
+          if (i !== j) nearest = Math.min(nearest, Math.hypot(pts[i].x - pts[j].x, pts[i].y - pts[j].y));
+        }
+        assert.ok(nearest <= 2.35 * r, `${definition.id}: detached sprite in starting formation (${nearest.toFixed(1)} px)`);
+      }
+    }
+
+    const centroids = byType.map((pts) => ({
+      x: pts.reduce((s, p) => s + p.x, 0) / pts.length,
+      y: pts.reduce((s, p) => s + p.y, 0) / pts.length,
+    }));
+    const hulls = byType.map(convexHull);
+
+    for (let a = 0; a < types; a++) {
+      for (let b = a + 1; b < types; b++) {
+        const dist = Math.hypot(centroids[a].x - centroids[b].x, centroids[a].y - centroids[b].y);
+        assert.ok(dist >= 600, `${definition.id}: centroids ${a} and ${b} only ${dist.toFixed(1)} px apart (< 600 px)`);
+        assert.ok(hullsStrictlySeparated(hulls[a], hulls[b]), `${definition.id}: army regions ${a} and ${b} overlap`);
+      }
+    }
+
+    const midX = W / 2;
+    if (types === 3) {
+      assert.ok(Math.abs(centroids[2].x - midX) <= 3, `classic top army off-axis: ${centroids[2].x.toFixed(2)}`);
+      assert.ok(centroids[0].x < midX && centroids[1].x > midX);
+      assert.ok(Math.abs((centroids[0].x + centroids[1].x) / 2 - midX) <= 3, "classic lower armies not mirrored in x");
+      assert.ok(Math.abs(centroids[0].y - centroids[1].y) <= 3, "classic lower armies not mirrored in y");
+    } else if (types === 5) {
+      assert.ok(Math.abs(centroids[0].x - midX) <= 3, `five-rivals top army off-axis: ${centroids[0].x.toFixed(2)}`);
+      assert.ok(centroids[4].x < midX && centroids[1].x > midX);
+      assert.ok(Math.abs((centroids[4].x + centroids[1].x) / 2 - midX) <= 3, "five-rivals upper pair not mirrored in x");
+      assert.ok(Math.abs(centroids[4].y - centroids[1].y) <= 3, "five-rivals upper pair not mirrored in y");
+      assert.ok(centroids[3].x < midX && centroids[2].x > midX);
+      assert.ok(Math.abs((centroids[3].x + centroids[2].x) / 2 - midX) <= 3, "five-rivals lower pair not mirrored in x");
+      assert.ok(Math.abs(centroids[3].y - centroids[2].y) <= 3, "five-rivals lower pair not mirrored in y");
+    }
+
+    assert.ok(trace.events.length > 0);
+    const firstConversionSec = trace.events[0].frame / VIDEO.fps;
+    assert.ok(
+      firstConversionSec > 0 && firstConversionSec <= 1.5,
+      `${definition.id}: first conversion at ${firstConversionSec.toFixed(2)} s (expected within 1.5 s)`,
+    );
+  }
+});
+
 test("mulberry32 is the standard stream and rules matrices are tournaments", () => {
   const rand = mulberry32(1);
   assert.equal(rand(), 0.6270739405881613);

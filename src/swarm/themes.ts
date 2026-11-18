@@ -56,11 +56,11 @@ export interface SwarmDefinition {
 
 const CLASSIC_SKIN: SwarmSkin = {
   title: "WHO WINS?",
-  rules: "rock beats scissors · scissors beat paper · paper beats rock",
+  rules: "rock crushes scissors · scissors cut paper · paper covers rock",
   types: [
-    { name: "rock", caption: "ROCK", color: "#a3acb8", icon: "rock", sound: "tok" },
-    { name: "paper", caption: "PAPER", color: "#dbe9ff", icon: "paper", sound: "fwip" },
-    { name: "scissors", caption: "SCISSORS", color: "#ff5348", icon: "scissors", sound: "snip" },
+    { name: "rock", caption: "ROCK", color: "#64b5e5", icon: "rock", sound: "tok" },
+    { name: "paper", caption: "PAPER", color: "#eef6fc", icon: "paper", sound: "fwip" },
+    { name: "scissors", caption: "SCISSORS", color: "#c8ff00", icon: "scissors", sound: "snip" },
   ],
 };
 
@@ -68,11 +68,11 @@ const FIVE_RIVALS_SKIN: SwarmSkin = {
   title: "WHO WINS?",
   rules: "every shape beats two rivals and loses to two others",
   types: [
-    { name: "circle", caption: "CIRCLE", color: "#3da5ff", icon: "circle", sound: "bloop" },
-    { name: "triangle", caption: "TRIANGLE", color: "#ffc933", icon: "triangle", sound: "ting" },
-    { name: "square", caption: "SQUARE", color: "#ff4d7d", icon: "square", sound: "blip" },
-    { name: "star", caption: "STAR", color: "#7ee05a", icon: "star", sound: "twinkle" },
-    { name: "hexagon", caption: "HEXAGON", color: "#b07cff", icon: "hexagon", sound: "knock" },
+    { name: "circle", caption: "CIRCLE", color: "#c8ff00", icon: "circle", sound: "bloop" },
+    { name: "triangle", caption: "TRIANGLE", color: "#4db8ff", icon: "triangle", sound: "ting" },
+    { name: "square", caption: "SQUARE", color: "#eef6fc", icon: "square", sound: "blip" },
+    { name: "star", caption: "STAR", color: "#a86eff", icon: "star", sound: "twinkle" },
+    { name: "hexagon", caption: "HEXAGON", color: "#ff7a59", icon: "hexagon", sound: "knock" },
   ],
 };
 
@@ -92,14 +92,14 @@ export const SWARM_DEFINITIONS: readonly SwarmDefinition[] = [
     skin: CLASSIC_SKIN,
     config: {
       id: "swarm-rps-classic",
-      // Picked with scripts/search-swarm-seed.ts (seeds 1..1000): rock falls to 2 of 180 sprites at 23 s and still wins at 35.1 s.
-      seed: 726,
+      // Picked with scripts/search-swarm-seed.ts (36 of 1000 seeds qualify): 7 lead changes, scissors drops to 2/180 at 20.9 s and wins at 33.0 s.
+      seed: 76,
       count: 180,
       types: 3,
       rules: CLASSIC_RULES,
-      radius: 27.5,
+      radius: 25.5,
       arena: SWARM_ARENA,
-      physics: { ...DEFAULT_SWARM_PHYSICS },
+      physics: { ...DEFAULT_SWARM_PHYSICS, speed: 64, chaseBoost: 0.16 },
       maxPlayFrames: 52 * 60,
       holdFrames: SWARM_HOLD_FRAMES,
     },
@@ -120,14 +120,14 @@ export const SWARM_DEFINITIONS: readonly SwarmDefinition[] = [
     skin: FIVE_RIVALS_SKIN,
     config: {
       id: "swarm-five-rivals",
-      // Picked with scripts/search-swarm-seed.ts (seeds 1..1000): the circle falls to 1 of 200 sprites at 22.6 s and still wins at 34.5 s.
-      seed: 463,
-      count: 200,
+      // Picked with scripts/search-swarm-seed.ts (92 of 1000 seeds qualify): 10 lead changes, hexagon drops to 1/160 at 21.7 s and wins at 34.2 s.
+      seed: 479,
+      count: 160,
       types: 5,
       rules: cyclicRules(5, 2),
-      radius: 26.5,
+      radius: 24.0,
       arena: SWARM_ARENA,
-      physics: { ...DEFAULT_SWARM_PHYSICS, speed: 50, sight: 125 },
+      physics: { ...DEFAULT_SWARM_PHYSICS, speed: 74, chaseBoost: 0.18, sight: 145 },
       maxPlayFrames: 52 * 60,
       holdFrames: SWARM_HOLD_FRAMES,
     },
