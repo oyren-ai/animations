@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { parseMidi } from "../midi/parse.ts";
 import { buildSceneData, pieceTime } from "../midi/timeline.ts";
-import { createMusicBoxPainter } from "./paint.ts";
+import { createMusicBoxPainter, MUSIC_BOX_DISPLAY_TITLE } from "./paint.ts";
 import { MIDI_FUR_ELISE_MUSIC_BOX } from "./scene.ts";
 import {
   buildMusicBoxPlan,
@@ -19,6 +19,7 @@ const FPS = 60;
 
 function mockContext() {
   const calls: Record<string, number> = {};
+  const texts: string[] = [];
   let font = "600 20px sans-serif";
   const gradient = { addColorStop() {} };
   const target: Record<string, unknown> = {
@@ -27,6 +28,10 @@ function mockContext() {
     measureText(text: string) {
       const size = Number(/(\d+(?:\.\d+)?)px/.exec(font)?.[1] ?? 20);
       return { width: text.length * size * 0.52 };
+    },
+    fillText(text: string) {
+      calls.fillText = (calls.fillText ?? 0) + 1;
+      texts.push(text);
     },
     createLinearGradient: () => gradient,
     createRadialGradient: () => gradient,
@@ -38,7 +43,7 @@ function mockContext() {
     },
     set(obj, prop, value) { obj[prop as string] = value; return true; },
   }) as unknown as CanvasRenderingContext2D;
-  return { ctx, calls };
+  return { ctx, calls, texts };
 }
 
 test("Music box comb and cylinder are symmetric on x = 540, centred on y = 940, with 1-to-1 pin events", () => {
@@ -79,7 +84,11 @@ test("every pin reaches contactY and plucks its tooth within one frame of note-o
   assert.equal(pieceProgressAt(scene.endSec + tailSec - 0.02, scene.endSec, tailSec), 0);
 });
 
-test("Music box painter is deterministic and renders cleanly across timeline", () => {
+test("Music box painter displays 'Für Elise' with umlaut (ignoring ASCII SMF track name) and renders deterministically", () => {
+  assert.equal(MIDI_FUR_ELISE_MUSIC_BOX.defaultTitle, "F\u00fcr Elise");
+  assert.equal(MUSIC_BOX_DISPLAY_TITLE, "F\u00fcr Elise");
+  assert.equal(PARSED.tracks[0]?.name, "Fur Elise", "SMF conductor track name is 7-bit ASCII");
+
   const document = { createElement: () => ({ width: 0, height: 0, getContext: () => mockContext().ctx }) };
   Object.defineProperty(globalThis, "document", { value: document, configurable: true });
   const scene = buildSceneData(
@@ -89,7 +98,9 @@ test("Music box painter is deterministic and renders cleanly across timeline", (
     { width: 1080, height: 1920 },
   );
   const painter = createMusicBoxPainter(scene, MIDI_FUR_ELISE_MUSIC_BOX.label);
-  const { ctx, calls } = mockContext();
+  const { ctx, calls, texts } = mockContext();
   for (const f of [0, 33, 66, 600, 1500, 2400, scene.totalFrames - 1]) painter(ctx, f);
   assert.ok((calls.roundRect ?? 0) > 0);
+  assert.ok(texts.includes("F\u00fcr Elise"), "draws 'Für Elise' with umlaut");
+  assert.ok(!texts.includes("Fur Elise"), "never draws ASCII 'Fur Elise'");
 });

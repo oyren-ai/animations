@@ -8,6 +8,7 @@ import { createMusicBoxPainter } from "./paint.ts";
  */
 export const MIDI_FUR_ELISE_MUSIC_BOX: MidiSceneSpec = {
   id: "MidiFurEliseMusicBox",
+  defaultTitle: "F\u00fcr Elise",
   label: "Ludwig van Beethoven  \u00b7  Music Box",
   leadFrames: 66,
   tailSec: 2.6,

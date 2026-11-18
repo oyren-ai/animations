@@ -204,7 +204,13 @@ function drawBrassCylinder(
   ctx.fillRect(left + 8, STAGE.contactY - 1.5, width - 16, 3);
 }
 
+export const MUSIC_BOX_DISPLAY_TITLE = "F\u00fcr Elise";
+
 export function createMusicBoxPainter(scene: MidiSceneData, label: string): MidiPainter {
+  const displayScene: MidiSceneData = {
+    ...scene,
+    title: scene.title && scene.title !== "Fur Elise" ? scene.title : MUSIC_BOX_DISPLAY_TITLE,
+  };
   const plan = buildMusicBoxPlan(scene.notes);
   const accents = buildAccents(scene.notes, 0.04, 0.7, 2.8);
   const tailSec = (scene.totalFrames / scene.fps) - scene.leadSec - scene.endSec;
@@ -436,6 +442,6 @@ export function createMusicBoxPainter(scene: MidiSceneData, label: string): Midi
     ctx.restore(); // end camera transform
 
     drawVignette(ctx, W, H, 0.42);
-    drawSceneTitle(ctx, scene, label, frame);
+    drawSceneTitle(ctx, displayScene, label, frame);
   };
 }

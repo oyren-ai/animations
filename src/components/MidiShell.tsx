@@ -30,6 +30,8 @@ export type MidiPainter = (ctx: CanvasRenderingContext2D, frame: number) => void
 
 export interface MidiSceneSpec {
   id: string;
+  /** Default piece title shown above the subtitle when no `title` prop overrides it. */
+  defaultTitle?: string;
   /** Scene name shown in the small title ("Ball Piano"). */
   label: string;
   /** Frames before the first note-on (long enough for the scene to introduce it, such as a falling ball). */
@@ -72,7 +74,7 @@ export function createMidiShell(spec: MidiSceneSpec) {
         .then(([parsed]) => {
           setScene(buildSceneData(parsed, midiFile,
             { fps: VIDEO.fps, leadFrames: spec.leadFrames, tailSec: spec.tailSec ?? MIDI_TAIL_SEC },
-            { width: VIDEO.width, height: VIDEO.height }, title));
+            { width: VIDEO.width, height: VIDEO.height }, title ?? spec.defaultTitle));
           continueRender(handle);
         })
         .catch(cancelRender);

@@ -653,7 +653,7 @@ function furEliseMusicBox(): MidiPiece {
 
   return {
     file: "fur-elise-music-box.mid",
-    title: "Fur Elise",
+    title: "F\u00fcr Elise",
     composer: "Ludwig van Beethoven",
     credit: "Beethoven, WoO 59 (public domain), music-box arrangement",
     options: {

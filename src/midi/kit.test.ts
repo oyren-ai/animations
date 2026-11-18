@@ -116,7 +116,7 @@ test("framing standard: titles are centred on x = 540 inside the central 840 px,
     tracks: [{ index: 0, name: "A very long piece name that has to shrink to fit the central column of the frame", programs: [], channels: [], noteCount: 0 }],
     notes: [note(0)], durationSec: 1,
   }, "x.mid", { fps: 60, leadFrames: 60, tailSec: 1 }, { width: 1080, height: 1920 });
-  for (const title of [scene.title, "Ode to Joy"]) {
+  for (const title of [scene.title, "Ode to Joy", "F\u00fcr Elise"]) {
     const boxes = drawSceneTitle(textContext(), { ...scene, title }, "Ball Piano", 120);
     assert.equal(boxes.length, 2);
     for (const box of boxes) {
