@@ -5,7 +5,8 @@ import {
   buildCarpetLoomScore,
   CARPET_TOTAL_FRAMES,
 } from "../music-carpet/score.ts";
-import { simulateCarpetLoom } from "../music-carpet/sim.ts";
+import { CARPET_COLS, CARPET_ROWS } from "../music-carpet/pattern.ts";
+import { createCarpetLoomSimulation, simulateCarpetLoom } from "../music-carpet/sim.ts";
 import {
   buildFireworkMountainKingScore,
   FIREWORK_TOTAL_FRAMES,
@@ -165,10 +166,10 @@ test("Rope Harp (Greensleeves) score, simulation, pitch, sync, and loudness pass
   assert.ok(report.maxSilentGapSec <= 1.5, `Unexpected silent gap ${report.maxSilentGapSec}s`);
 });
 
-test("Carpet Loom (Sarı gəlin) score, simulation, pitch, sync, and loudness pass all constraints", () => {
+test("Carpet Loom (Sarı gəlin) weaves row-by-row bottom-to-top and passes pitch, sync, and loudness checks", () => {
   const score = buildCarpetLoomScore();
   const sim1 = simulateCarpetLoom();
-  const sim2 = simulateCarpetLoom();
+  const sim2 = createCarpetLoomSimulation(score);
 
   assert.equal(score.title, "Sarı gəlin");
   assert.equal(score.totalFrames, CARPET_TOTAL_FRAMES);
@@ -176,6 +177,41 @@ test("Carpet Loom (Sarı gəlin) score, simulation, pitch, sync, and loudness pa
   assert.equal(score.notes.length, 280);
   assert.equal(score.drums.length, 174);
   assert.deepEqual(sim1.visualEvents, sim2.visualEvents);
+  assert.deepEqual(sim1.noteRuns, sim2.noteRuns);
+  assert.deepEqual(sim1.rowCompletions, sim2.rowCompletions);
+
+  // 1. Knot run count equals note count, and total knots equal CARPET_COLS * CARPET_ROWS
+  assert.equal(sim1.noteRuns.length, score.notes.length);
+  const sumKnots = sim1.noteRuns.reduce((acc, r) => acc + r.knotCount, 0);
+  assert.equal(sumKnots, CARPET_COLS * CARPET_ROWS);
+  assert.equal(sim1.cellKnots.length, CARPET_COLS * CARPET_ROWS);
+  for (let i = 0; i < sim1.cellKnots.length; i++) {
+    assert.ok(sim1.cellKnots[i] !== undefined, `Cell ${i} was never knotted`);
+  }
+
+  // 2. Rows complete strictly in bottom-to-top order (weaveRow 0..79, gridRow 79..0)
+  assert.equal(sim1.rowCompletions.length, CARPET_ROWS);
+  for (let w = 0; w < CARPET_ROWS; w++) {
+    const rc = sim1.rowCompletions[w];
+    assert.equal(rc.weaveRow, w);
+    assert.equal(rc.gridRow, CARPET_ROWS - 1 - w);
+    if (w > 0) {
+      assert.ok(
+        rc.completedTime >= sim1.rowCompletions[w - 1].completedTime,
+        `Row ${w} completed before row ${w - 1}`,
+      );
+      assert.ok(rc.completedByNote >= sim1.rowCompletions[w - 1].completedByNote);
+    }
+  }
+
+  // 3. Final row completes at the final chord (last note at t = 55.8 s)
+  const lastRow = sim1.rowCompletions[CARPET_ROWS - 1];
+  const lastNote = score.notes[score.notes.length - 1];
+  assert.equal(lastRow.completedByNote, score.notes.length - 1);
+  assert.ok(
+    Math.abs(lastRow.completedTime - lastNote.time) < 0.3,
+    `Expected final row at last chord (${lastNote.time}s), got ${lastRow.completedTime}s`,
+  );
 
   // Hook at t=0.0s & combined musical event cadence never leaves >2.0s gap
   assert.equal(score.notes[0].time, 0);

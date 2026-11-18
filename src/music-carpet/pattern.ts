@@ -25,8 +25,8 @@ export type DyeName =
   | "ochre"
   | "green";
 
-export const CARPET_COLS = 84;
-export const CARPET_ROWS = 120;
+export const CARPET_COLS = 72;
+export const CARPET_ROWS = 80;
 
 export interface CarpetCell {
   readonly col: number;
