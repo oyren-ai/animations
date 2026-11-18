@@ -193,51 +193,22 @@ Tests cover seeded replay, mass and disc-area conservation, moving contacts, cur
 
 Render and inspect frames after changing the layout or motion. A passing typecheck does not inspect pixels.
 
-## MIDI scenes
+## License
 
-Three scenes are driven by MIDI note data (onset, duration, pitch, velocity, track). The same notes feed the picture and a locally synthesised WAV, so sound and animation share one timeline (frame-exact with `pnpm render:midi`, see below). Every frame is a pure function of the notes and the frame number, so frames can be rendered in any order and in parallel. A small TypeScript MIDI kit reads and writes Standard MIDI Files and synthesises piano, bell, marimba and kalimba voices; it adds no runtime dependency. The built-in pieces are two public-domain compositions transcribed by hand as note data (Beethoven's "Ode to Joy" theme and the Pachelbel Canon ground bass with its canon line) and one original generative phasing piece. No recordings, soundfonts or downloads are used. These scenes fade out after the last note and do not append the shared code end card. Every scene is centred on x = 540 of 1080 with equal side margins: the keyboard, water tank and disc each fill 960 to 1000 px, and the title and legend are centred inside the central 840 px.
+The source in this repository is [MIT licensed](LICENSE), copyright 2026 Oyren. Dependencies retain their own licenses, including [Remotion's licensing terms](https://www.remotion.dev/license).
 
-| Ball Piano | Ripple Tank | Phase Orbit |
-| --- | --- | --- |
-| <img src="docs/previews/MidiBallPiano.jpg" width="270" alt="Glowing balls landing on a piano keyboard with ring and spark bursts"> | <img src="docs/previews/MidiRippleTank.jpg" width="270" alt="Neon ripples from a canon interfering on a dark water surface"> | <img src="docs/previews/MidiPhaseOrbit.jpg" width="270" alt="A radial piano roll with colour-coded voices and a sweeping playhead"> |
+## MIDI kit
 
-| Composition ID | What happens | Good first remix |
-| --- | --- | --- |
-| `MidiBallPiano` | "Ode to Joy" (`public/midi/ode-to-joy.mid`). Every note is a glowing ball that falls from the top and lands on its key exactly at note-on time. It squashes on impact, the key presses and lights up, a ring and sparks burst out, and the ball bounces and fades. Loud chords kick the camera. | Change `FALL_SEC` (fall time), the bounce and squash constants in `src/midi-ball-piano/events.ts`, or the hue wheel in `ballHue`. |
-| `MidiRippleTank` | "Canon in D" (`public/midi/canon-in-d.mid`). Every note drops into a dark neon water tank and sends out an expanding ring. Pitch sets the horizontal position and colour (teal low, through violet and magenta, to amber high), velocity sets the wavelength and height of the ring, and each voice gets its own row, so chords make visible interference lattices. The surface is a stateless analytic sum of ring packets plus their wall reflections, shaded as glossy water at reduced resolution and upscaled. Note-ons add a squashed splash flash, droplet sparks and a fading buoy; loud chords and voice entrances kick the camera. | Change the wave speed, ring lifetime or wavelength mapping in `src/midi-ripple-tank/events.ts`, or the packet shape in `src/midi-ripple-tank/field.ts`. |
-| `MidiPhaseOrbit` | "Pentatonic Phase" (`public/midi/pentatonic-phase.mid`). A radial piano roll for phasing music: pitch sets the ring (evenly spaced like record grooves), time sets the angle (one 6/4 bar is one turn), and notes are neon arcs coloured by voice. A comet-tailed playhead strikes each arc with a white-hot flash, a jelly pop and a burst of sparks. Three voices loop at slightly different lengths, so they visibly slide against each other on the same rings and snap back into unison at 45 s, where the final chord flares every arc. The disc breathes on each bar and rotates slowly, the camera kicks on loud chords, and a six-fold corona sparkles around the rim. | Change the loop lengths and patterns in `src/midi/pieces.ts`, or the ring layout and palette in `src/midi-phase-orbit/layout.ts`. |
-
-### Use your own MIDI file
-
-Any `.mid` file dropped into `public/midi` works with all three scenes through the `midiFile` prop:
-
-~~~sh
-cp my-song.mid public/midi/
-pnpm assets
-pnpm render MidiBallPiano out/my-song.mp4 --props='{"midiFile":"my-song.mid"}'
-~~~
-
-For frame-exact sound use `pnpm render:midi MidiBallPiano out/my-song.mp4 --props='{"midiFile":"my-song.mid"}'`. `pnpm render` also works, but Remotion copies its raw AAC audio into the MP4 without an edit list, so players hear it about 43 ms (two AAC frames) late. `render:midi` renders the picture muted and muxes the synthesised WAV with ffmpeg (an ffmpeg with the `aac` encoder must be on `PATH`, or set `FFMPEG`), which writes the priming offset into the file.
-
-`pnpm assets` writes the built-in pieces to `public/midi/` and synthesises `public/generated/midi-<name>.wav` for every `.mid` in that folder. The composition length follows the file (lead-in, last note, and a short ring-out), and the on-screen title defaults to the sequence name in the file; pass `"title"` to override it. Format 0 and 1 files, running status, tempo changes and note-on velocity 0 are supported. The keyboard and the ring layout adapt to the pitch range of the file.
-
-### The MIDI kit
+A TypeScript MIDI kit reads and writes Standard MIDI Files and synthesises deterministic stereo WAV audio with zero runtime dependencies.
 
 | File | Responsibility |
 | --- | --- |
 | `src/midi/parse.ts` | Standard MIDI File reader: formats 0 and 1, running status, tempo map, time signature, SMPTE division, note-on velocity 0 as note-off, track names and programs |
-| `src/midi/write.ts` | MIDI writer used to generate the built-in files from note arrays authored in beats |
+| `src/midi/write.ts` | MIDI writer used to generate `.mid` files from note arrays authored in beats |
 | `src/midi/synth.ts` | Offline synthesiser: Karplus-Strong piano, FM bell, marimba and kalimba voices, velocity-dependent brightness, pitch-dependent pan, Schroeder reverb, look-ahead limiter, stereo PCM16 WAV |
-| `src/midi/pieces.ts` | The three built-in pieces as note data |
-| `src/midi/timeline.ts` | Scene timing (lead-in, ring-out), audio file naming, and the derived scene data |
-| `src/midi/kit.ts` | Seeded random numbers, easing, colour, chord accents, camera kick, glow sprites, and the shared title and end fade |
+| `src/midi/pieces.ts` | Built-in public-domain transcriptions as note data |
+| `src/midi/timeline.ts` | Scene timing (lead-in, ring-out), audio file naming, and derived scene data |
+| `src/midi/kit.ts` | Seeded random numbers, easing, colour, chord accents, camera kick, glow sprites, and shared title and end fade |
 | `src/components/MidiShell.tsx` | Loads the MIDI file, sets the composition length, paints each frame and plays the matching WAV |
-| `scripts/generate-midi-assets.ts` | Writes the built-in `.mid` files and one WAV per `.mid` in `public/midi` |
+| `scripts/generate-midi-assets.ts` | Writes built-in `.mid` files and one WAV per `.mid` in `public/midi` |
 | `scripts/render-midi.ts` | Muted Remotion render plus an ffmpeg audio mux for frame-exact sound (`pnpm render:midi`) |
-| `src/midi-ball-piano/`, `src/midi-ripple-tank/`, `src/midi-phase-orbit/` | The three scenes: layout and event tables (pure, unit-tested) plus the canvas painter |
-
-Good first remix for the kit: add a fourth piece to `src/midi/pieces.ts` (notes in beats, one track per voice, and a General MIDI program per track picks the voice: piano `0`, bell `9`, marimba `12`, kalimba `108`), run `pnpm assets`, and render any of the three scenes with that file name as `midiFile`.
-
-## License
-
-The source in this repository is [MIT licensed](LICENSE), copyright 2026 Oyren. Dependencies retain their own licenses, including [Remotion's licensing terms](https://www.remotion.dev/license).

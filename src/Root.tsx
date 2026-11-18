@@ -5,7 +5,6 @@ import { PatateShell } from "./components/PatateShell.tsx";
 import { getReelArenaTiming, ReelArenaShell } from "./components/ReelArenaShell.tsx";
 import { COUNTRY_MAPS } from "./country-maps/fourier.ts";
 import { DROP_STYLES } from "./drop-arenas/sim.ts";
-import { MidiCompositions } from "./midi/compositions.tsx";
 import { PATATE_COMPOSITIONS, PATATE_TOTAL_FRAMES } from "./patate/themes.ts";
 import { STRING_ROUNDS } from "./string-arena/sim.ts";
 import { TOTAL_FRAMES, VIDEO } from "./settings.ts";
@@ -86,7 +85,5 @@ export function Root() {
         defaultProps={{ slug: patate.slug }}
       />
     ))}
-
-    <MidiCompositions />
   </>;
 }
