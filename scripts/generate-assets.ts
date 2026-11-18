@@ -25,6 +25,10 @@ import {
   waveTones,
 } from "../src/audio.ts";
 import { TOTAL_FRAMES, VIDEO } from "../src/settings.ts";
+import { synthesizePieceWav } from "../src/music/synth.ts";
+import { buildCarpetLoomScore } from "../src/music-carpet/score.ts";
+import { buildFireworkMountainKingScore } from "../src/music-fireworks/score.ts";
+import { buildRopeHarpScore } from "../src/music-rope-harp/score.ts";
 
 const directory = fileURLToPath(new URL("../public/generated/", import.meta.url));
 mkdirSync(directory, { recursive: true });
@@ -146,6 +150,26 @@ for (const patate of PATATE_COMPOSITIONS) {
   });
   console.log(
     `${patate.id}: ${trace.events.length} events; bossFrame=${trace.bossMergeFrame}; ${trace.totalFrames} frames (${(trace.totalFrames / VIDEO.fps).toFixed(2)}s)`,
+  );
+}
+
+for (const musicScore of [
+  buildCarpetLoomScore(),
+  buildFireworkMountainKingScore(),
+  buildRopeHarpScore(),
+]) {
+  const wav = synthesizePieceWav(musicScore);
+  writeFileSync(
+    new URL(`../public/generated/${musicScore.slug}.wav`, import.meta.url),
+    wav,
+  );
+  results.push({
+    id: musicScore.id,
+    frames: musicScore.totalFrames,
+    audioDigest: createHash("sha256").update(wav).digest("hex"),
+  });
+  console.log(
+    `${musicScore.id}: ${musicScore.notes.length} notes; ${musicScore.totalFrames} frames (${musicScore.durationSec.toFixed(2)}s)`,
   );
 }
 
