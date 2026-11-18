@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { REEL_SAFE_BOUNDS } from "../shared/reelUtils.ts";
-import { barSegments, paintSwarmFrame, SWARM_LAYOUT, TITLE_CAP_HEIGHT, TITLE_FONT_SIZE, TITLE_MIN_FONT_SIZE } from "./paint.ts";
+import { barSegments, paintSwarmFrame, SWARM_LAYOUT, swarmBoxIsSafe, TITLE_CAP_HEIGHT, TITLE_FONT_SIZE, TITLE_MIN_FONT_SIZE } from "./paint.ts";
 import { SWARM_DEFINITIONS, simulateSwarmDefinition } from "./themes.ts";
 
 function makeMockCanvasContext(): CanvasRenderingContext2D {
@@ -53,13 +52,10 @@ function makeMockCanvasContext(): CanvasRenderingContext2D {
   }) as unknown as CanvasRenderingContext2D;
 }
 
-const inSafeZone = (b: { left: number; right: number; top: number; bottom: number }) =>
-  b.left >= REEL_SAFE_BOUNDS.left - 0.5 &&
-  b.right <= REEL_SAFE_BOUNDS.right + 0.5 &&
-  b.top >= REEL_SAFE_BOUNDS.top - 0.5 &&
-  b.bottom <= REEL_SAFE_BOUNDS.bottom + 0.5;
+const inSafeZone = swarmBoxIsSafe;
+const centreX = (b: { left: number; right: number }) => (b.left + b.right) / 2;
 
-test("swarm HUD, title and caption stay inside the reel-safe zone with a 110 px+ title", () => {
+test("swarm HUD, title and caption sit in the framing zone, centred on x = 540, with a 110 px+ title", () => {
   assert.ok(TITLE_MIN_FONT_SIZE >= 110 && TITLE_FONT_SIZE >= TITLE_MIN_FONT_SIZE);
   assert.ok(TITLE_CAP_HEIGHT >= 110, "drawn cap height, not only the font size, is 110 px or more");
   const ctx = makeMockCanvasContext();
@@ -74,6 +70,12 @@ test("swarm HUD, title and caption stay inside the reel-safe zone with a 110 px+
       assert.ok(title.bottom - title.top >= TITLE_MIN_FONT_SIZE, `${definition.id}: title shorter than ${TITLE_MIN_FONT_SIZE}px`);
       assert.ok(boxes.some((b) => b.label === definition.skin.rules), `${definition.id}: rules line missing`);
       assert.ok(boxes.some((b) => b.label === "bar"));
+      // Framing standard: title, rules line, bar and caption are centred on x = 540, text stays in the central 840 px.
+      const centred = boxes.filter((b) => b.label === definition.skin.title || b.label === definition.skin.rules || b.label === "bar" || /WINS$/.test(b.label));
+      for (const box of centred) assert.ok(Math.abs(centreX(box) - 540) <= 2, `${definition.id} f${frame}: "${box.label}" centred at ${centreX(box).toFixed(1)}`);
+      for (const box of boxes) if (box.label !== "bar") assert.ok(box.left >= 120 - 0.5 && box.right <= 960 + 0.5, `${definition.id} f${frame}: "${box.label}" leaves the central 840 px`);
+      const bar = boxes.find((b) => b.label === "bar");
+      assert.ok(bar && Math.abs(bar.left - (1080 - bar.right)) < 0.5, "equal bar margins");
     }
   }
 });
@@ -102,6 +104,11 @@ test("the painted counters always add up to the sprite total and match the trace
       const boxes = paintSwarmFrame(ctx, definition, trace, frame);
       const numbers = boxes.filter((b) => /^\d+$/.test(b.label)).map((b) => Number(b.label));
       assert.equal(numbers.length, trace.types);
+      // The counter row (icons and numbers) is centred on x = 540 whatever the digits are.
+      const row = boxes.filter((b) => /icon$/.test(b.label) || /^\d+$/.test(b.label));
+      const rowLeft = Math.min(...row.map((b) => b.left));
+      const rowRight = Math.max(...row.map((b) => b.right));
+      assert.ok(Math.abs((rowLeft + rowRight) / 2 - 540) <= 8, `${definition.id} f${frame}: counter row centred at ${((rowLeft + rowRight) / 2).toFixed(1)}`);
       assert.equal(numbers.reduce((a, b) => a + b, 0), trace.count, `${definition.id} f${frame}`);
       assert.deepEqual(numbers, Array.from(trace.counts.subarray(frame * trace.types, (frame + 1) * trace.types)));
     }

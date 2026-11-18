@@ -92,12 +92,12 @@ export const SWARM_DEFINITIONS: readonly SwarmDefinition[] = [
     skin: CLASSIC_SKIN,
     config: {
       id: "swarm-rps-classic",
-      // Picked with scripts/search-swarm-seed.ts (seeds 1..1000): rock falls to a single sprite at 25 s and still wins at 35.5 s.
-      seed: 135,
-      count: 240,
+      // Picked with scripts/search-swarm-seed.ts (seeds 1..1000): rock falls to 2 of 180 sprites at 23 s and still wins at 35.1 s.
+      seed: 726,
+      count: 180,
       types: 3,
       rules: CLASSIC_RULES,
-      radius: 22,
+      radius: 27.5,
       arena: SWARM_ARENA,
       physics: { ...DEFAULT_SWARM_PHYSICS },
       maxPlayFrames: 52 * 60,
@@ -120,14 +120,14 @@ export const SWARM_DEFINITIONS: readonly SwarmDefinition[] = [
     skin: FIVE_RIVALS_SKIN,
     config: {
       id: "swarm-five-rivals",
-      // Picked with scripts/search-swarm-seed.ts (seeds 1..1000): three rivals stay alive past 30 s, the square falls to one sprite at 16.6 s and still wins at 34.2 s.
-      seed: 68,
-      count: 260,
+      // Picked with scripts/search-swarm-seed.ts (seeds 1..1000): the circle falls to 1 of 200 sprites at 22.6 s and still wins at 34.5 s.
+      seed: 463,
+      count: 200,
       types: 5,
       rules: cyclicRules(5, 2),
-      radius: 21,
+      radius: 26.5,
       arena: SWARM_ARENA,
-      physics: { ...DEFAULT_SWARM_PHYSICS, speed: 55, sight: 100 },
+      physics: { ...DEFAULT_SWARM_PHYSICS, speed: 50, sight: 125 },
       maxPlayFrames: 52 * 60,
       holdFrames: SWARM_HOLD_FRAMES,
     },

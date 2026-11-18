@@ -1,33 +1,62 @@
 import { VIDEO } from "../settings.ts";
-import { assertReelSafeBox, type ReelBox } from "../shared/reelUtils.ts";
+import type { ReelBox } from "../shared/reelUtils.ts";
 import { easeOut } from "../theme.ts";
 import { mulberry32, SWARM_ARENA, type SwarmTrace } from "./sim.ts";
 import { drawSprite, drawTypeIcon, lighten } from "./sprites.ts";
 import type { SwarmDefinition, SwarmIcon } from "./themes.ts";
 
-/** Canvas layout in px. Text, numbers, bar and caption stay inside the reel-safe zone (x 60..900, y 220..1560). */
+/**
+ * Canvas layout in px, following the framing standard: everything is centred
+ * on x = 540 with equal margins, the arena fills the width (50 px margins),
+ * text and numbers stay in the central 840 px, nothing important sits within
+ * 200 px of the bottom edge, and the block is centred around y = 940.
+ */
 export const SWARM_LAYOUT = {
-  /** Safe-zone centre; the title, rules and caption are centred here. */
-  centerX: 480,
-  titleBaseline: 346,
-  rulesBaseline: 398,
-  arenaLeft: 0,
-  arenaTop: 420,
+  centerX: VIDEO.width / 2,
+  titleBaseline: 300,
+  rulesBaseline: 352,
+  arenaLeft: (VIDEO.width - SWARM_ARENA.width) / 2,
+  arenaTop: 400,
   arenaWidth: SWARM_ARENA.width,
   arenaHeight: SWARM_ARENA.height,
-  barLeft: 64,
-  barWidth: 832,
-  barTop: 1356,
+  barLeft: (VIDEO.width - SWARM_ARENA.width) / 2,
+  barWidth: SWARM_ARENA.width,
+  barTop: 1526,
   barHeight: 40,
-  counterCenterY: 1476,
-  columnsLeft: 60,
+  counterCenterY: 1648,
+  columnsLeft: 120,
   columnsWidth: 840,
 } as const;
+
+/** Where text, numbers and art may sit (px). */
+export const SWARM_SAFE = {
+  textLeft: 120,
+  textRight: 960,
+  artLeft: 40,
+  artRight: 1040,
+  top: 150,
+  bottom: 1720,
+} as const;
+
+export function swarmBoxIsSafe(box: { label: string; left: number; right: number; top: number; bottom: number }): boolean {
+  const art = box.label === "bar";
+  const left = art ? SWARM_SAFE.artLeft : SWARM_SAFE.textLeft;
+  const right = art ? SWARM_SAFE.artRight : SWARM_SAFE.textRight;
+  return (
+    Number.isFinite(box.left + box.right + box.top + box.bottom) &&
+    box.right >= box.left &&
+    box.bottom >= box.top &&
+    box.left >= left - 0.5 &&
+    box.right <= right + 0.5 &&
+    box.top >= SWARM_SAFE.top - 0.5 &&
+    box.bottom <= SWARM_SAFE.bottom + 0.5
+  );
+}
 
 /**
  * The title is at least 110 px tall as drawn: Inter caps are 0.727 em high, so
  * a 152 px face gives a 110 px cap height, squeezed horizontally to fit the
- * 840 px safe width.
+ * central 840 px.
  */
 export const TITLE_FONT_SIZE = 152;
 export const TITLE_MIN_FONT_SIZE = 110;
@@ -93,7 +122,8 @@ function roundRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: n
 }
 
 function glowLine(g: CanvasRenderingContext2D, y: number) {
-  const W = VIDEO.width;
+  const x0 = SWARM_LAYOUT.arenaLeft;
+  const x1 = SWARM_LAYOUT.arenaLeft + SWARM_LAYOUT.arenaWidth;
   g.save();
   g.globalCompositeOperation = "lighter";
   g.lineCap = "butt";
@@ -105,8 +135,8 @@ function glowLine(g: CanvasRenderingContext2D, y: number) {
     g.strokeStyle = `rgba(38, 224, 255, ${alpha})`;
     g.lineWidth = width;
     g.beginPath();
-    g.moveTo(0, y);
-    g.lineTo(W, y);
+    g.moveTo(x0, y);
+    g.lineTo(x1, y);
     g.stroke();
   }
   g.shadowColor = CYAN;
@@ -114,15 +144,42 @@ function glowLine(g: CanvasRenderingContext2D, y: number) {
   g.strokeStyle = "#6fefff";
   g.lineWidth = 5;
   g.beginPath();
-  g.moveTo(0, y);
-  g.lineTo(W, y);
+  g.moveTo(x0, y);
+  g.lineTo(x1, y);
   g.stroke();
   g.shadowBlur = 0;
   g.strokeStyle = "#eafdff";
   g.lineWidth = 2.2;
   g.beginPath();
-  g.moveTo(0, y);
-  g.lineTo(W, y);
+  g.moveTo(x0, y);
+  g.lineTo(x1, y);
+  g.stroke();
+  g.restore();
+}
+
+/** The arena's side edges: the same glow, dimmer, so the box reads as closed. */
+function glowSide(g: CanvasRenderingContext2D, x: number) {
+  const y0 = SWARM_LAYOUT.arenaTop;
+  const y1 = SWARM_LAYOUT.arenaTop + SWARM_LAYOUT.arenaHeight;
+  g.save();
+  g.globalCompositeOperation = "lighter";
+  g.lineCap = "butt";
+  for (const [width, alpha] of [
+    [26, 0.04],
+    [12, 0.09],
+  ] as const) {
+    g.strokeStyle = `rgba(38, 224, 255, ${alpha})`;
+    g.lineWidth = width;
+    g.beginPath();
+    g.moveTo(x, y0);
+    g.lineTo(x, y1);
+    g.stroke();
+  }
+  g.strokeStyle = "rgba(111, 239, 255, 0.62)";
+  g.lineWidth = 3;
+  g.beginPath();
+  g.moveTo(x, y0);
+  g.lineTo(x, y1);
   g.stroke();
   g.restore();
 }
@@ -237,6 +294,8 @@ function buildWall(g: CanvasRenderingContext2D) {
   g.fillStyle = "rgba(2, 4, 8, 0.42)";
   g.fillRect(0, 0, W, L.arenaTop);
   g.fillRect(0, L.arenaTop + L.arenaHeight, W, H - L.arenaTop - L.arenaHeight);
+  g.fillRect(0, L.arenaTop, L.arenaLeft, L.arenaHeight);
+  g.fillRect(L.arenaLeft + L.arenaWidth, L.arenaTop, W - L.arenaLeft - L.arenaWidth, L.arenaHeight);
 
   // Light spill from the glowing edges into the arena.
   for (const edge of [0, 1]) {
@@ -246,7 +305,7 @@ function buildWall(g: CanvasRenderingContext2D) {
     spill.addColorStop(0, "rgba(38, 224, 255, 0.16)");
     spill.addColorStop(1, "rgba(38, 224, 255, 0)");
     g.fillStyle = spill;
-    g.fillRect(0, Math.min(edgeY, edgeY + dir * 150), W, 150);
+    g.fillRect(L.arenaLeft, Math.min(edgeY, edgeY + dir * 150), L.arenaWidth, 150);
   }
 
   const vignette = g.createRadialGradient(W / 2, H / 2, 420, W / 2, H / 2, 1250);
@@ -257,6 +316,8 @@ function buildWall(g: CanvasRenderingContext2D) {
 
   glowLine(g, L.arenaTop);
   glowLine(g, L.arenaTop + L.arenaHeight);
+  glowSide(g, L.arenaLeft);
+  glowSide(g, L.arenaLeft + L.arenaWidth);
 }
 
 let wallCanvas: HTMLCanvasElement | null | undefined;
@@ -281,7 +342,7 @@ function paintFlatBackdrop(ctx: CanvasRenderingContext2D) {
   ctx.fillRect(0, 0, VIDEO.width, VIDEO.height);
   for (const y of [L.arenaTop, L.arenaTop + L.arenaHeight]) {
     ctx.fillStyle = CYAN;
-    ctx.fillRect(0, y - 2, VIDEO.width, 4);
+    ctx.fillRect(L.arenaLeft, y - 2, L.arenaWidth, 4);
   }
 }
 
@@ -308,7 +369,7 @@ interface TextStyle {
 
 function pushBox(boxes: ReelBox[], label: string, left: number, top: number, right: number, bottom: number): ReelBox {
   const box: ReelBox = { label, left, top, right, bottom };
-  assertReelSafeBox(box);
+  if (!swarmBoxIsSafe(box)) throw new RangeError(`Swarm UI box outside the framing zone: ${JSON.stringify(box)}`);
   boxes.push(box);
   return box;
 }
@@ -418,7 +479,7 @@ function paintSprites(
   ctx.beginPath();
   ctx.rect(L.arenaLeft, L.arenaTop, L.arenaWidth, L.arenaHeight);
   ctx.clip();
-  ctx.translate(0, L.arenaTop);
+  ctx.translate(L.arenaLeft, L.arenaTop);
   const winPulse = f >= trace.winFrame ? f - trace.winFrame : -1;
   for (let i = 0; i < N; i++) {
     const type = trace.type[base + i];
@@ -507,11 +568,12 @@ function paintBarAndCounters(
   ctx.stroke();
   pushBox(boxes, "bar", L.barLeft, L.barTop, L.barLeft + L.barWidth, L.barTop + L.barHeight);
 
-  // Counters: stable icon slot per column, live number to its right.
+  // Counters: an icon and its live number per type. The row is centred on x = 540 by its actual
+  // width (spacing between groups is fixed), so the margins stay equal whatever the digits are.
   const columnWidth = L.columnsWidth / K;
-  const iconSize = K <= 3 ? 62 : 38;
+  const iconSize = K <= 3 ? 62 : 40;
   const gap = K <= 3 ? 16 : 8;
-  const numberSize = K <= 3 ? 84 : 50;
+  const numberSize = K <= 3 ? 84 : 56;
   const numberStyle: TextStyle = {
     size: numberSize,
     maxWidth: columnWidth - iconSize - gap - 10,
@@ -524,11 +586,21 @@ function paintBarAndCounters(
   };
   const nominalSize = fitSize(ctx, "000", 900, numberStyle);
   ctx.font = `900 ${nominalSize}px ${FONT}`;
-  const nominalWidth = ctx.measureText("000").width;
-  const groupWidth = iconSize + gap + nominalWidth;
+  // Fixed spacing, sized for the widest row the counts can make (one three-digit number, the rest two-digit);
+  // a little of the 840 px is kept back for the number outlines.
+  const budget = L.columnsWidth - 24;
+  const wideGroup = iconSize + gap + ctx.measureText("000").width;
+  const normalGroup = iconSize + gap + ctx.measureText("00").width;
+  const spacing = K > 1 ? Math.max(8, (budget - wideGroup - (K - 1) * normalGroup) / (K - 1)) : 0;
+  const groupWidths: number[] = [];
+  for (let k = 0; k < K; k++) groupWidths.push(iconSize + gap + ctx.measureText(String(counts[k])).width);
+  const groupsWidth = groupWidths.reduce((a, b) => a + b, 0);
+  const rowSpacing = K > 1 ? Math.min(spacing, Math.max(0, (budget - groupsWidth) / (K - 1))) : 0;
+  const rowWidth = groupsWidth + rowSpacing * (K - 1);
+  let cursor = L.centerX - rowWidth / 2;
   for (let k = 0; k < K; k++) {
-    const center = L.columnsLeft + columnWidth * (k + 0.5);
-    const left = center - groupWidth / 2;
+    const left = cursor;
+    cursor += groupWidths[k] + rowSpacing;
     const iconCx = left + iconSize / 2;
     const drawSize = iconSize * (skins[k].icon === "scissors" ? 1.12 : 1);
     drawTypeIcon(ctx, skins[k].icon, iconCx, L.counterCenterY, drawSize, skins[k].color);
@@ -648,10 +720,10 @@ export function paintSwarmFrame(
   ctx.strokeStyle = CYAN;
   ctx.lineWidth = 4;
   ctx.beginPath();
-  ctx.moveTo(0, L.arenaTop);
-  ctx.lineTo(VIDEO.width, L.arenaTop);
-  ctx.moveTo(0, L.arenaTop + L.arenaHeight);
-  ctx.lineTo(VIDEO.width, L.arenaTop + L.arenaHeight);
+  ctx.moveTo(L.arenaLeft, L.arenaTop);
+  ctx.lineTo(L.arenaLeft + L.arenaWidth, L.arenaTop);
+  ctx.moveTo(L.arenaLeft, L.arenaTop + L.arenaHeight);
+  ctx.lineTo(L.arenaLeft + L.arenaWidth, L.arenaTop + L.arenaHeight);
   ctx.stroke();
   ctx.restore();
 

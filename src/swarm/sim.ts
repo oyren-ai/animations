@@ -16,7 +16,7 @@ export const SWARM_DT = 1 / SWARM_FPS;
 /** Every clip ends on exactly three seconds of winner caption. */
 export const SWARM_HOLD_FRAMES = VIDEO.fps * 3;
 /** Playfield in its own coordinates; the painter places it on the canvas. */
-export const SWARM_ARENA = { width: 1080, height: 900 } as const;
+export const SWARM_ARENA = { width: 980, height: 1090 } as const;
 
 /** `rules[a][b] === 1` means type `a` converts type `b` on contact. */
 export type SwarmRules = readonly (readonly number[])[];
@@ -63,9 +63,9 @@ export interface SwarmConfig {
 }
 
 export const DEFAULT_SWARM_PHYSICS: SwarmPhysics = {
-  speed: 60,
+  speed: 55,
   chaseBoost: 0.1,
-  sight: 110,
+  sight: 130,
   steerRate: 5,
   wander: 0.35,
   holdWeight: 1,
