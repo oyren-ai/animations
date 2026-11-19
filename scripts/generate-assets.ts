@@ -25,6 +25,7 @@ import {
   waveTones,
 } from "../src/audio.ts";
 import { TOTAL_FRAMES, VIDEO } from "../src/settings.ts";
+import { generateMidiAssets } from "./generate-midi-assets.ts";
 
 const directory = fileURLToPath(new URL("../public/generated/", import.meta.url));
 mkdirSync(directory, { recursive: true });
@@ -147,6 +148,11 @@ for (const patate of PATATE_COMPOSITIONS) {
   console.log(
     `${patate.id}: ${trace.events.length} events; bossFrame=${trace.bossMergeFrame}; ${trace.totalFrames} frames (${(trace.totalFrames / VIDEO.fps).toFixed(2)}s)`,
   );
+}
+
+// MIDI scenes: public/midi/*.mid -> public/generated/midi-<name>.wav (built-in pieces are written first).
+for (const midi of generateMidiAssets()) {
+  results.push({ id: "midi/" + midi.file, notes: midi.notes, durationSec: Number(midi.durationSec.toFixed(4)), midiDigest: midi.midiDigest, audioDigest: midi.audioDigest });
 }
 
 writeFileSync(new URL("../public/generated/manifest.json", import.meta.url), JSON.stringify({ fps: VIDEO.fps, results }, null, 2) + "\n");

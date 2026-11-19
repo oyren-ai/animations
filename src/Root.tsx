@@ -8,6 +8,7 @@ import { DROP_STYLES } from "./drop-arenas/sim.ts";
 import { PATATE_COMPOSITIONS, PATATE_TOTAL_FRAMES } from "./patate/themes.ts";
 import { STRING_ROUNDS } from "./string-arena/sim.ts";
 import { TOTAL_FRAMES, VIDEO } from "./settings.ts";
+import { MidiCompositions } from "./midi/compositions.tsx";
 
 export function Root() {
   const stringCombinedTiming = getReelArenaTiming({ kind: "string-combined" });
@@ -85,5 +86,7 @@ export function Root() {
         defaultProps={{ slug: patate.slug }}
       />
     ))}
+
+    <MidiCompositions />
   </>;
 }

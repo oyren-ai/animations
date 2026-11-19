@@ -196,3 +196,56 @@ Render and inspect frames after changing the layout or motion. A passing typeche
 ## License
 
 The source in this repository is [MIT licensed](LICENSE), copyright 2026 Oyren. Dependencies retain their own licenses, including [Remotion's licensing terms](https://www.remotion.dev/license).
+
+## MIDI kit
+
+A TypeScript MIDI kit reads and writes Standard MIDI Files and synthesises deterministic stereo WAV audio with zero runtime dependencies.
+
+| File | Responsibility |
+| --- | --- |
+| `src/midi/parse.ts` | Standard MIDI File reader: formats 0 and 1, running status, tempo map, time signature, SMPTE division, note-on velocity 0 as note-off, track names and programs |
+| `src/midi/write.ts` | MIDI writer used to generate `.mid` files from note arrays authored in beats |
+| `src/midi/synth.ts` | Offline synthesiser: Karplus-Strong piano, FM bell, marimba and kalimba voices, velocity-dependent brightness, pitch-dependent pan, Schroeder reverb, look-ahead limiter, stereo PCM16 WAV |
+| `src/midi/pieces.ts` | Built-in public-domain transcriptions as note data |
+| `src/midi/timeline.ts` | Scene timing (lead-in, ring-out), audio file naming, and derived scene data |
+| `src/midi/kit.ts` | Seeded random numbers, easing, colour, chord accents, camera kick, glow sprites, and shared title and end fade |
+| `src/components/MidiShell.tsx` | Loads the MIDI file, sets the composition length, paints each frame and plays the matching WAV |
+| `scripts/generate-midi-assets.ts` | Writes built-in `.mid` files and one WAV per `.mid` in `public/midi` |
+| `scripts/render-midi.ts` | Muted Remotion render plus an ffmpeg audio mux for frame-exact sound (`pnpm render:midi`) |
+
+### MIDI scenes
+
+Three vertical compositions (`1080 × 1920`, `60 fps`) render public-domain scores authored as deterministic MIDI note arrays in `src/midi/pieces.ts`, synthesised offline (`piano`, `strings`, `musicbox`, `marimba`, `kalimba`, `bell`), and framed with the shared `OyrenBrandLayer`.
+
+| Flight of the Bumblebee | Canon in D (five voices) | Für Elise (music box) |
+| --- | --- | --- |
+| <img src="docs/previews/MidiBumblebee.jpg" width="270" alt="Falling MIDI note bars and a growing bumblebee swarm over a piano keyboard"> | <img src="docs/previews/MidiCanonVoices.jpg" width="270" alt="Five colour-coded horizontal voice lanes entering one at a time across a central playhead"> | <img src="docs/previews/MidiFurEliseMusicBox.jpg" width="270" alt="A rotating pinned brass cylinder plucking a tuned steel comb with a progress ring"> |
+
+| Composition ID | What happens | Good first remix |
+| --- | --- | --- |
+| `MidiBumblebee` | Rimsky-Korsakov, *Flight of the Bumblebee* (`public/midi/flight-of-the-bumblebee.mid`). Falling MIDI note bars land on a 4-octave keyboard at steady *Vivace* tempo (`148` to `152 BPM`) while a bumblebee and growing swarm (`1` to `7` bees) trace the score-verified chromatic melody up to the 3-octave chromatic finale. | Adjust `BUMBLEBEE_TEMPOS` in `src/midi/pieces.ts` or `FALL_SEC` in `src/midi-bumblebee/sim.ts`. |
+| `MidiCanonVoices` | Pachelbel, *Canon in D* (`public/midi/canon-in-d-five-voices.mid`). Five horizontal lanes centred on `x = 540` light up one voice per ground-bass cycle (`VOICES 1..5`), growing from a single violin line into five layered counter-lines (`strings`, `kalimba`, `piano`). | Change lane voice palettes or scrolling scale `PX_PER_SEC` in `src/midi-canon/sim.ts`. |
+| `MidiFurEliseMusicBox` | Beethoven, *Für Elise*, WoO 59 (`public/midi/fur-elise-music-box.mid`). A 3D orthographic pinned brass cylinder maps time to angle and pitch to comb position, deflecting and plucking tuned steel teeth (`musicbox` inharmonic cantilever tones) while a centred ring tracks progress. | Tune comb tooth count or `FRONT_HALF_SEC` cylinder lookahead in `src/midi-music-box/sim.ts`. |
+
+### Original modal MIDI compositions (quiet brand layer)
+
+Two original compositions inspired by the jazz-mugham tradition and nocturnal modal jazz are authored from scratch in `src/midi/pieces.ts`, exported as MIT-licensed Standard MIDI Files in [`midi/`](midi/README.md), and framed with `OyrenBrandQuietLayer` (`src/brand/OyrenBrandQuiet.tsx`).
+
+| Mugham Nocturne (original) | Baku Nights (original) |
+| --- | --- |
+| <img src="docs/previews/MidiMughamNocturne.jpg" width="270" alt="Fretted horizontal Tar with sympathetic strings above grand-piano hammers and a 7/8 jazz-brush medallion"> | <img src="docs/previews/MidiBakuNights.jpg" width="270" alt="Silhouetted nocturnal lamplighter igniting seaside boulevard lamps beneath a 96-window terraced stone skyline"> |
+
+| Composition ID | What happens | Good first remix |
+| --- | --- | --- |
+| `MidiMughamNocturne` | Original composition inspired by the jazz-mugham tradition (`midi/mugham-nocturne.mid`, MIT). Opens with a free-time rubato Tar + bowed Kamancha introduction over a `D2` drone in a D Shur-inspired mode (`+40¢` microtonal pitch-bend on ornamental `Eb`), locks into a `7/8` (`2+2+3`) call-and-response groove and modal solo across a shared Tar/Piano pitch axis, peaks in octave unison, and returns to the `D2` drone. | Adjust the `7/8` call motifs or `+40¢` microtonal inflection in `mughamNocturne()` (`src/midi/pieces.ts`). |
+| `MidiBakuNights` | Original slow lyrical nocturne in a C Rast-inspired mode at `78 BPM` (`midi/baku-nights.mid`, MIT; title only, not derived from any existing song). A silhouetted lamplighter at `x = 540` raises an ember-tipped brass pole to ignite one seaside streetlamp per piano melody note (`x` = time, height = pitch) while a symmetric 96-window stone skyline lights up and bass swells cross the harbour water. | Change `SCROLL_SPEED` or window permutation in `src/midi-baku-nights/sim.ts`. |
+
+### Public-domain Azerbaijani operetta melody with original accompaniment (quiet brand layer)
+
+| Arshin Mal Alan — "Askar's Song" (1913) |  |
+| --- | --- |
+| <img src="docs/previews/MidiArshinMalAlan.jpg" width="270" alt="Dusk street-market cloth peddler measuring jewel-toned silks along an engraved brass arshin stick beneath three overhead lines"> |  |
+
+| Composition ID | What happens | Good first remix |
+| --- | --- | --- |
+| `MidiArshinMalAlan` | Uzeyir Hajibeyov, *Arshin Mal Alan* (1913), Act II, No. 12 *"Askar's Song"* (`midi/arshin-mal-alan-askars-song.mid`; vocal melody public domain from IMSLP #402316, Baku 1948; arrangement and accompaniment MIT). A street-market cloth peddler behind a walnut counter at `x = 540` measures and snips one silk length along an engraved brass *arshin* stick per vocal melody note (`168` notes verbatim from `flat_full` in sounding tenor register), hanging first-pass cloths left-to-centre and repeated phrases right-to-centre with gold trim before folding them away for the loop. | Adjust `ARSHIN_QUARTER_BPM` (`104..120`) or `ARSHIN_FERMATA_FACTOR` in `src/midi/arshin.ts`. |
