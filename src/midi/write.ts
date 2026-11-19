@@ -12,6 +12,8 @@ export interface MidiWriteNote {
   pitch: number;
   /** 1..127 */
   velocity: number;
+  /** Optional per-note pitch-bend offset in cents (-200..+200, standard +/-2 semitone wheel range). */
+  pitchBendCents?: number;
 }
 
 export interface MidiWriteTrack {
@@ -44,7 +46,7 @@ export interface MidiWriteOptions {
 
 interface RawEvent { tick: number; order: number; bytes: number[] }
 
-const ORDER_META = 0, ORDER_PROGRAM = 1, ORDER_OFF = 2, ORDER_ON = 3;
+const ORDER_META = 0, ORDER_PROGRAM = 1, ORDER_OFF = 2, ORDER_BEND = 3, ORDER_ON = 4;
 
 function vlq(value: number): number[] {
   if (!Number.isInteger(value) || value < 0 || value > 0x0fffffff) throw new RangeError("Invalid MIDI delta time " + value);
@@ -96,6 +98,13 @@ function voiceEvents(track: MidiWriteTrack, channel: number, ppq: number, zeroOf
     if (!(note.beat >= 0) || !(note.durationBeats >= 0)) throw new RangeError("Invalid note timing " + note.beat + "+" + note.durationBeats);
     const on = Math.round(note.beat * ppq);
     const off = on + Math.max(1, Math.round(note.durationBeats * ppq)); // a zero-length note would sort its off before its on
+    const cents = note.pitchBendCents ?? 0;
+    if (Math.abs(cents) > 0.05) {
+      const clamped = Math.max(-200, Math.min(200, cents));
+      const bend14 = Math.max(0, Math.min(16383, Math.round(8192 + (clamped / 200) * 8192)));
+      events.push({ tick: on, order: ORDER_BEND, bytes: [0xe0 | channel, bend14 & 0x7f, (bend14 >> 7) & 0x7f] });
+      events.push({ tick: off, order: ORDER_OFF, bytes: [0xe0 | channel, 0, 64] });
+    }
     events.push({ tick: on, order: ORDER_ON, bytes: [0x90 | channel, note.pitch, note.velocity] });
     events.push({ tick: off, order: ORDER_OFF, bytes: zeroOff ? [0x90 | channel, note.pitch, 0] : [0x80 | channel, note.pitch, 64] });
   }

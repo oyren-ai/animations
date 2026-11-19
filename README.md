@@ -223,6 +223,19 @@ Three vertical compositions (`1080 × 1920`, `60 fps`) render public-domain scor
 
 | Composition ID | What happens | Good first remix |
 | --- | --- | --- |
-| `MidiBumblebee` | Rimsky-Korsakov, *Flight of the Bumblebee* (`public/midi/flight-of-the-bumblebee.mid`). Falling MIDI note bars land on a 4-octave keyboard across a 4-stage accelerando (`136` to `212 BPM`) while a bumblebee and growing swarm (`1` to `7` bees) trace the melody and a live notes-per-second meter climbs to the 3-octave chromatic finale. | Adjust `BUMBLEBEE_TEMPOS` in `src/midi/pieces.ts` or `FALL_SEC` in `src/midi-bumblebee/sim.ts`. |
+| `MidiBumblebee` | Rimsky-Korsakov, *Flight of the Bumblebee* (`public/midi/flight-of-the-bumblebee.mid`). Falling MIDI note bars land on a 4-octave keyboard at steady *Vivace* tempo (`148` to `152 BPM`) while a bumblebee and growing swarm (`1` to `7` bees) trace the score-verified chromatic melody up to the 3-octave chromatic finale. | Adjust `BUMBLEBEE_TEMPOS` in `src/midi/pieces.ts` or `FALL_SEC` in `src/midi-bumblebee/sim.ts`. |
 | `MidiCanonVoices` | Pachelbel, *Canon in D* (`public/midi/canon-in-d-five-voices.mid`). Five horizontal lanes centred on `x = 540` light up one voice per ground-bass cycle (`VOICES 1..5`), growing from a single violin line into five layered counter-lines (`strings`, `kalimba`, `piano`). | Change lane voice palettes or scrolling scale `PX_PER_SEC` in `src/midi-canon/sim.ts`. |
 | `MidiFurEliseMusicBox` | Beethoven, *Für Elise*, WoO 59 (`public/midi/fur-elise-music-box.mid`). A 3D orthographic pinned brass cylinder maps time to angle and pitch to comb position, deflecting and plucking tuned steel teeth (`musicbox` inharmonic cantilever tones) while a centred ring tracks progress. | Tune comb tooth count or `FRONT_HALF_SEC` cylinder lookahead in `src/midi-music-box/sim.ts`. |
+
+### Original modal MIDI compositions (quiet brand layer)
+
+Two original compositions inspired by the jazz-mugham tradition and nocturnal modal jazz are authored from scratch in `src/midi/pieces.ts`, exported as MIT-licensed Standard MIDI Files in [`midi/`](midi/README.md), and framed with `OyrenBrandQuietLayer` (`src/brand/OyrenBrandQuiet.tsx`).
+
+| Mugham Nocturne (original) | Baku Nights (original) |
+| --- | --- |
+| <img src="docs/previews/MidiMughamNocturne.jpg" width="270" alt="Fretted horizontal Tar with sympathetic strings above grand-piano hammers and a 7/8 jazz-brush medallion"> | <img src="docs/previews/MidiBakuNights.jpg" width="270" alt="Silhouetted nocturnal lamplighter igniting seaside boulevard lamps beneath a 96-window terraced stone skyline"> |
+
+| Composition ID | What happens | Good first remix |
+| --- | --- | --- |
+| `MidiMughamNocturne` | Original composition inspired by the jazz-mugham tradition (`midi/mugham-nocturne.mid`, MIT). Opens with a free-time rubato Tar + bowed Kamancha introduction over a `D2` drone in a D Shur-inspired mode (`+40¢` microtonal pitch-bend on ornamental `Eb`), locks into a `7/8` (`2+2+3`) call-and-response groove and modal solo across a shared Tar/Piano pitch axis, peaks in octave unison, and returns to the `D2` drone. | Adjust the `7/8` call motifs or `+40¢` microtonal inflection in `mughamNocturne()` (`src/midi/pieces.ts`). |
+| `MidiBakuNights` | Original slow lyrical nocturne in a C Rast-inspired mode at `78 BPM` (`midi/baku-nights.mid`, MIT; title only, not derived from any existing song). A silhouetted lamplighter at `x = 540` raises an ember-tipped brass pole to ignite one seaside streetlamp per piano melody note (`x` = time, height = pitch) while a symmetric 96-window stone skyline lights up and bass swells cross the harbour water. | Change `SCROLL_SPEED` or window permutation in `src/midi-baku-nights/sim.ts`. |

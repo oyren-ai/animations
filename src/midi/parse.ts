@@ -11,7 +11,7 @@ import type { MidiNote, MidiTempoChange, MidiTrackInfo, ParsedMidi } from "./typ
 
 const DEFAULT_TEMPO = 500000; // 120 BPM, the SMF default until a tempo meta event says otherwise
 
-interface RawNoteEvent { tick: number; on: boolean; channel: number; pitch: number; velocity: number }
+interface RawNoteEvent { tick: number; on: boolean; channel: number; pitch: number; velocity: number; bendCents: number }
 
 interface RawTrack {
   index: number;
@@ -62,6 +62,7 @@ function parseTrack(
 ): RawTrack {
   const reader = new Reader(data, from, to);
   const track: RawTrack = { index, name: "", programs: [], channelPrograms: {}, notes: [], endTick: 0 };
+  const channelBendCents = new Float64Array(16);
   let tick = 0;
   let running = 0;
   while (!reader.done) {
@@ -104,9 +105,12 @@ function parseTrack(
         // channel pressure: one data byte, ignored
       } else {
         const b = reader.u8();
-        if (kind === 0x90 || kind === 0x80) {
+        if (kind === 0xe0) {
+          const bend14 = ((b & 0x7f) << 7) | (a & 0x7f);
+          channelBendCents[channel] = Math.round(((bend14 - 8192) / 8192) * 200 * 100) / 100;
+        } else if (kind === 0x90 || kind === 0x80) {
           const on = kind === 0x90 && b > 0; // note-on with velocity 0 means note-off
-          track.notes.push({ tick, on, channel, pitch: a & 0x7f, velocity: on ? b & 0x7f : 0 });
+          track.notes.push({ tick, on, channel, pitch: a & 0x7f, velocity: on ? b & 0x7f : 0, bendCents: channelBendCents[channel] });
         }
       }
     }
@@ -184,12 +188,14 @@ export function parseMidi(input: Uint8Array | ArrayBuffer): ParsedMidi {
   const notes: MidiNote[] = [];
   const tracks: MidiTrackInfo[] = [];
   for (const raw of rawTracks) {
-    const open = new Map<number, { tick: number; velocity: number }[]>();
+    const open = new Map<number, { tick: number; velocity: number; bendCents: number }[]>();
     const channels: number[] = [];
     let noteCount = 0;
-    const emit = (onTick: number, offTick: number, channel: number, pitch: number, velocity: number) => {
+    const emit = (onTick: number, offTick: number, channel: number, pitch: number, velocity: number, bendCents: number) => {
       const start = tickToSec(onTick);
-      notes.push({ timeSec: start, durationSec: Math.max(0, tickToSec(offTick) - start), pitch, velocity, track: raw.index, channel });
+      const item: MidiNote = { timeSec: start, durationSec: Math.max(0, tickToSec(offTick) - start), pitch, velocity, track: raw.index, channel };
+      if (Math.abs(bendCents) > 0.05) item.pitchBendCents = bendCents;
+      notes.push(item);
       noteCount++;
       if (!channels.includes(channel)) channels.push(channel);
     };
@@ -197,14 +203,14 @@ export function parseMidi(input: Uint8Array | ArrayBuffer): ParsedMidi {
       const key = event.channel * 128 + event.pitch;
       if (event.on) {
         const queue = open.get(key);
-        if (queue) queue.push({ tick: event.tick, velocity: event.velocity });
-        else open.set(key, [{ tick: event.tick, velocity: event.velocity }]);
+        if (queue) queue.push({ tick: event.tick, velocity: event.velocity, bendCents: event.bendCents });
+        else open.set(key, [{ tick: event.tick, velocity: event.velocity, bendCents: event.bendCents }]);
       } else {
         const started = open.get(key)?.shift(); // FIFO: the earliest sounding note of this pitch ends first
-        if (started) emit(started.tick, event.tick, event.channel, event.pitch, started.velocity);
+        if (started) emit(started.tick, event.tick, event.channel, event.pitch, started.velocity, started.bendCents);
       }
     }
-    for (const [key, queue] of open) for (const started of queue) emit(started.tick, raw.endTick, key >> 7, key & 127, started.velocity);
+    for (const [key, queue] of open) for (const started of queue) emit(started.tick, raw.endTick, key >> 7, key & 127, started.velocity, started.bendCents);
     tracks.push({
       index: raw.index, name: raw.name, programs: raw.programs, channels: channels.sort((a, b) => a - b),
       channelPrograms: raw.channelPrograms, noteCount,

@@ -7,29 +7,44 @@ import { synthesizeMidiToWav } from "../src/midi/synth.ts";
 import { MIDI_TAIL_SEC, midiAudioFile } from "../src/midi/timeline.ts";
 
 const publicDir = fileURLToPath(new URL("../public/", import.meta.url));
+const repoMidiDir = fileURLToPath(new URL("../midi/", import.meta.url));
+
+const REPO_MIDI_EXPORT_NAME: Record<string, string> = {
+  "mugham-nocturne.mid": "mugham-nocturne.mid",
+  "baku-nights.mid": "baku-nights.mid",
+  "canon-in-d-five-voices.mid": "canon-five-voices.mid",
+  "fur-elise-music-box.mid": "fur-elise.mid",
+  "flight-of-the-bumblebee.mid": "flight-of-the-bumblebee.mid",
+};
 
 export interface MidiAssetResult { file: string; wav: string; notes: number; durationSec: number; midiDigest: string; audioDigest: string }
 
+function writeIfChanged(path: string, bytes: Buffer): void {
+  if (!existsSync(path) || !readFileSync(path).equals(bytes)) writeFileSync(path, bytes);
+}
+
 /**
- * 1. Write the built-in pieces (authored in src/midi/pieces.ts) to public/midi/*.mid.
+ * 1. Write the built-in pieces (authored in src/midi/pieces.ts) to public/midi/*.mid and midi/*.mid.
  * 2. Synthesise a WAV for every .mid in public/midi, built-in or dropped in by hand, to
  *    public/generated/midi-<name>.wav. The MIDI scenes play that WAV, so a new file only needs `pnpm assets`.
  */
 export function generateMidiAssets(): MidiAssetResult[] {
   const midiDir = publicDir + "midi/";
   mkdirSync(midiDir, { recursive: true });
+  mkdirSync(repoMidiDir, { recursive: true });
   mkdirSync(publicDir + "generated/", { recursive: true });
   for (const piece of builtInPieces()) {
     const bytes = Buffer.from(pieceBytes(piece));
-    const path = midiDir + piece.file;
-    if (!existsSync(path) || !readFileSync(path).equals(bytes)) writeFileSync(path, bytes);
+    writeIfChanged(midiDir + piece.file, bytes);
+    const exportedName = REPO_MIDI_EXPORT_NAME[piece.file];
+    if (exportedName) writeIfChanged(repoMidiDir + exportedName, bytes);
   }
   const results: MidiAssetResult[] = [];
   for (const file of readdirSync(midiDir).filter((name) => /\.midi?$/i.test(name)).sort()) {
     const bytes = readFileSync(midiDir + file);
     const parsed = parseMidi(bytes);
     const wav = synthesizeMidiToWav(parsed, { tailSec: MIDI_TAIL_SEC });
-    writeFileSync(publicDir + midiAudioFile(file), wav);
+    writeIfChanged(publicDir + midiAudioFile(file), wav);
     results.push({
       file, wav: midiAudioFile(file), notes: parsed.notes.length, durationSec: parsed.durationSec,
       midiDigest: createHash("sha256").update(bytes).digest("hex"),

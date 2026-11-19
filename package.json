@@ -14,7 +14,7 @@
     "render:midi": "pnpm assets && node --import tsx scripts/render-midi.ts",
     "still": "pnpm assets && remotion still src/index.ts",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test --test-concurrency=1 src/ball-drop/sim.test.ts src/ball-drop/bounds.test.ts src/components/end-card.test.ts src/pendulum-wave/wave.test.ts src/country-maps/fourier.test.ts src/string-arena/sim.test.ts src/drop-arenas/sim.test.ts src/patate/sim.test.ts src/audio.test.ts src/encoding.test.ts src/midi/parse.test.ts src/midi/pieces.test.ts src/midi/synth.test.ts src/midi/kit.test.ts src/midi-bumblebee/bumblebee.test.ts src/midi-canon/canon.test.ts src/midi-music-box/music-box.test.ts src/brand/oyren-brand.test.ts"
+    "test": "node --import tsx --test --test-concurrency=1 src/ball-drop/sim.test.ts src/ball-drop/bounds.test.ts src/components/end-card.test.ts src/pendulum-wave/wave.test.ts src/country-maps/fourier.test.ts src/string-arena/sim.test.ts src/drop-arenas/sim.test.ts src/patate/sim.test.ts src/audio.test.ts src/encoding.test.ts src/midi/parse.test.ts src/midi/pieces.test.ts src/midi/synth.test.ts src/midi/kit.test.ts src/midi-bumblebee/bumblebee.test.ts src/midi-canon/canon.test.ts src/midi-music-box/music-box.test.ts src/brand/oyren-brand.test.ts src/brand/oyren-brand-quiet.test.ts src/midi-mugham/mugham.test.ts src/midi-baku-nights/baku-nights.test.ts"
   },
   "dependencies": {
     "@fontsource-variable/inter": "5.2.8",

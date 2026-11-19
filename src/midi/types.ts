@@ -12,6 +12,8 @@ export interface MidiNote {
   track: number;
   /** MIDI channel, 0..15 (channel 9 is General MIDI percussion). */
   channel: number;
+  /** Optional microtonal pitch-bend offset in cents (for example +40 cents in Shur); omitted when 0. */
+  pitchBendCents?: number;
 }
 
 export interface MidiTrackInfo {

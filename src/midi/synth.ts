@@ -15,7 +15,7 @@ import type { MidiNote, ParsedMidi } from "./types.ts";
  */
 
 export const SYNTH_SAMPLE_RATE = 48000;
-export type Instrument = "piano" | "bell" | "marimba" | "kalimba" | "strings" | "musicbox";
+export type Instrument = "piano" | "bell" | "marimba" | "kalimba" | "strings" | "musicbox" | "tar" | "bass";
 
 export interface SynthOptions {
   /** Output sample rate in Hz (default 48000). */
@@ -57,12 +57,14 @@ export interface StereoAudio {
   sampleRate: number;
 }
 
-/** General MIDI program number to one of the six voices (everything not listed is a piano). */
+/** General MIDI program number to one of the eight voices (everything not listed is a piano). */
 export function instrumentForProgram(program: number): Instrument {
   const p = Math.trunc(program);
   if (p === 10) return "musicbox";
   if ((p >= 8 && p <= 9) || p === 14 || p === 98 || (p >= 112 && p <= 119)) return "bell";
   if (p >= 11 && p <= 13) return "marimba";
+  if (p === 25 || p === 26) return "tar";
+  if (p === 32 || p === 33) return "bass";
   if ((p >= 40 && p <= 44) || (p >= 48 && p <= 51)) return "strings";
   if (p >= 105 && p <= 108) return "kalimba";
   return "piano";
@@ -89,6 +91,8 @@ const VOICE_GAIN: Record<Instrument, number> = {
   kalimba: 0.19,
   strings: 0.18,
   musicbox: 0.21,
+  tar: 0.21,
+  bass: 0.23,
 };
 const DRUM_GAIN = 0.3;
 
@@ -458,13 +462,59 @@ function renderStrings(ws: Workspace, p: NoteParams): VoiceOut {
   return { buf, len, hold: Math.round(hold * sr), release: Math.round(release * sr) };
 }
 
+/** Bright double-course plucked lute (Tar / Oud colour): paired Karplus-Strong strings + sympathetic octave shimmer + mizrab pick. */
+function renderTar(ws: Workspace, p: NoteParams): VoiceOut {
+  const { freq: f, sr, vn, rng } = p;
+  const t60 = clamp(2.8 * Math.pow(293.66 / f, 0.35), 1.1, 3.6);
+  const hold = Math.max(p.holdSec, 0.06);
+  const release = 0.24;
+  const len = Math.max(2, Math.round(Math.min(t60 * 1.25, hold + release) * sr));
+  const buf = ws.voice(len);
+
+  // Paired melody course (slight +/-1.4 cent shimmer) with bright velocity-sensitive cutoff
+  const cutoff = Math.min(8200, f * (3.5 + 9 * vn * vn));
+  addKarplusStrong(ws, buf, len, sr, f * Math.pow(2, -1.4 / 1200), t60, cutoff, 0.42 + 0.25 * vn, rng);
+  addKarplusStrong(ws, buf, len, sr, f * Math.pow(2, 1.4 / 1200), t60 * 0.92, cutoff * 0.9, 0.36 + 0.22 * vn, rng);
+
+  // Mulberry-wood / skin membrane body harmonics + delicate sympathetic octave string
+  addDecayingSine(buf, len, f, 0.48, t60 * 0.75, 0, sr);
+  addDecayingSine(buf, len, 2 * f, 0.28 * (0.35 + 0.65 * vn), t60 * 0.55, 0.3, sr);
+  addDecayingSine(buf, len, 3 * f, 0.16 * vn, t60 * 0.3, 0, sr);
+  addDecayingSine(buf, len, 4.02 * f, 0.09 * vn * vn, t60 * 0.22, 0.8, sr);
+
+  // Crisp mizrab plectrum transient + skin tap
+  addNoiseBurst(buf, len, sr, rng, 4400, 0.0018, 0.24 * Math.pow(vn, 1.35));
+  addNoiseBurst(buf, len, sr, rng, 520, 0.009, 0.18 * vn);
+  return { buf, len, hold: Math.round(hold * sr), release: Math.round(release * sr) };
+}
+
+/** Soft low plucked upright double bass: warm woody fundamental + damped gut Karplus-Strong string + finger thump. */
+function renderBass(ws: Workspace, p: NoteParams): VoiceOut {
+  const { freq: f, sr, vn, rng } = p;
+  const t60 = clamp(2.4 * Math.pow(110 / Math.max(40, f), 0.25), 1.0, 2.8);
+  const hold = Math.max(p.holdSec, 0.08);
+  const release = 0.18;
+  const len = Math.max(2, Math.round(Math.min(t60 * 1.2, hold + release) * sr));
+  const buf = ws.voice(len);
+
+  addDecayingSine(buf, len, f, 0.85, t60, 0, sr);
+  addDecayingSine(buf, len, 2 * f, 0.42 * (0.45 + 0.55 * vn), t60 * 0.6, 0, sr);
+  addDecayingSine(buf, len, 3 * f, 0.18 * vn, t60 * 0.35, 0, sr);
+  const cutoff = Math.min(1400, f * (2.2 + 3.5 * vn * vn));
+  addKarplusStrong(ws, buf, len, sr, f, t60 * 0.85, cutoff, 0.32 + 0.18 * vn, rng);
+  addNoiseBurst(buf, len, sr, rng, 210, 0.014, 0.28 * Math.pow(vn, 1.3));
+  return { buf, len, hold: Math.round(hold * sr), release: Math.round(release * sr) };
+}
+
 /** GM percussion on channel 9: one-shot sweep / noise voices, deliberately soft. */
 function renderDrum(ws: Workspace, p: NoteParams): VoiceOut {
   const { pitch, sr, rng } = p;
   const kind = pitch === 35 || pitch === 36 ? "kick" : [41, 43, 45, 47, 48, 50].includes(pitch) ? "tom"
-    : [37, 38, 39, 40].includes(pitch) ? "snare" : pitch === 42 || pitch === 44 ? "hat" : pitch === 46 ? "openhat"
+    : pitch === 39 ? "brushswirl" : pitch === 40 ? "brushtap"
+    : [37, 38].includes(pitch) ? "snare" : pitch === 42 || pitch === 44 ? "hat" : pitch === 46 ? "openhat"
     : [49, 51, 52, 53, 55, 57, 59].includes(pitch) ? "cymbal" : "click";
-  const seconds = kind === "kick" ? 0.35 : kind === "tom" ? 0.4 : kind === "snare" ? 0.3 : kind === "hat" ? 0.12
+  const seconds = kind === "kick" ? 0.35 : kind === "tom" ? 0.4 : kind === "brushswirl" ? 0.34 : kind === "brushtap" ? 0.18
+    : kind === "snare" ? 0.3 : kind === "hat" ? 0.12
     : kind === "openhat" ? 0.5 : kind === "cymbal" ? 1.4 : 0.2;
   const len = Math.round(seconds * sr);
   const buf = ws.voice(len);
@@ -496,6 +546,21 @@ function renderDrum(ws: Workspace, p: NoteParams): VoiceOut {
 
   if (kind === "kick") sweep(130, 46, 0.03, 0.13, 1);
   else if (kind === "tom") sweep(2 * (60 + (pitch - 41) * 9), 60 + (pitch - 41) * 9, 0.04, 0.11, 0.8);
+  else if (kind === "brushswirl") {
+    // Velvety jazz wire-brush sweep across coated snare skin (soft bandpass noise swell)
+    const a = Math.exp((-TWO_PI * 4200) / sr);
+    let y = 0, prev = 0;
+    for (let i = 0; i < len; i++) {
+      const t = i / sr;
+      const x = rng() * 2 - 1;
+      y = a * y + (1 - a) * (x - 0.92 * prev);
+      prev = x;
+      const swell = (0.35 + 0.65 * Math.sin(Math.PI * Math.min(1, t / 0.11))) * Math.exp(-t / 0.14);
+      buf[i] += 0.72 * swell * y * 2.1;
+    }
+  } else if (kind === "brushtap") {
+    hiss(true, 5200, 0.048, 0.42);
+  }
   else if (kind === "snare") { hiss(true, 7000, 0.07, 0.6); sweep(210, 170, 0.02, 0.05, 0.4); }
   else if (kind === "hat") hiss(true, 9000, 0.02, 0.45);
   else if (kind === "openhat") hiss(true, 9000, 0.12, 0.4);
@@ -767,9 +832,10 @@ export function renderNotes(notes: readonly MidiNote[], options: SynthOptions = 
     const start = Math.max(0, Math.round(note.timeSec * sr));
     if (start >= frames) continue;
     const pitch = clamp(note.pitch, 0, 127);
+    const bendSemitones = Number.isFinite(note.pitchBendCents) ? clamp(note.pitchBendCents!, -200, 200) / 100 : 0;
     const params: NoteParams = {
       pitch,
-      freq: noteHz(pitch),
+      freq: noteHz(pitch + bendSemitones),
       vn: clamp(note.velocity, 1, 127) / 127,
       holdSec: Number.isFinite(note.durationSec) ? Math.max(0, note.durationSec) : 0,
       sr,
@@ -783,6 +849,8 @@ export function renderNotes(notes: readonly MidiNote[], options: SynthOptions = 
       : instrument === "kalimba" ? renderKalimba(ws, params)
       : instrument === "musicbox" ? renderMusicBox(ws, params)
       : instrument === "strings" ? renderStrings(ws, params)
+      : instrument === "tar" ? renderTar(ws, params)
+      : instrument === "bass" ? renderBass(ws, params)
       : renderPiano(ws, params);
     const buf = voice.buf;
     const len = Math.min(shapeEnvelope(buf, voice.len, voice.hold, voice.release, sr), frames - start);

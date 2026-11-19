@@ -206,3 +206,21 @@ test("format 0 files report the first program of each channel", () => {
   assert.deepEqual(parsed.tracks[0].channelPrograms, { 0: 0, 1: 12 });
   assert.deepEqual(parsed.tracks[0].programs, [0, 12, 40]);
 });
+
+test("per-note microtonal pitchBendCents round-trips through MIDI pitch-bend wheel events", () => {
+  const bytes = writeMidi({
+    tracks: [{
+      name: "Tar",
+      channel: 0,
+      program: 25,
+      notes: [
+        { beat: 0, durationBeats: 1, pitch: 63, velocity: 96, pitchBendCents: 40 },
+        { beat: 1, durationBeats: 1, pitch: 62, velocity: 90 },
+      ],
+    }],
+  });
+  const parsed = parseMidi(bytes);
+  assert.equal(parsed.notes.length, 2);
+  near(parsed.notes[0].pitchBendCents ?? 0, 40, 0.2);
+  assert.equal(parsed.notes[1].pitchBendCents, undefined);
+});

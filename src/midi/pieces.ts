@@ -22,8 +22,22 @@ export interface MidiPiece {
 
 const clampVelocity = (value: number) => Math.max(1, Math.min(127, Math.round(value)));
 
-function note(beat: number, durationBeats: number, pitch: number, velocity: number): MidiWriteNote {
-  return { beat, durationBeats, pitch, velocity: clampVelocity(velocity) };
+function note(beat: number, durationBeats: number, pitch: number, velocity: number, pitchBendCents?: number): MidiWriteNote {
+  const n: MidiWriteNote = { beat: Math.max(0, beat), durationBeats, pitch, velocity: clampVelocity(velocity) };
+  if (pitchBendCents !== undefined && Math.abs(pitchBendCents) > 0.05) n.pitchBendCents = pitchBendCents;
+  return n;
+}
+
+/** Deterministic mulberry32 PRNG for original modal improvisation and micro-timing humanisation. */
+function seededRng(seed: number): () => number {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
 }
 
 /** Prevent same-pitch overlaps on a single track by trimming any earlier note that would collide. */
@@ -54,83 +68,72 @@ function cleanTrackNotes(raw: MidiWriteNote[]): MidiWriteNote[] {
 }
 
 // ===================================================================================================
-// A. Nikolai Rimsky-Korsakov — Flight of the Bumblebee (Act III, The Tale of Tsar Saltan, 2/4)
+// A. Nikolai Rimsky-Korsakov — Flight of the Bumblebee (Act III, The Tale of Tsar Saltan, 2/4, Vivace)
+//    Score-verified against independent reference (piano.org / IMSLP Act III orchestral reduction):
+//    1. Opening bars 1..4 use the uninterrupted chromatic backstep figure E-D#-D-C#-D-C#-C-B...
+//    2. Main theme uses the descending chromatic + fourth-leap figure A4-G#4-G4-F#4-F4-Bb4-A4-G#4 | A4-G#4-G4-F#4-F4-F#4-G4-G#4.
+//    3. Steady Vivace tempo (~148 BPM) with dynamic hairpins instead of an artificial accelerando.
+//    4. Clean piano + bowed-string horn counter-motif (no clacky marimba doubling).
 // ===================================================================================================
 
-/** Opening chromatic plunge from E6 (88) down two octaves to E4 (64) and onto A4 (69). */
+/** Score-verified 6-bar opening chromatic descent from E6 (88) to E4 (64) and transition into A4 (69). */
 export const BUMBLEBEE_INTRO_BARS: readonly (readonly number[])[] = [
-  // Bar 0: beat 1 = dramatic E6 strike (4 sixteenths = 1 beat), beat 2 = E6 D#6 D6 C#6
-  [88, 87, 86, 85], // starts at beat 1.0 of bar 0
-  [84, 83, 82, 81, 80, 79, 78, 77], // Bar 1: C6..F5
-  [76, 79, 78, 77, 76, 75, 74, 73], // Bar 2: E5 turn + E5..C#5
-  [72, 71, 70, 69, 68, 67, 66, 65], // Bar 3: C5..F4
-  [64, 67, 66, 65, 64, 67, 66, 65], // Bar 4: E4 turn twice
-  [64, 65, 66, 67, 68, 69, 70, 68], // Bar 5: chromatic climb into A4 (69)
+  [88, 87, 86, 85, 86, 85, 84, 83], // Bar 1: E6 D#6 D6 C#6 | D6 C#6 C6 B5
+  [82, 81, 80, 81, 80, 79, 78, 77], // Bar 2: Bb5 A5 G#5 A5 | G#5 G5 F#5 F5
+  [76, 75, 74, 73, 74, 73, 72, 71], // Bar 3: E5 D#5 D5 C#5 | D5 C#5 C5 B4
+  [70, 69, 68, 69, 68, 67, 66, 65], // Bar 4: Bb4 A4 G#4 A4 | G#4 G4 F#4 F4
+  [64, 65, 64, 63, 64, 65, 66, 67], // Bar 5: E4 F4 E4 D#4 | E4 F4 F#4 G4
+  [68, 69, 68, 67, 68, 69, 70, 68], // Bar 6: G#4 A4 G#4 G4 | G#4 A4 Bb4 G#4 -> A4 (69)
 ];
 
-/** Two-bar (16-sixteenth) main buzzing wave starting on a given root (69 = A4): climbs to +5, leaps to +8, descends. */
+/**
+ * Score-verified 2-bar (16-sixteenth) Bumblebee motif on `root` (69 = A4):
+ * | root, -1, -2, -3, -4, +1, 0, -1 | root, -1, -2, -3, -4, -3, -2, -1 |
+ * On A4: | A4 G#4 G4 F#4 F4 Bb4 A4 G#4 | A4 G#4 G4 F#4 F4 F#4 G4 G#4 |
+ */
 export function bumblebeeWave16(root: number): number[] {
   return [
-    root, root + 1, root + 2, root + 3,
-    root + 4, root + 5, root + 8, root + 7,
-    root + 6, root + 5, root + 4, root + 3,
-    root + 2, root + 1, root, root - 1,
+    root, root - 1, root - 2, root - 3,
+    root - 4, root + 1, root, root - 1,
+    root, root - 1, root - 2, root - 3,
+    root - 4, root - 3, root - 2, root - 1,
   ];
 }
 
-/** One-bar (8-sixteenth) tight neighbour buzz around a given root: root, +1, 0, -1, 0, +3, +2, +1. */
+/** Score-verified 1-bar (8-sixteenth) tight turn figure around `root`: | root, -1, -2, -3, -4, +1, 0, -1 |. */
 export function bumblebeeBuzz8(root: number): number[] {
-  return [root, root + 1, root, root - 1, root, root + 3, root + 2, root + 1];
+  return [root, root - 1, root - 2, root - 3, root - 4, root + 1, root, root - 1];
 }
 
-/** Four-stage accelerando from 136 BPM to 212 BPM so "notes per second" visibly climbs to the finale. */
+/** Steady Vivace tempo (~148 BPM, +/-2 BPM natural phrase breath) matching Rimsky-Korsakov's score marking (1/4 = 144..152). */
 export const BUMBLEBEE_TEMPOS: readonly MidiTempo[] = [
-  { beat: 0, bpm: 136 },   // Stage 1: crisp, clear opening plunge & A-minor theme (~10.5 notes/s)
-  { beat: 36, bpm: 158 },  // Stage 2: dominant storm & horn stabs (~13.5 notes/s)
-  { beat: 64, bpm: 180 },  // Stage 3: sequential chromatic climb (~16.5 notes/s)
-  { beat: 92, bpm: 202 },  // Stage 4: payoff reprise (~20 notes/s)
-  { beat: 108, bpm: 212 }, // Finale: 3-octave chromatic rocket (~22+ notes/s)
+  { beat: 0, bpm: 148 },
+  { beat: 44, bpm: 150 },
+  { beat: 88, bpm: 152 },
 ];
 
 function flightOfTheBumblebee(): MidiPiece {
   const lead: MidiWriteNote[] = [];
   const left: MidiWriteNote[] = [];
-  const sparkle: MidiWriteNote[] = [];
+  const hornStrings: MidiWriteNote[] = [];
 
-  const pushSixteenths = (startBeat: number, pitches: readonly number[], baseVel: number, octaveDouble = false) => {
+  const pushSixteenths = (startBeat: number, pitches: readonly number[], baseVel: number, hairpin = true) => {
     for (let i = 0; i < pitches.length; i++) {
       const b = startBeat + i * 0.25;
-      const accent = i % 8 === 0 ? 10 : i % 4 === 0 ? 6 : 0;
-      const v = baseVel + accent;
-      lead.push(note(b, 0.22, pitches[i], v));
-      if (octaveDouble && pitches[i] + 12 <= 96) {
-        sparkle.push(note(b, 0.20, pitches[i] + 12, v - 16));
-      }
+      const wave = hairpin ? Math.round(10 * Math.sin((Math.PI * (i % 8)) / 7)) : 0;
+      const metric = i % 8 === 0 ? 5 : i % 4 === 0 ? 2 : 0;
+      lead.push(note(b, 0.21, pitches[i], baseVel + wave + metric));
     }
   };
 
-  const pushOomPahBar = (barIndex: number, bassPitch: number, chordTriad: readonly number[], vel: number, dense = false) => {
+  const pushAccompBar = (barIndex: number, bassPitch: number, chordTriad: readonly number[], vel: number, octaveBass = false) => {
     const b0 = barIndex * 2;
-    // Beat 1 & Beat 2 eighth-note oom-pah: bass on 0 and 1.0, crisp staccato triad on 0.5 and 1.5
-    left.push(note(b0, 0.42, bassPitch, vel + 6));
-    for (const p of chordTriad) left.push(note(b0 + 0.5, 0.34, p, vel - 6));
-    left.push(note(b0 + 1.0, 0.42, dense ? bassPitch + 12 : bassPitch, vel + 2));
-    for (const p of chordTriad) left.push(note(b0 + 1.5, 0.34, p, vel - 8));
+    left.push(note(b0, 0.36, bassPitch, vel + 4));
+    if (octaveBass) left.push(note(b0, 0.36, bassPitch - 12, vel));
+    for (const p of chordTriad) left.push(note(b0 + 0.5, 0.28, p, vel - 10));
+    left.push(note(b0 + 1.0, 0.36, bassPitch, vel));
+    for (const p of chordTriad) left.push(note(b0 + 1.5, 0.28, p, vel - 12));
   };
-
-  // --- Stage 1: Bars 0..17 (Beats 0..36) ---
-  // Bar 0 opening fortissimo E octave stab + high E6 launch
-  left.push(note(0, 0.85, 52, 108));
-  left.push(note(0, 0.85, 64, 104));
-  lead.push(note(0, 0.85, 88, 112));
-  pushSixteenths(1.0, BUMBLEBEE_INTRO_BARS[0], 96);
-  for (let b = 1; b <= 5; b++) {
-    pushSixteenths(b * 2, BUMBLEBEE_INTRO_BARS[b], 92 - (b === 4 ? 6 : 0) + (b === 5 ? 6 : 0));
-    if (b >= 2) {
-      left.push(note(b * 2, 0.38, 52, 74));
-      left.push(note(b * 2 + 1, 0.38, 52, 68));
-    }
-  }
 
   const AM_TRIAD = [57, 60, 64]; // A3 C4 E4
   const DM_TRIAD = [57, 62, 65]; // A3 D4 F4
@@ -138,155 +141,142 @@ function flightOfTheBumblebee(): MidiPiece {
   const C_TRIAD = [55, 60, 64];  // G3 C4 E4
   const F_TRIAD = [57, 60, 65];  // A3 C4 F4
 
-  // Bars 6..13: Main A-minor theme
-  pushSixteenths(12, bumblebeeWave16(69), 86);
-  pushOomPahBar(6, 45, AM_TRIAD, 74);
-  pushOomPahBar(7, 50, DM_TRIAD, 76);
-
-  pushSixteenths(16, bumblebeeBuzz8(69), 84);
-  pushOomPahBar(8, 45, AM_TRIAD, 72);
-  pushSixteenths(18, bumblebeeBuzz8(69), 86);
-  pushOomPahBar(9, 52, E7_TRIAD, 74);
-
-  pushSixteenths(20, bumblebeeWave16(69), 88);
-  pushOomPahBar(10, 45, AM_TRIAD, 76);
-  pushOomPahBar(11, 50, DM_TRIAD, 78);
-
-  pushSixteenths(24, bumblebeeBuzz8(69), 88);
-  pushOomPahBar(12, 45, AM_TRIAD, 76);
-  // Bar 13: chromatic bridge up to D5 (74)
-  pushSixteenths(26, [69, 70, 71, 72, 71, 72, 73, 75], 90);
-  pushOomPahBar(13, 45, [55, 61, 64], 78); // A7 -> Dm
-
-  // Bars 14..17: D-minor subdominant answer
-  pushSixteenths(28, bumblebeeWave16(74), 90);
-  pushOomPahBar(14, 50, DM_TRIAD, 80);
-  pushOomPahBar(15, 43, [55, 58, 62], 80); // Gm
-  pushSixteenths(32, bumblebeeBuzz8(74), 88);
-  pushOomPahBar(16, 50, DM_TRIAD, 78);
-  pushSixteenths(34, [74, 75, 74, 73, 74, 75, 76, 75], 92);
-  pushOomPahBar(17, 45, E7_TRIAD, 80);
-
-  // --- Stage 2: Bars 18..31 (Beats 36..64) — Dominant storm & brass horn motif ---
-  // Bars 18..21: E5 buzz with horn counter-motif (E4 - F4 - E4 - D#4 - E4)
-  for (let k = 0; k < 4; k++) {
-    const bar = 18 + k;
-    const seq = k % 2 === 0 ? bumblebeeBuzz8(76) : [76, 77, 78, 79, 80, 79, 78, 77];
-    pushSixteenths(bar * 2, seq, 92 + k);
-    pushOomPahBar(bar, 52, E7_TRIAD, 80, true);
+  // --- Bars 0..5 (Beats 0..12): Opening fortissimo E stab + two-octave chromatic backstep descent ---
+  left.push(note(0, 0.65, 40, 102));
+  left.push(note(0, 0.65, 52, 106));
+  for (let b = 0; b < 6; b++) {
+    pushSixteenths(b * 2, BUMBLEBEE_INTRO_BARS[b], 92 - b * 2);
+    if (b >= 2) {
+      left.push(note(b * 2, 0.32, 52, 70));
+      left.push(note(b * 2 + 1, 0.32, 52, 64));
+    }
   }
-  // Horn punctuation stabs in sparkle/marimba + mid-piano
-  for (const [hb, hp] of [[36, 64], [36.5, 65], [37, 64], [37.5, 63], [38, 64], [40, 64], [40.5, 65], [41, 64], [41.5, 63], [42, 64]] as const) {
-    sparkle.push(note(hb, 0.40, hp + 12, 86));
-  }
-  // Bars 22..25: A4/E5 interplay with A - Bb - A - G# - A horn motif
-  pushSixteenths(44, bumblebeeWave16(69), 94);
-  pushOomPahBar(22, 45, AM_TRIAD, 82, true);
-  pushOomPahBar(23, 50, DM_TRIAD, 82, true);
-  pushSixteenths(48, bumblebeeWave16(76), 95);
-  pushOomPahBar(24, 52, E7_TRIAD, 84, true);
-  pushOomPahBar(25, 45, AM_TRIAD, 84, true);
-  for (const [hb, hp] of [[44, 69], [44.5, 70], [45, 69], [45.5, 68], [46, 69]] as const) {
-    sparkle.push(note(hb, 0.40, hp + 12, 88));
-  }
-  // Bars 26..31: Modulation to C major / F major
-  pushSixteenths(52, [69, 70, 71, 72, 73, 74, 73, 71], 94);
-  pushOomPahBar(26, 43, [55, 59, 62], 82); // G7
-  pushSixteenths(54, bumblebeeBuzz8(72), 95);
-  pushOomPahBar(27, 48, C_TRIAD, 84);
-  pushSixteenths(56, bumblebeeWave16(72), 96);
-  pushOomPahBar(28, 48, C_TRIAD, 84, true);
-  pushOomPahBar(29, 41, F_TRIAD, 86, true);
-  pushSixteenths(60, bumblebeeBuzz8(72), 96);
-  pushOomPahBar(30, 48, C_TRIAD, 84);
-  pushSixteenths(62, [72, 71, 72, 73, 74, 75, 76, 73], 98);
-  pushOomPahBar(31, 45, [55, 61, 64], 86);
 
-  // --- Stage 3: Bars 32..45 (Beats 64..92) — Sequential Chromatic Climb ---
-  const climbSteps: Array<[number, number, readonly number[]]> = [
-    [74, 50, DM_TRIAD], // Bars 32-33: D5
-    [76, 52, E7_TRIAD], // Bars 34-35: E5
-    [77, 41, F_TRIAD],  // Bars 36-37: F5
-    [79, 43, [55, 59, 62]], // Bars 38-39: G5
-    [81, 45, AM_TRIAD], // Bars 40-41: A5
+  // --- Bars 6..13 (Beats 12..28): Main Theme in A minor -> D minor ---
+  pushSixteenths(12, bumblebeeWave16(69), 80);
+  pushAccompBar(6, 45, AM_TRIAD, 70);
+  pushAccompBar(7, 45, AM_TRIAD, 70);
+
+  pushSixteenths(16, bumblebeeWave16(69), 84);
+  pushAccompBar(8, 45, AM_TRIAD, 72);
+  pushAccompBar(9, 52, E7_TRIAD, 72);
+
+  pushSixteenths(20, [69, 68, 67, 66, 65, 70, 69, 70, 71, 70, 71, 72, 73, 72, 73, 75], 86);
+  pushAccompBar(10, 45, [55, 61, 64], 74);
+  pushAccompBar(11, 45, [55, 61, 64], 76);
+
+  pushSixteenths(24, bumblebeeWave16(74), 88);
+  pushAccompBar(12, 50, DM_TRIAD, 76);
+  pushAccompBar(13, 50, DM_TRIAD, 76);
+
+  // --- Bars 14..21 (Beats 28..44): Return to A4 and high-register A5 echo ---
+  pushSixteenths(28, [74, 73, 72, 71, 70, 75, 74, 73, 72, 71, 70, 69, 68, 67, 68, 70], 86);
+  pushAccompBar(14, 50, DM_TRIAD, 74);
+  pushAccompBar(15, 52, E7_TRIAD, 74);
+
+  pushSixteenths(32, bumblebeeWave16(69), 84);
+  pushAccompBar(16, 45, AM_TRIAD, 72);
+  pushAccompBar(17, 45, AM_TRIAD, 74);
+
+  pushSixteenths(36, bumblebeeWave16(81), 88);
+  pushAccompBar(18, 45, AM_TRIAD, 74);
+  pushAccompBar(19, 50, DM_TRIAD, 76);
+
+  pushSixteenths(40, [81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 73, 74, 75, 76, 77, 75], 88);
+  pushAccompBar(20, 45, AM_TRIAD, 76);
+  pushAccompBar(21, 52, E7_TRIAD, 78);
+
+  // --- Bars 22..33 (Beats 44..68): Dominant Episode + Prince Gvidon Bowed-String Counter-Theme ---
+  for (let k = 0; k < 3; k++) {
+    const bar = 22 + k * 2;
+    pushSixteenths(bar * 2, bumblebeeWave16(76), 88 + k * 2);
+    pushAccompBar(bar, 52, E7_TRIAD, 78);
+    pushAccompBar(bar + 1, 52, E7_TRIAD, 78);
+  }
+  const gvidonE: ReadonlyArray<readonly [number, number, number]> = [
+    [44, 64, 0.46], [44.5, 65, 0.46], [45, 64, 0.46], [45.5, 63, 0.46],
+    [46, 64, 0.46], [46.5, 67, 0.46], [47, 66, 0.46], [47.5, 65, 0.46], [48, 64, 1.4],
   ];
-  climbSteps.forEach(([root, bass, triad], idx) => {
-    const bar = 32 + idx * 2;
-    pushSixteenths(bar * 2, bumblebeeWave16(root), 96 + idx * 2, idx >= 2);
-    pushOomPahBar(bar, bass, triad, 84 + idx * 2, true);
-    pushOomPahBar(bar + 1, bass, triad, 86 + idx * 2, true);
+  for (const [hb, hp, hd] of gvidonE) hornStrings.push(note(hb, hd, hp, 86));
+
+  for (let k = 0; k < 3; k++) {
+    const bar = 28 + k * 2;
+    pushSixteenths(bar * 2, bumblebeeWave16(k === 1 ? 74 : 69), 90 + k * 2);
+    pushAccompBar(bar, k === 1 ? 50 : 45, k === 1 ? DM_TRIAD : AM_TRIAD, 80);
+    pushAccompBar(bar + 1, k === 1 ? 50 : 45, k === 1 ? DM_TRIAD : AM_TRIAD, 80);
+  }
+  const gvidonA: ReadonlyArray<readonly [number, number, number]> = [
+    [56, 69, 0.46], [56.5, 70, 0.46], [57, 69, 0.46], [57.5, 68, 0.46],
+    [58, 69, 0.46], [58.5, 72, 0.46], [59, 71, 0.46], [59.5, 70, 0.46], [60, 69, 1.4],
+  ];
+  for (const [hb, hp, hd] of gvidonA) hornStrings.push(note(hb, hd, hp, 88));
+
+  // --- Bars 34..43 (Beats 68..88): Sequential Harmonic Ascent (C -> Dm -> E7 -> F -> Am) ---
+  const seqSteps: ReadonlyArray<[number, number, readonly number[]]> = [
+    [72, 48, C_TRIAD],
+    [74, 50, DM_TRIAD],
+    [76, 52, E7_TRIAD],
+    [77, 41, F_TRIAD],
+    [81, 45, AM_TRIAD],
+  ];
+  seqSteps.forEach(([root, bass, triad], idx) => {
+    const bar = 34 + idx * 2;
+    pushSixteenths(bar * 2, bumblebeeWave16(root), 90 + idx * 3);
+    pushAccompBar(bar, bass, triad, 80 + idx * 2, idx >= 2);
+    pushAccompBar(bar + 1, bass, triad, 82 + idx * 2, idx >= 2);
   });
-  // Bars 42..45: Swirling descent and springboard on E7 into the Payoff!
-  pushSixteenths(84, [81, 80, 79, 78, 77, 76, 75, 74], 102, true);
-  pushOomPahBar(42, 52, E7_TRIAD, 88, true);
-  pushSixteenths(86, [76, 79, 78, 77, 76, 75, 74, 73], 102, true);
-  pushOomPahBar(43, 52, E7_TRIAD, 88, true);
-  pushSixteenths(88, [76, 77, 76, 75, 76, 79, 78, 77], 104, true);
-  pushOomPahBar(44, 52, E7_TRIAD, 90, true);
-  pushSixteenths(90, [76, 77, 78, 79, 80, 81, 82, 80], 106, true);
-  pushOomPahBar(45, 52, E7_TRIAD, 92, true);
 
-  // --- Stage 4: Bars 46..63 (Beats 92..128) — PAYOFF REPRISE & 3-OCTAVE FINALE ROCKET ---
-  // High-octave blazing A-minor reprise (A5 = 81!) with shimmering octave sparkle
-  pushSixteenths(92, bumblebeeWave16(81), 106, true);
-  pushOomPahBar(46, 45, AM_TRIAD, 92, true);
-  pushOomPahBar(47, 50, DM_TRIAD, 94, true);
-
-  pushSixteenths(96, bumblebeeBuzz8(81), 106, true);
-  pushOomPahBar(48, 45, AM_TRIAD, 92, true);
-  pushSixteenths(98, bumblebeeBuzz8(81), 108, true);
-  pushOomPahBar(49, 52, E7_TRIAD, 94, true);
-
-  pushSixteenths(100, bumblebeeWave16(81), 108, true);
-  pushOomPahBar(50, 45, AM_TRIAD, 94, true);
-  pushOomPahBar(51, 50, DM_TRIAD, 96, true);
-
-  // Plunge to A3 (57) and launch the iconic 3-octave chromatic rocket (57..93 = A3..A6, 36 sixteenths + cadence!)
-  pushSixteenths(104, [81, 80, 79, 78, 77, 76, 75, 74], 106);
-  pushOomPahBar(52, 45, AM_TRIAD, 90, true);
-  pushSixteenths(106, [73, 72, 71, 70, 69, 68, 67, 66], 104);
-  pushOomPahBar(53, 52, E7_TRIAD, 90, true);
-  pushSixteenths(108, [65, 64, 63, 62, 61, 60, 59, 58], 104);
-  pushOomPahBar(54, 45, AM_TRIAD, 90, true);
-
-  // Bars 55..59 (Beats 110..120 = 40 sixteenths): Unbroken 3-octave chromatic rocket A3 (57) -> A6 (93)!
-  const rocket: number[] = [57, 58, 57, 56]; // 4-note launch coil around A3
-  for (let p = 57; p <= 92; p++) rocket.push(p); // 36 chromatic steps straight up!
-  pushSixteenths(110, rocket, 110, true);
-  for (let bar = 55; bar <= 59; bar++) {
-    pushOomPahBar(bar, bar % 2 === 0 ? 52 : 45, bar % 2 === 0 ? E7_TRIAD : AM_TRIAD, 94 + (bar - 55) * 2, true);
+  // --- Bars 44..57 (Beats 88..116): Payoff High Reprise & Three-Octave Chromatic Finale ---
+  pushSixteenths(88, bumblebeeWave16(81), 102);
+  pushAccompBar(44, 45, AM_TRIAD, 88, true);
+  pushAccompBar(45, 50, DM_TRIAD, 90, true);
+  for (const [hb, hp, hd] of [[88, 76, 0.9], [89, 77, 0.9], [90, 76, 0.9], [91, 75, 0.9]] as const) {
+    hornStrings.push(note(hb, hd, hp, 88));
   }
 
-  // Bar 60..61 (Beats 120..124): Peak A6 (93) snap + classical Tsar Saltan E5 -> A5 pizzicato/staccato cadence!
-  lead.push(note(120, 0.45, 93, 122)); // High A6!
-  sparkle.push(note(120, 0.45, 81, 114));
-  left.push(note(120, 0.45, 45, 112));
-  left.push(note(120, 0.45, 57, 108));
+  pushSixteenths(92, bumblebeeWave16(81), 104);
+  pushAccompBar(46, 45, AM_TRIAD, 90, true);
+  pushAccompBar(47, 52, E7_TRIAD, 92, true);
 
-  // Dramatic beat 121: E5 (76) + E6 (88) dominant punctuation
-  lead.push(note(121, 0.45, 88, 116));
-  sparkle.push(note(121, 0.45, 76, 108));
-  left.push(note(121, 0.45, 52, 110));
-  left.push(note(121, 0.45, 64, 106));
+  const plunge: number[] = [];
+  for (let i = 0; i < 24; i++) plunge.push(81 - i);
+  pushSixteenths(96, plunge, 98, false);
+  pushAccompBar(48, 45, AM_TRIAD, 86, true);
+  pushAccompBar(49, 52, E7_TRIAD, 86, true);
+  pushAccompBar(50, 45, AM_TRIAD, 86, true);
 
-  // Final tonic snap at beat 122: crisp A minor chord across the keyboard!
-  lead.push(note(122, 1.3, 81, 124));
-  sparkle.push(note(122, 1.1, 93, 110));
-  for (const [i, p] of [45, 52, 57, 60, 64, 69].entries()) {
-    left.push(note(122 + i * 0.02, 1.3, p, 116 - i * 3));
+  const rocket: number[] = [57, 56, 57, 56];
+  for (let p = 57; p <= 92; p++) rocket.push(p);
+  pushSixteenths(102, rocket, 104, false);
+  for (let bar = 51; bar <= 55; bar++) {
+    pushAccompBar(bar, bar % 2 === 0 ? 52 : 45, bar % 2 === 0 ? E7_TRIAD : AM_TRIAD, 88 + (bar - 51) * 2, true);
+  }
+
+  lead.push(note(112, 0.42, 93, 118));
+  left.push(note(112, 0.42, 45, 108));
+  left.push(note(112, 0.42, 57, 104));
+
+  lead.push(note(113, 0.42, 88, 112));
+  left.push(note(113, 0.42, 52, 106));
+  left.push(note(113, 0.42, 64, 102));
+
+  lead.push(note(114, 1.25, 81, 120));
+  hornStrings.push(note(114, 1.15, 69, 94));
+  for (const [i, p] of [45, 52, 57, 60, 64].entries()) {
+    left.push(note(114 + i * 0.018, 1.25, p, 112 - i * 3));
   }
 
   const tracks: MidiWriteTrack[] = [
     { name: "Bumblebee Lead", channel: 0, program: 0, notes: cleanTrackNotes(lead) },
-    { name: "Piano Stride", channel: 1, program: 0, notes: cleanTrackNotes(left) },
-    { name: "Xylophone Sparkle", channel: 2, program: 12, notes: cleanTrackNotes(sparkle) },
+    { name: "Piano Accompaniment", channel: 1, program: 0, notes: cleanTrackNotes(left) },
+    { name: "Muted Strings", channel: 2, program: 40, notes: cleanTrackNotes(hornStrings) },
   ];
 
   return {
     file: "flight-of-the-bumblebee.mid",
     title: "Flight of the Bumblebee",
     composer: "Nikolai Rimsky-Korsakov",
-    credit: "Rimsky-Korsakov (public domain), 4-stage accelerando arrangement",
+    credit: "Rimsky-Korsakov (public domain), score-verified Vivace piano & strings arrangement",
     options: {
       format: 1,
       ticksPerQuarter: 480,
@@ -672,9 +662,432 @@ function furEliseMusicBox(): MidiPiece {
   };
 }
 
-/** Built-in pieces in scene order: Flight of the Bumblebee, Canon in D (five voices), Für Elise (music box). */
+// ===================================================================================================
+// M. Original Jazz-Mugham Piece — "Mugham Nocturne" (D Shur mode, rubato intro + 7/8 groove + climax)
+//    100% original composition authored for this repository (MIT); zero borrowed melodies or bass lines.
+//    D Shur 12-TET degrees: D (2), Eb (3, +40 cents microtonal bend on ornamental notes), F (5), G (7),
+//    A (9), Bb (10), C (0), plus chromatic lower-neighbour approach tones (C#, F#, G#) in the jazz solo.
+// ===================================================================================================
+
+export const MUGHAM_SHUR_CLASSES = [2, 3, 5, 7, 9, 10, 0] as const;
+
+export function mughamNocturne(): MidiPiece {
+  const rng = seededRng(0x53485552); // deterministic humanisation & solo variation seed
+  const tar: MidiWriteNote[] = [];
+  const kamancha: MidiWriteNote[] = [];
+  const piano: MidiWriteNote[] = [];
+  const bass: MidiWriteNote[] = [];
+  const brushes: MidiWriteNote[] = [];
+
+  // Deterministic micro-timing (+/-9 ms at ~128 BPM -> +/-0.019 beats) & velocity (+/-5) humaniser
+  const humanBeat = (b: number, maxBeats = 0.018) => (b <= 0.02 ? b : Math.max(0, b + (rng() * 2 - 1) * maxBeats));
+  const humanVel = (v: number, span = 5) => clampVelocity(v + (rng() * 2 - 1) * span);
+  const bendForShur = (pitch: number, ornamental = false) =>
+    ornamental && ((pitch % 12) + 12) % 12 === 3 ? 40 : undefined; // +40c neutral-2nd inflection on Eb
+
+  // --- (a) Free-time rubato introduction: beats 0..13 (~12.0 s across fluctuating 68->56->74->62 BPM) ---
+  // Sustained D2/A2 drone + bowed Kamancha breath + ornamented Tar phrasing (grace notes, mordents, trills, slides)
+  bass.push(note(0, 4.2, 38, 76));     // D2 drone pluck
+  kamancha.push(note(0.15, 3.8, 50, 68)); // D3 bowed breath
+  kamancha.push(note(2.2, 2.6, 57, 64));  // A3 fifth colour
+
+  bass.push(note(4.5, 4.2, 38, 74));
+  kamancha.push(note(4.7, 3.9, 55, 66));  // G3 Shur fourth colour
+  bass.push(note(9.0, 3.8, 38, 78));
+  kamancha.push(note(9.2, 3.4, 50, 70));
+
+  // Original ornamented Tar rubato line over the D drone
+  const introTar: ReadonlyArray<readonly [number, number, number, number, boolean?]> = [
+    // Phrase 1: grace D4->G4, zengule mordent G4-Ab/A4-G4, settle through F4 & Eb4(+40c) to D4
+    [0.55, 0.11, 62, 78], [0.68, 1.05, 67, 92],
+    [1.82, 0.12, 69, 86], [1.96, 0.12, 70, 82], [2.10, 0.85, 69, 90],
+    [3.05, 0.45, 67, 84], [3.55, 0.52, 65, 82], [4.12, 0.75, 63, 86, true],
+    // Phrase 2: expressive slide F4->G4->A4->C5, rapid trill on A4-Bb4, descend to G4 & D4
+    [5.05, 0.12, 65, 80], [5.19, 0.14, 67, 86], [5.35, 0.95, 69, 94],
+    [6.40, 0.55, 72, 92], [7.02, 0.13, 69, 88], [7.16, 0.13, 70, 84], [7.30, 0.13, 69, 88], [7.44, 0.13, 70, 82],
+    [7.60, 0.95, 67, 90], [8.65, 0.55, 65, 84],
+    // Phrase 3: cadential sigh Eb4(+40c) -> D4 preparing the 7/8 groove launch
+    [9.35, 0.12, 65, 82], [9.50, 0.85, 63, 90, true], [10.42, 0.14, 62, 84], [10.58, 0.14, 63, 80, true],
+    [10.75, 1.85, 62, 92],
+  ];
+  for (const [b, dur, p, v, bent] of introTar) {
+    tar.push(note(humanBeat(b, 0.01), dur, p, humanVel(v, 4), bendForShur(p, Boolean(bent))));
+  }
+  // Gentle whispered piano quartal shimmer near end of intro
+  for (const [i, p] of [55, 60, 65, 69].entries()) {
+    piano.push(note(11.4 + i * 0.08, 1.2, p, 62 - i * 2));
+  }
+
+  // --- (b) 7/8 Jazz-Mugham Groove (2 + 2 + 3 eighths = 3.5 quarter-beats per bar): beats 13..62 (14 bars) ---
+  const grooveStart = 13.0;
+  const barBeats = 3.5; // 7/8: beat 0 (2 eighths = 1.0), beat 1.0 (2 eighths = 1.0), beat 2.0 (3 eighths = 1.5)
+
+  // Modal bass roots & quartal piano voicings cycling cleanly in original 4-bar harmonic loops (i - iv - bVII - i)
+  const grooveHarmony: ReadonlyArray<{ bass: readonly [number, number, number, number]; chord: readonly number[] }> = [
+    { bass: [38, 45, 48, 45], chord: [55, 60, 65] }, // D pedal + G-C-F quartal
+    { bass: [43, 50, 53, 50], chord: [53, 58, 62] }, // G subdominant + F-Bb-D
+    { bass: [36, 43, 46, 45], chord: [52, 57, 60] }, // C modal VII + E-A-C->Bb
+    { bass: [38, 45, 50, 45], chord: [55, 58, 62] }, // D Shur tonic + G-Bb-D
+  ];
+
+  const pushGrooveRhythmBar = (barIdx: number, b0: number, energyBoost: number) => {
+    const h = grooveHarmony[barIdx % 4];
+    // Plucked upright double bass 2+2+3 ostinato
+    bass.push(note(humanBeat(b0), 0.88, h.bass[0], humanVel(82 + energyBoost)));
+    bass.push(note(humanBeat(b0 + 1.0), 0.88, h.bass[1], humanVel(76 + energyBoost)));
+    bass.push(note(humanBeat(b0 + 2.0), 0.88, h.bass[2], humanVel(80 + energyBoost)));
+    bass.push(note(humanBeat(b0 + 3.0), 0.44, h.bass[3], humanVel(72 + energyBoost)));
+
+    // Noise-based jazz brushes in 2+2+3 (39 = swirl, 40 = tap, 42 = chick)
+    brushes.push(note(humanBeat(b0, 0.01), 0.25, 39, humanVel(76 + energyBoost)));
+    brushes.push(note(humanBeat(b0 + 1.0, 0.01), 0.18, 40, humanVel(68 + energyBoost)));
+    brushes.push(note(humanBeat(b0 + 2.0, 0.01), 0.25, 39, humanVel(74 + energyBoost)));
+    brushes.push(note(humanBeat(b0 + 2.5, 0.01), 0.15, 42, humanVel(60 + energyBoost)));
+    brushes.push(note(humanBeat(b0 + 3.0, 0.01), 0.18, 40, humanVel(66 + energyBoost)));
+  };
+
+  // Bars 0..7 of groove: Sequential motif development & Call-and-Response between Tar and Jazz Piano!
+  const callMotifs: ReadonlyArray<ReadonlyArray<readonly [number, number, number, boolean?]>> = [
+    // Bar 0 (Tar call 1): original 7/8 motif D4-F4 | G4-A4 | Bb4-A4-G4
+    [[0, 0.45, 62], [0.5, 0.45, 65], [1.0, 0.45, 67], [1.5, 0.45, 69], [2.0, 0.45, 70], [2.5, 0.45, 69], [3.0, 0.45, 67]],
+    // Bar 2 (Tar call 2, sequenced up into upper Shur tetrachord): F4-G4 | A4-Bb4 | C5-Bb4-A4
+    [[0, 0.45, 65], [0.5, 0.45, 67], [1.0, 0.45, 69], [1.5, 0.45, 70], [2.0, 0.45, 72], [2.5, 0.45, 70], [3.0, 0.45, 69]],
+    // Bar 4 (Tar call 3, ornamented with mordent & +40c Eb4): A4-C5 | D5-C5 | Bb4-G4-Eb4(+40c)
+    [[0, 0.45, 69], [0.5, 0.45, 72], [1.0, 0.22, 74], [1.25, 0.22, 75, true], [1.5, 0.45, 74], [2.0, 0.45, 70], [2.5, 0.45, 67], [3.0, 0.45, 63, true]],
+    // Bar 6 (Tar call 4, resolving cadence): D4-G4 | F#4(approach)->G4 | A4-F4-D4
+    [[0, 0.45, 62], [0.5, 0.45, 67], [1.0, 0.22, 66], [1.25, 0.7, 67], [2.0, 0.45, 69], [2.5, 0.45, 65], [3.0, 0.45, 62]],
+  ];
+
+  const pianoResponses: ReadonlyArray<ReadonlyArray<readonly [number, number, number]>> = [
+    // Bar 1 (Piano response 1, with chromatic approach F#4->G4):
+    [[0, 0.45, 66], [0.5, 0.45, 67], [1.0, 0.45, 70], [1.5, 0.45, 69], [2.0, 0.45, 67], [2.5, 0.45, 65], [3.0, 0.45, 62]],
+    // Bar 3 (Piano response 2, with chromatic approach C#5->D5):
+    [[0, 0.45, 73], [0.5, 0.45, 74], [1.0, 0.45, 72], [1.5, 0.45, 70], [2.0, 0.45, 69], [2.5, 0.45, 67], [3.0, 0.45, 65]],
+    // Bar 5 (Piano response 3, bebop-mugham run):
+    [[0, 0.45, 68], [0.5, 0.45, 69], [1.0, 0.45, 72], [1.5, 0.45, 74], [2.0, 0.45, 72], [2.5, 0.45, 69], [3.0, 0.45, 67]],
+    // Bar 7 (Piano response 4, ascending lead-in to solo):
+    [[0, 0.45, 62], [0.5, 0.45, 65], [1.0, 0.45, 67], [1.5, 0.45, 69], [2.0, 0.45, 72], [2.5, 0.45, 73], [3.0, 0.45, 74]],
+  ];
+
+  for (let bar = 0; bar < 8; bar++) {
+    const b0 = grooveStart + bar * barBeats;
+    pushGrooveRhythmBar(bar, b0, 2);
+    const chord = grooveHarmony[bar % 4].chord;
+    if (bar % 2 === 0) {
+      // Tar leads, Piano comps soft syncopated quartals on beats 0 and 2.0
+      for (const p of chord) {
+        piano.push(note(humanBeat(b0), 0.75, p, humanVel(60)));
+        piano.push(note(humanBeat(b0 + 2.0), 0.95, p, humanVel(62)));
+      }
+      for (const [off, dur, p, bent] of callMotifs[bar >> 1]) {
+        tar.push(note(humanBeat(b0 + off), dur, p, humanVel(90), bendForShur(p, Boolean(bent))));
+      }
+    } else {
+      // Piano responds with melodic line + left-hand rootless shell, Tar holds resonant fifth punctuation
+      tar.push(note(humanBeat(b0), 0.9, 62, humanVel(74)));
+      for (const p of chord.slice(0, 2)) piano.push(note(humanBeat(b0), 0.85, p - 12, humanVel(58)));
+      for (const [off, dur, p] of pianoResponses[bar >> 1]) {
+        piano.push(note(humanBeat(b0 + off), dur, p, humanVel(88)));
+      }
+    }
+  }
+
+  // Bars 8..13 of groove (6 bars): Seeded modal improvisation trading rapid Shur + chromatic-approach cells!
+  const shurScale = [62, 63, 65, 67, 69, 70, 72, 74, 75, 77, 79, 81]; // D4..A5 in D Shur
+  let degIdx = 5; // start near Bb4/A4
+  for (let bar = 8; bar < 14; bar++) {
+    const b0 = grooveStart + bar * barBeats;
+    pushGrooveRhythmBar(bar, b0, 6);
+    const chord = grooveHarmony[bar % 4].chord;
+    for (const p of chord) piano.push(note(humanBeat(b0 + 2.0), 1.1, p - (bar >= 11 ? 0 : 12), humanVel(64)));
+
+    // 7 eighth-note slots with occasional chromatic approach sixteenth & Tar/Piano trading every half-bar
+    const slots = [0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0];
+    for (let s = 0; s < slots.length; s++) {
+      const stepChoice = rng();
+      if (stepChoice < 0.36) degIdx = Math.min(shurScale.length - 1, degIdx + 1);
+      else if (stepChoice < 0.72) degIdx = Math.max(1, degIdx - 1);
+      else degIdx = Math.max(1, Math.min(shurScale.length - 2, degIdx + (rng() < 0.5 ? 2 : -2)));
+
+      const targetPitch = shurScale[degIdx];
+      const slotBeat = b0 + slots[s];
+      const useTar = (bar + (s >= 4 ? 1 : 0)) % 2 === 0;
+      const dest = useTar ? tar : piano;
+
+      // Chromatic lower-neighbour approach on strong beats into D, G, or A
+      const pc = targetPitch % 12;
+      if ((s === 0 || s === 4) && (pc === 2 || pc === 7 || pc === 9) && rng() < 0.65) {
+        dest.push(note(humanBeat(slotBeat, 0.01), 0.21, targetPitch - 1, humanVel(84)));
+        dest.push(note(humanBeat(slotBeat + 0.25, 0.01), 0.22, targetPitch, humanVel(94)));
+      } else {
+        dest.push(note(
+          humanBeat(slotBeat),
+          0.44,
+          targetPitch,
+          humanVel(90 + (s === 0 || s === 4 ? 6 : 0)),
+          useTar ? bendForShur(targetPitch, true) : undefined,
+        ));
+      }
+    }
+  }
+
+  // --- (c) Octave-Doubled Climax Payoff: beats 62..79.5 (5 bars of 7/8, rising to D6 = 86!) ---
+  const climaxStart = grooveStart + 14 * barBeats; // beat 62.0
+  const climaxBars: ReadonlyArray<readonly number[]> = [
+    [74, 75, 77, 79, 81, 79, 77], // D5 Eb5 F5 G5 A5 G5 F5
+    [77, 79, 81, 82, 84, 82, 81], // F5 G5 A5 Bb5 C6 Bb5 A5
+    [79, 81, 82, 84, 86, 84, 82], // Peak on D6 (86)!
+    [86, 84, 82, 81, 79, 77, 75], // Cascading descent from D6
+    [74, 77, 75, 74, 72, 69, 67], // Resolving cascade toward D5/G4
+  ];
+  climaxBars.forEach((pitches, idx) => {
+    const b0 = climaxStart + idx * barBeats;
+    pushGrooveRhythmBar(14 + idx, b0, 12);
+    const chord = grooveHarmony[idx % 4].chord;
+    for (const p of chord) piano.push(note(humanBeat(b0), 1.3, p, humanVel(76)));
+    // Soft bowed kamancha soaring pad underneath climax
+    kamancha.push(note(b0, 3.2, idx < 3 ? 62 : 57, 72));
+
+    pitches.forEach((p, s) => {
+      const sb = b0 + s * 0.5;
+      tar.push(note(humanBeat(sb, 0.012), 0.44, p, humanVel(102 + (s === 0 ? 6 : 0)), bendForShur(p, true)));
+      piano.push(note(humanBeat(sb, 0.012), 0.44, p - 12, humanVel(96 + (s === 0 ? 6 : 0))));
+    });
+  });
+
+  // --- (d) Return to Opening Drone: beats 79.5..85.5 (last ~4.8 s, slowing cleanly into loop state) ---
+  const codaStart = climaxStart + 5 * barBeats; // beat 79.5
+  bass.push(note(codaStart, 4.8, 38, 80)); // D2 drone matching beat 0!
+  kamancha.push(note(codaStart + 0.1, 4.5, 50, 68)); // D3 bowed breath matching beat 0!
+  brushes.push(note(codaStart, 0.3, 39, 62));
+  tar.push(note(codaStart + 0.2, 0.85, 65, 84));
+  tar.push(note(codaStart + 1.15, 0.95, 63, 82, 40)); // whispered Eb4 (+40c)
+  tar.push(note(codaStart + 2.2, 2.5, 62, 86)); // final sustained D4 maye
+
+  const tracks: MidiWriteTrack[] = [
+    { name: "Tar Lead", channel: 0, program: 25, notes: cleanTrackNotes(tar) },
+    { name: "Kamancha Intro", channel: 1, program: 40, notes: cleanTrackNotes(kamancha) },
+    { name: "Jazz Piano", channel: 2, program: 0, notes: cleanTrackNotes(piano) },
+    { name: "Double Bass", channel: 3, program: 32, notes: cleanTrackNotes(bass) },
+    { name: "Jazz Brushes", channel: 9, program: 0, notes: cleanTrackNotes(brushes) },
+  ];
+
+  return {
+    file: "mugham-nocturne.mid",
+    title: "Mugham Nocturne",
+    composer: "Original",
+    credit: "Original composition written for this repository (D Shur jazz-mugham); MIT",
+    options: {
+      format: 1,
+      ticksPerQuarter: 480,
+      tempos: [
+        { beat: 0, bpm: 68 },
+        { beat: 4, bpm: 58 },
+        { beat: 8, bpm: 74 },
+        { beat: 10.5, bpm: 60 },
+        { beat: grooveStart, bpm: 124 },
+        { beat: climaxStart, bpm: 132 },
+        { beat: codaStart, bpm: 84 },
+        { beat: codaStart + 2, bpm: 66 },
+      ],
+      tracks,
+      title: "Mugham Nocturne",
+      timeSignature: [7, 8],
+    },
+  };
+}
+
+// ===================================================================================================
+// N. Original Lyrical Nocturne — "Baku Nights" (C Rast-inspired mode, 78 BPM, 4/4 slow nocturnal groove)
+//    100% original composition authored for this repository (MIT); title is only a title, unrelated to
+//    any existing song. C Rast-inspired degrees: C (0), D (2), E (4, -20c warm third on strings), F (5),
+//    G (7), A (9), B (11) ascending / Bb (10) descending modal colour.
+// ===================================================================================================
+
+export function bakuNights(): MidiPiece {
+  const rng = seededRng(0x42414b55);
+  const pianoLead: MidiWriteNote[] = [];
+  const pianoChords: MidiWriteNote[] = [];
+  const strings: MidiWriteNote[] = [];
+  const bass: MidiWriteNote[] = [];
+  const brushes: MidiWriteNote[] = [];
+
+  const humanBeat = (b: number, maxBeats = 0.012) => (b <= 0.02 ? b : Math.max(0, b + (rng() * 2 - 1) * maxBeats));
+  const humanVel = (v: number, span = 5) => clampVelocity(v + (rng() * 2 - 1) * span);
+
+  // 15 bars of 4/4 at 78 BPM (60 beats = 46.15 s) + warm resolving Cmaj9 bar = ~48.4 s
+  interface NocturneBar {
+    bassRoot: number;
+    bassFifth: number;
+    voicing: readonly number[];
+    stringPad: readonly [number, number?]; // [pitch, optional centsOffset]
+    melody: ReadonlyArray<readonly [number, number, number]>; // [beatOffsetInBar, durBeats, pitch]
+  }
+
+  // Newly composed original nocturnal progression & lyrical melody in C Rast-inspired mode
+  const bars: readonly NocturneBar[] = [
+    // Section A (Bars 0..3): Intimate opening promenade — solo piano lamps over warm bass
+    {
+      bassRoot: 36, bassFifth: 43, voicing: [48, 55, 59, 62], stringPad: [64, -20],
+      melody: [[0, 1.4, 67], [1.5, 0.48, 69], [2.0, 0.95, 72], [3.0, 0.95, 74]],
+    },
+    {
+      bassRoot: 41, bassFifth: 48, voicing: [53, 57, 60, 64], stringPad: [69],
+      melody: [[0, 1.4, 71], [1.5, 0.48, 69], [2.0, 1.2, 67], [3.33, 0.62, 64]],
+    },
+    {
+      bassRoot: 43, bassFifth: 50, voicing: [55, 58, 62, 65], stringPad: [67], // Gm9 (descending Bb Rast colour!)
+      melody: [[0, 0.95, 65], [1.0, 0.95, 67], [2.0, 0.95, 70], [3.0, 0.95, 69]],
+    },
+    {
+      bassRoot: 36, bassFifth: 43, voicing: [48, 52, 55, 62], stringPad: [64, -20],
+      melody: [[0, 1.9, 67], [2.0, 0.95, 64], [3.0, 0.95, 62]],
+    },
+
+    // Section B (Bars 4..7): Groove & bowed strings enter, skyline begins lighting up
+    {
+      bassRoot: 36, bassFifth: 43, voicing: [52, 55, 59, 62], stringPad: [72],
+      melody: [[0, 0.95, 67], [1.0, 0.48, 72], [1.5, 0.48, 74], [2.0, 1.4, 76], [3.5, 0.48, 74]],
+    },
+    {
+      bassRoot: 45, bassFifth: 52, voicing: [53, 57, 60, 64], stringPad: [76, -20],
+      melody: [[0, 0.95, 72], [1.0, 0.95, 69], [2.0, 0.95, 71], [3.0, 0.95, 72]],
+    },
+    {
+      bassRoot: 38, bassFifth: 45, voicing: [53, 57, 60, 65], stringPad: [74],
+      melody: [[0, 0.95, 74], [1.0, 0.48, 72], [1.5, 0.48, 69], [2.0, 1.2, 65], [3.33, 0.62, 67]],
+    },
+    {
+      bassRoot: 43, bassFifth: 50, voicing: [53, 57, 59, 62], stringPad: [71], // G13sus4 -> G9
+      melody: [[0, 1.4, 69], [1.5, 0.48, 71], [2.0, 0.95, 74], [3.0, 0.95, 72]],
+    },
+
+    // Section C — Payoff (Bars 8..11, 60%..84%): Full warm nocturnal climax in upper register!
+    {
+      bassRoot: 36, bassFifth: 48, voicing: [52, 55, 59, 62], stringPad: [76, -20],
+      melody: [[0, 0.95, 79], [1.0, 0.48, 81], [1.5, 0.48, 79], [2.0, 0.95, 76], [3.0, 0.95, 74]],
+    },
+    {
+      bassRoot: 41, bassFifth: 48, voicing: [53, 57, 60, 64], stringPad: [77],
+      melody: [[0, 0.95, 77], [1.0, 0.48, 76], [1.5, 0.48, 74], [2.0, 0.95, 72], [3.0, 0.95, 76]],
+    },
+    {
+      bassRoot: 43, bassFifth: 50, voicing: [55, 58, 62, 65], stringPad: [79], // Gm9 modal glow
+      melody: [[0, 0.65, 74], [0.67, 0.65, 77], [1.34, 0.65, 79], [2.0, 1.2, 82], [3.33, 0.62, 79]],
+    },
+    {
+      bassRoot: 38, bassFifth: 43, voicing: [53, 57, 60, 64], stringPad: [74],
+      melody: [[0, 0.95, 77], [1.0, 0.95, 76], [2.0, 0.95, 74], [3.0, 0.95, 71]],
+    },
+
+    // Section D — Gentle Nocturnal Descent & Loop Return (Bars 12..14)
+    {
+      bassRoot: 36, bassFifth: 43, voicing: [48, 55, 59, 62], stringPad: [72],
+      melody: [[0, 1.4, 72], [1.5, 0.48, 69], [2.0, 0.95, 67], [3.0, 0.95, 64]],
+    },
+    {
+      bassRoot: 41, bassFifth: 43, voicing: [50, 55, 59, 62], stringPad: [67],
+      melody: [[0, 1.4, 65], [1.5, 0.48, 64], [2.0, 0.95, 62], [3.0, 0.95, 64]],
+    },
+    {
+      bassRoot: 36, bassFifth: 43, voicing: [48, 52, 55, 59], stringPad: [64, -20],
+      melody: [[0, 1.8, 67], [2.0, 2.2, 60]],
+    },
+  ];
+
+  bars.forEach((bar, barIdx) => {
+    const b0 = barIdx * 4;
+    const isPayoff = barIdx >= 8 && barIdx <= 11;
+    const isIntro = barIdx < 2;
+    const isOutro = barIdx >= 13;
+    const dyn = isPayoff ? 12 : barIdx >= 4 && !isOutro ? 5 : 0;
+
+    // Upright bass: warm two-feel in intro/outro, gentle walking 4-feel in middle & payoff
+    bass.push(note(humanBeat(b0), 1.85, bar.bassRoot, humanVel(78 + dyn)));
+    bass.push(note(humanBeat(b0 + 2.0), 1.85, bar.bassFifth, humanVel(72 + dyn)));
+    if (barIdx >= 4 && barIdx <= 11) {
+      bass.push(note(humanBeat(b0 + 1.0), 0.9, bar.bassRoot + 7, humanVel(66 + dyn)));
+      bass.push(note(humanBeat(b0 + 3.0), 0.9, bar.bassRoot + 5, humanVel(68 + dyn)));
+    }
+
+    // Rolled warm piano left-hand voicings (lighting skyline windows!)
+    bar.voicing.forEach((vp, vi) => {
+      pianoChords.push(note(humanBeat(b0 + vi * 0.06, 0.006), 1.85, vp, humanVel(62 + dyn - vi * 2)));
+      if (!isOutro) {
+        pianoChords.push(note(humanBeat(b0 + 2.0 + vi * 0.05, 0.006), 1.75, vp, humanVel(58 + dyn - vi * 2)));
+      }
+    });
+
+    // Bowed string pad & soaring counter-harmony from bar 2 onward
+    if (barIdx >= 2) {
+      const [sp, sbend] = bar.stringPad;
+      strings.push(note(humanBeat(b0 + 0.04), 3.75, sp, humanVel(66 + dyn), sbend));
+      if (isPayoff) {
+        strings.push(note(humanBeat(b0 + 2.0), 1.85, sp - 5, humanVel(64 + dyn)));
+      }
+    }
+
+    // Soft nocturnal jazz brushes (12/8 swung whisper from bar 2..13)
+    if (!isIntro && !isOutro) {
+      brushes.push(note(humanBeat(b0, 0.008), 0.3, 39, humanVel(66 + Math.floor(dyn / 2))));
+      brushes.push(note(humanBeat(b0 + 1.0, 0.008), 0.18, 40, humanVel(58)));
+      brushes.push(note(humanBeat(b0 + 1.67, 0.008), 0.14, 42, humanVel(52)));
+      brushes.push(note(humanBeat(b0 + 2.0, 0.008), 0.3, 39, humanVel(64 + Math.floor(dyn / 2))));
+      brushes.push(note(humanBeat(b0 + 3.0, 0.008), 0.18, 40, humanVel(58)));
+      brushes.push(note(humanBeat(b0 + 3.67, 0.008), 0.14, 42, humanVel(52)));
+    }
+
+    // Lyrical right-hand piano melody (1-to-1 boulevard lamps; octave-warmed during payoff!)
+    for (const [off, dur, mp] of bar.melody) {
+      pianoLead.push(note(humanBeat(b0 + off), dur, mp, humanVel(88 + dyn)));
+      if (isPayoff) {
+        pianoChords.push(note(humanBeat(b0 + off + 0.01, 0.005), dur * 0.9, mp - 12, humanVel(72)));
+      }
+    }
+  });
+
+  // Final whispered Cmaj9 nocturnal chord at beat 60 matching the opening harmonic state
+  bass.push(note(60, 2.6, 36, 74));
+  [48, 55, 59, 62].forEach((p, i) => pianoChords.push(note(60.05 + i * 0.06, 2.4, p, 60 - i * 2)));
+  pianoLead.push(note(60.25, 2.3, 67, 82)); // G4 matching bar 0 beat 0!
+
+  const tracks: MidiWriteTrack[] = [
+    { name: "Nocturne Piano Lead", channel: 0, program: 0, notes: cleanTrackNotes(pianoLead) },
+    { name: "Nocturne Piano Chords", channel: 1, program: 0, notes: cleanTrackNotes(pianoChords) },
+    { name: "Bowed String Pad", channel: 2, program: 48, notes: cleanTrackNotes(strings) },
+    { name: "Upright Bass", channel: 3, program: 32, notes: cleanTrackNotes(bass) },
+    { name: "Night Brushes", channel: 9, program: 0, notes: cleanTrackNotes(brushes) },
+  ];
+
+  return {
+    file: "baku-nights.mid",
+    title: "Baku Nights",
+    composer: "Original",
+    credit: "Original composition written for this repository (C Rast-inspired nocturne); MIT",
+    options: {
+      format: 1,
+      ticksPerQuarter: 480,
+      tempos: [
+        { beat: 0, bpm: 78 },
+        { beat: 56, bpm: 73 },
+        { beat: 59, bpm: 68 },
+      ],
+      tracks,
+      title: "Baku Nights",
+      timeSignature: [4, 4],
+    },
+  };
+}
+
+/** Built-in pieces for public/midi/ and WAV generation (v2 trio + two original v3 pieces). */
 export function builtInPieces(): MidiPiece[] {
-  return [flightOfTheBumblebee(), canonInDFiveVoices(), furEliseMusicBox()];
+  return [
+    flightOfTheBumblebee(),
+    canonInDFiveVoices(),
+    furEliseMusicBox(),
+    mughamNocturne(),
+    bakuNights(),
+  ];
 }
 
 export function pieceBytes(piece: MidiPiece): Uint8Array {

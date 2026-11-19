@@ -74,14 +74,15 @@ test("1-to-1 note bar events land on keyTop within one frame of note-on and NPS 
     assert.ok(!beforeOn || !beforeOn.active, "not yet active one frame earlier");
   }
 
-  // Notes per second readout rises across the accelerando and returns to 0 for the loop
+  // Notes per second readout rises from solo chromatic intro into full Vivace accompaniment and returns to 0 for the loop
   const npsStart = notesPerSecondAt(PARSED.notes, -1.0, scene.endSec);
-  const npsEarly = notesPerSecondAt(PARSED.notes, 6.0, scene.endSec);
-  const npsFinale = notesPerSecondAt(PARSED.notes, 40.0, scene.endSec);
+  const npsIntro = notesPerSecondAt(PARSED.notes, 1.6, scene.endSec);
+  const npsFull = notesPerSecondAt(PARSED.notes, 24.0, scene.endSec);
   const npsEnd = notesPerSecondAt(PARSED.notes, scene.endSec + 1.8, scene.endSec);
   assert.equal(npsStart, 0);
   assert.equal(npsEnd, 0);
-  assert.ok(npsFinale > npsEarly * 1.35, `NPS climbs from ${npsEarly.toFixed(1)} to ${npsFinale.toFixed(1)}`);
+  assert.ok(npsIntro > 8 && npsIntro < 13, `solo 16th intro at 148 BPM is ~9.9 nps, got ${npsIntro.toFixed(1)}`);
+  assert.ok(npsFull > npsIntro * 1.45, `full Vivace texture climbs from ${npsIntro.toFixed(1)} to ${npsFull.toFixed(1)} nps`);
 });
 
 test("hero bee starts and finishes at exact loop rest pose and grows swarm to 7", () => {

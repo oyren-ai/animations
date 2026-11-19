@@ -11,6 +11,7 @@ import {
   type CalculateMetadataFunction,
 } from "remotion";
 import { OyrenBrandLayer } from "../brand/OyrenBrand.tsx";
+import { OyrenBrandQuietLayer } from "../brand/OyrenBrandQuiet.tsx";
 import { loadParsedMidi } from "../midi/load.ts";
 import { buildSceneData, midiAudioFile, sceneFrameCount, type MidiSceneData } from "../midi/timeline.ts";
 import { MIDI_TAIL_SEC } from "../midi/timeline.ts";
@@ -37,6 +38,8 @@ export interface MidiSceneSpec {
   /** Frames before the first note-on (long enough for the scene to introduce it, such as a falling ball). */
   leadFrames: number;
   tailSec?: number;
+  /** "standard" (default, for the v2 trio) or "quiet" (subtle top wordmark for v3 pieces). */
+  brand?: "standard" | "quiet";
   /** Called once per loaded piece; return the per-frame painter (precompute layout and event tables here). */
   createPainter: (scene: MidiSceneData, label: string) => MidiPainter;
 }
@@ -89,7 +92,7 @@ export function createMidiShell(spec: MidiSceneSpec) {
             </Sequence>
           </>
         )}
-        <OyrenBrandLayer />
+        {spec.brand === "quiet" ? <OyrenBrandQuietLayer /> : <OyrenBrandLayer />}
       </AbsoluteFill>
     );
   };

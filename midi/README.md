@@ -1,0 +1,11 @@
+# Standard MIDI Files (`midi/`)
+
+Every `.mid` file in this directory is exported deterministically from [`src/midi/pieces.ts`](../src/midi/pieces.ts) via [`scripts/generate-midi-assets.ts`](../scripts/generate-midi-assets.ts) — the exact same note arrays that drive both the Remotion canvas simulations and the WebAudio-free offline PCM synthesizer (`src/midi/synth.ts`). Nothing in `midi/` derives from any downloaded MIDI file or external recording.
+
+| File | Piece | Composer | Status | Tempo | Meter | Mode | Note count | Licence |
+| --- | --- | --- | --- | --- | --- | --- | ---: | --- |
+| `mugham-nocturne.mid` | Mugham Nocturne | original | Original composition (inspired by the jazz-mugham tradition) | 58–74 BPM rubato -> 124–132 BPM -> 66 BPM | 7/8 (`2+2+3`) | Inspired by Shur on D, approximated in 12-TET (`D Eb(+40c) F G A Bb C` + chromatic approaches) | 462 | Original composition written for this repository, not derived from any existing piece; MIT |
+| `baku-nights.mid` | Baku Nights | original | Original composition (lyrical nocturne; title only) | 78 BPM (rit. 68 BPM) | 4/4 | Inspired by Rast on C, approximated in 12-TET (`C D E(-20c) F G A Bb/B`) | 328 | Original composition written for this repository, not derived from any existing piece; MIT |
+| `canon-five-voices.mid` | Canon in D | Johann Pachelbel | Own transcription of a public-domain work | 124 BPM (rit. 104 BPM) | 4/4 | D major | 509 | Public-domain work; own transcription in this repository (MIT) |
+| `fur-elise.mid` | Für Elise, WoO 59 | Ludwig van Beethoven | Own transcription of a public-domain work | 136 BPM (rit. 98 BPM) | 3/8 (notated 3/4) | A minor / C major | 265 | Public-domain work; own transcription in this repository (MIT) |
+| `flight-of-the-bumblebee.mid` | Flight of the Bumblebee | Nikolai Rimsky-Korsakov | Own transcription of a public-domain work (score-verified) | 148–152 BPM (*Vivace*) | 2/4 | A minor / chromatic | 911 | Public-domain work; own transcription in this repository (MIT) |

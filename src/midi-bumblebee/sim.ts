@@ -280,7 +280,7 @@ export function beePoseAt(
   const vx = ((next.x - curr.x) / span) * (6 * u * (1 - u));
   const tilt = clamp(vx / 2200, -0.46, 0.46);
 
-  // Swarm grows cleanly across the 4 accelerando stages: 1 -> 3 -> 5 -> 7 bees
+  // Swarm grows cleanly across the 4 structural sections: 1 -> 3 -> 5 -> 7 bees
   const progress = clamp01(t / Math.max(1, endSec));
   const swarmCount = progress < 0.28 ? 1 : progress < 0.52 ? 3 : progress < 0.74 ? 5 : 7;
   const swarmBlend = smoothstep(0.24, 0.8, progress);

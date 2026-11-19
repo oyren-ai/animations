@@ -13,7 +13,7 @@ import {
 import type { MidiNote, ParsedMidi } from "./types.ts";
 
 const SR = SYNTH_SAMPLE_RATE;
-const INSTRUMENTS: Instrument[] = ["piano", "bell", "marimba", "kalimba", "strings", "musicbox"];
+const INSTRUMENTS: Instrument[] = ["piano", "bell", "marimba", "kalimba", "strings", "musicbox", "tar", "bass"];
 
 function note(pitch: number, timeSec = 0.1, durationSec = 1.5, velocity = 100, track = 0, channel = 0): MidiNote {
   return { timeSec, durationSec, pitch, velocity, track, channel };
@@ -188,6 +188,8 @@ test("pitch accuracy: A4, C3 and C6 are within 5 cents (piano) and 10 cents (bel
     ["bell", 10],
     ["strings", 10],
     ["musicbox", 10],
+    ["tar", 10],
+    ["bass", 10],
   ];
   for (const [instrument, tolerance] of cases) {
     for (const pitch of [69, 48, 84]) {
@@ -322,7 +324,7 @@ test("zero-length and tiny notes still sound, on every voice and on percussion, 
   for (const instrument of INSTRUMENTS) {
     for (const durationSec of [0, 0.001, 0.01]) checks.push([`${instrument} dur ${durationSec}`, note(64, 0.1, durationSec, 100), instrument]);
   }
-  for (const drum of [36, 38, 42, 46, 49, 45, 56]) checks.push([`drum ${drum}`, note(drum, 0.1, 0, 100, 0, 9), "piano"]);
+  for (const drum of [36, 38, 39, 40, 42, 46, 49, 45, 56]) checks.push([`drum ${drum}`, note(drum, 0.1, 0, 100, 0, 9), "piano"]);
   for (const [label, midiNote, instrument] of checks) {
     const audio = renderSingle(instrument, midiNote, { tailSec: 1 });
     const peak = peakAbs(audio.left) + peakAbs(audio.right);
@@ -370,6 +372,8 @@ test("the output has no DC offset and the General MIDI program map picks the rig
     [8, "bell"], [9, "bell"], [14, "bell"], [98, "bell"], [112, "bell"], [119, "bell"],
     [10, "musicbox"],
     [11, "marimba"], [12, "marimba"], [13, "marimba"],
+    [25, "tar"], [26, "tar"],
+    [32, "bass"], [33, "bass"],
     [40, "strings"], [41, "strings"], [42, "strings"], [48, "strings"], [49, "strings"],
     [105, "kalimba"], [106, "kalimba"], [107, "kalimba"], [108, "kalimba"],
     [15, "piano"], [45, "piano"], [97, "piano"], [99, "piano"], [104, "piano"], [109, "piano"], [111, "piano"], [120, "piano"],
@@ -425,4 +429,12 @@ test("a 60 s, 500-note piece renders quickly", (t) => {
   t.diagnostic(`500 notes / ${((wav.length - 44) / 4 / SR).toFixed(1)} s of audio rendered and encoded in ${seconds.toFixed(2)} s`);
   assert.ok(seconds < 30, `took ${seconds} s`);
   assert.equal(wav.length, 44 + Math.round((notes.reduce((m, n) => Math.max(m, n.timeSec + n.durationSec), 0) + 3) * SR) * 4);
+});
+
+test("microtonal pitchBendCents shifts rendered fundamental frequency accurately", () => {
+  const bent: MidiNote = { timeSec: 0.1, durationSec: 1.4, pitch: 63, velocity: 100, track: 0, channel: 0, pitchBendCents: 42 };
+  const audio = renderSingle("tar", bent, { tailSec: 1.2 });
+  const expectedHz = hz(63 + 0.42);
+  const found = analysePitch(audio.left, 0.15, expectedHz);
+  assert.ok(Math.abs(cents(found.f0, expectedHz)) <= 6, `expected +42c shift, got ${cents(found.f0, hz(63)).toFixed(2)}c`);
 });
