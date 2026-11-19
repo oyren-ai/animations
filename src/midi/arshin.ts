@@ -7,8 +7,9 @@ import type { MidiWriteNote, MidiWriteTrack } from "./write.ts";
  *
  * Accuracy & Originality Contract:
  * 1. Vocal melody (Track 1, "Askar Melody") is generated EXCLUSIVELY from `flat_full` (168 notes,
- *    48 bars = 768 x 1/32-note units) in `/home/vorashil/work/arshin-1119/work/melody-reconciled.json`
- *    (mirrored byte-for-byte in `./arshin-melody-reconciled.json`).
+ *    48 bars = 768 x 1/32-note units) in `./arshin-melody-reconciled.json`, the reconciled transcription
+ *    of the vocal line in the public-domain 1948 vocal score (IMSLP #402316); two independent readings
+ *    of the scan agreed on all 48 bars.
  * 2. Octave choice: the printed vocal line is a tenor part in treble clef that sounds one octave lower.
  *    Track 1 uses exact sounding tenor pitch (`midi_if_tenor_octave_down = midi_written + ARSHIN_OCTAVE_SHIFT`,
  *    where `ARSHIN_OCTAVE_SHIFT = -12`, spanning G3..A4 = MIDI 55..69).
@@ -18,7 +19,8 @@ import type { MidiWriteNote, MidiWriteTrack } from "./write.ts";
  *    by `+6` units while keeping their exact written durations (`4, 4, 36`).
  * 4. Everything else (2-bar original bazaar curtain-raiser intro, original A-modal bass/piano/naghara
  *    accompaniment, original Tar refrain doubling & vocal-rest interludes, and 1-bar loop-return coda)
- *    is 100% newly composed here from the melody's A-Aeolian/Bayati-Shiraz pitch set + seeded PRNG.
+ *    is 100% newly composed here from the melody's A natural-minor pitch set (A B C D E F G, one F# in
+ *    the coda) + seeded PRNG.
  */
 
 export const ARSHIN_OCTAVE_SHIFT = -12;
@@ -242,7 +244,7 @@ function cleanAccompanimentTrack(raw: MidiWriteNote[]): MidiWriteNote[] {
  * Build the complete Arshin Mal Alan MidiPiece (`arshin-mal-alan-askars-song.mid`):
  * - Track 1 ("Askar Melody", bowed lead GM 40): 168 notes from `flat_full` verbatim in sounding tenor octave.
  * - Track 2 ("Courtyard Tar", plucked tar GM 25): refrain/coda bright octave doubling + original modal interludes.
- * - Track 3 ("Modal Piano", GM 0): original A-Aeolian / Bayati-Shiraz off-beat chords.
+ * - Track 3 ("Modal Piano", GM 0): original A natural-minor (Aeolian) off-beat chords.
  * - Track 4 ("Upright Bass", GM 32): original plucked modal root-fifth bass line.
  * - Track 5 ("Naghara Frame Drum", ch 9): original 4/8 courtyard frame-drum groove.
  */
@@ -262,7 +264,7 @@ export function arshinMalAlan(rawDoc?: Record<string, unknown>): MidiPiece {
   const bassTrack: MidiWriteNote[] = [];
   const drumTrack: MidiWriteNote[] = [];
 
-  // A-modal pitch constants (derived from A = pitch class 9, natural minor / Bayati-Shiraz collection)
+  // A-modal pitch constants (derived from A = pitch class 9, natural minor collection)
   const A2 = 45, E2 = 40, D2 = 38, G2 = 43, C3 = 48;
   const MODAL_VOICINGS: Record<string, { bass1: number; bass2: number; chord: readonly [number, number, number] }> = {
     Am: { bass1: A2, bass2: E2, chord: [57, 60, 64] }, // A3 C4 E4

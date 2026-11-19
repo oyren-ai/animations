@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import {
@@ -10,7 +11,12 @@ import {
 import { parseMidi } from "./parse.ts";
 import { pieceBytes } from "./pieces.ts";
 
-const EXTERNAL_RECONCILED_PATH = "/home/vorashil/work/arshin-1119/work/melody-reconciled.json";
+/**
+ * The reconciled vocal line is frozen: two independent readings of the 1948 vocal score agreed on all 48 bars, and
+ * this proof was written against exactly that file. Any later correction to a note must be deliberate, so it has to
+ * update this hash as well.
+ */
+const RECONCILED_SHA256 = "f412453b7b7e063d609a9c7bd0663a90d572bf3015d2ebc49de95c02739e67bd";
 const REPO_RECONCILED_URL = new URL("./arshin-melody-reconciled.json", import.meta.url);
 const PUBLIC_MIDI_URL = new URL("../../public/midi/arshin-mal-alan-askars-song.mid", import.meta.url);
 const EXPORTED_MIDI_URL = new URL("../../midi/arshin-mal-alan-askars-song.mid", import.meta.url);
@@ -25,18 +31,12 @@ const EXPORTED_MIDI_URL = new URL("../../midi/arshin-mal-alan-askars-song.mid", 
  *   coda notes (`696, 700, 704`) by `+6` units while preserving their exact written durations (`4, 4, 36`).
  */
 test("Arshin Mal Alan lead track matches melody-reconciled.json flat_full (168 notes) verbatim in pitches, 1/32-unit onsets, and durations", () => {
-  const repoBytes = readFileSync(REPO_RECONCILED_URL, "utf8");
-  const rawText = existsSync(EXTERNAL_RECONCILED_PATH)
-    ? readFileSync(EXTERNAL_RECONCILED_PATH, "utf8")
-    : repoBytes;
-
-  if (existsSync(EXTERNAL_RECONCILED_PATH)) {
-    assert.equal(
-      repoBytes,
-      rawText,
-      "mirrored src/midi/arshin-melody-reconciled.json is byte-for-byte identical to /home/vorashil/work/arshin-1119/work/melody-reconciled.json",
-    );
-  }
+  const rawText = readFileSync(REPO_RECONCILED_URL, "utf8");
+  assert.equal(
+    createHash("sha256").update(rawText).digest("hex"),
+    RECONCILED_SHA256,
+    "src/midi/arshin-melody-reconciled.json must be the reconciled transcription this accuracy proof was written against",
+  );
 
   const rawJson = JSON.parse(rawText) as {
     standIn?: boolean;
