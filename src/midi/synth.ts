@@ -511,9 +511,11 @@ function renderDrum(ws: Workspace, p: NoteParams): VoiceOut {
   const { pitch, sr, rng } = p;
   const kind = pitch === 35 || pitch === 36 ? "kick" : [41, 43, 45, 47, 48, 50].includes(pitch) ? "tom"
     : pitch === 39 ? "brushswirl" : pitch === 40 ? "brushtap"
+    : pitch === 60 ? "nagharadum" : pitch === 61 ? "nagharatak"
     : [37, 38].includes(pitch) ? "snare" : pitch === 42 || pitch === 44 ? "hat" : pitch === 46 ? "openhat"
     : [49, 51, 52, 53, 55, 57, 59].includes(pitch) ? "cymbal" : "click";
   const seconds = kind === "kick" ? 0.35 : kind === "tom" ? 0.4 : kind === "brushswirl" ? 0.34 : kind === "brushtap" ? 0.18
+    : kind === "nagharadum" ? 0.26 : kind === "nagharatak" ? 0.15
     : kind === "snare" ? 0.3 : kind === "hat" ? 0.12
     : kind === "openhat" ? 0.5 : kind === "cymbal" ? 1.4 : 0.2;
   const len = Math.round(seconds * sr);
@@ -560,6 +562,12 @@ function renderDrum(ws: Workspace, p: NoteParams): VoiceOut {
     }
   } else if (kind === "brushtap") {
     hiss(true, 5200, 0.048, 0.42);
+  } else if (kind === "nagharadum") {
+    sweep(148, 86, 0.028, 0.11, 0.85);
+    hiss(false, 950, 0.018, 0.34);
+  } else if (kind === "nagharatak") {
+    sweep(295, 215, 0.014, 0.042, 0.52);
+    hiss(true, 6200, 0.032, 0.38);
   }
   else if (kind === "snare") { hiss(true, 7000, 0.07, 0.6); sweep(210, 170, 0.02, 0.05, 0.4); }
   else if (kind === "hat") hiss(true, 9000, 0.02, 0.45);

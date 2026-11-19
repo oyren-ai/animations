@@ -239,3 +239,13 @@ Two original compositions inspired by the jazz-mugham tradition and nocturnal mo
 | --- | --- | --- |
 | `MidiMughamNocturne` | Original composition inspired by the jazz-mugham tradition (`midi/mugham-nocturne.mid`, MIT). Opens with a free-time rubato Tar + bowed Kamancha introduction over a `D2` drone in a D Shur-inspired mode (`+40¢` microtonal pitch-bend on ornamental `Eb`), locks into a `7/8` (`2+2+3`) call-and-response groove and modal solo across a shared Tar/Piano pitch axis, peaks in octave unison, and returns to the `D2` drone. | Adjust the `7/8` call motifs or `+40¢` microtonal inflection in `mughamNocturne()` (`src/midi/pieces.ts`). |
 | `MidiBakuNights` | Original slow lyrical nocturne in a C Rast-inspired mode at `78 BPM` (`midi/baku-nights.mid`, MIT; title only, not derived from any existing song). A silhouetted lamplighter at `x = 540` raises an ember-tipped brass pole to ignite one seaside streetlamp per piano melody note (`x` = time, height = pitch) while a symmetric 96-window stone skyline lights up and bass swells cross the harbour water. | Change `SCROLL_SPEED` or window permutation in `src/midi-baku-nights/sim.ts`. |
+
+### Public-domain Azerbaijani operetta melody with original accompaniment (quiet brand layer)
+
+| Arshin Mal Alan — "Askar's Song" (1913) |  |
+| --- | --- |
+| <img src="docs/previews/MidiArshinMalAlan.jpg" width="270" alt="Dusk street-market cloth peddler measuring jewel-toned silks along an engraved brass arshin stick beneath three overhead lines"> |  |
+
+| Composition ID | What happens | Good first remix |
+| --- | --- | --- |
+| `MidiArshinMalAlan` | Uzeyir Hajibeyov, *Arshin Mal Alan* (1913), Act II, No. 12 *"Askar's Song"* (`midi/arshin-mal-alan-askars-song.mid`; vocal melody public domain from IMSLP #402316, Baku 1948; arrangement and accompaniment MIT). A street-market cloth peddler behind a walnut counter at `x = 540` measures and snips one silk length along an engraved brass *arshin* stick per vocal melody note (`168` notes verbatim from `flat_full` in sounding tenor register), hanging first-pass cloths left-to-centre and repeated phrases right-to-centre with gold trim before folding them away for the loop. | Adjust `ARSHIN_QUARTER_BPM` (`104..120`) or `ARSHIN_FERMATA_FACTOR` in `src/midi/arshin.ts`. |

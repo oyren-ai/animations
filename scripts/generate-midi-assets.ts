@@ -15,6 +15,7 @@ const REPO_MIDI_EXPORT_NAME: Record<string, string> = {
   "canon-in-d-five-voices.mid": "canon-five-voices.mid",
   "fur-elise-music-box.mid": "fur-elise.mid",
   "flight-of-the-bumblebee.mid": "flight-of-the-bumblebee.mid",
+  "arshin-mal-alan-askars-song.mid": "arshin-mal-alan-askars-song.mid",
 };
 
 export interface MidiAssetResult { file: string; wav: string; notes: number; durationSec: number; midiDigest: string; audioDigest: string }

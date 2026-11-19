@@ -243,7 +243,7 @@ export function drawCenteredText(
  */
 export function drawSceneTitle(ctx: CanvasRenderingContext2D, scene: MidiSceneData, label: string, _frame: number): ReelBox[] {
   const boxes: ReelBox[] = [];
-  const subtitle = label.includes("\u00b7") ? label : "MIDI  \u00b7  " + label.toUpperCase();
+  const subtitle = label.includes("\u00b7") || /\d{4}/.test(label) ? label : "MIDI  \u00b7  " + label.toUpperCase();
   ctx.save();
   ctx.globalAlpha = 0.95;
   boxes.push(drawCenteredText(ctx, scene.title, 208, { size: 38, weight: 700, color: "#f1f5f9", maxWidth: 780 }));

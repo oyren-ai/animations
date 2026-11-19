@@ -1,3 +1,4 @@
+import { arshinMalAlan } from "./arshin.ts";
 import { writeMidi, type MidiTempo, type MidiWriteNote, type MidiWriteOptions, type MidiWriteTrack } from "./write.ts";
 
 /**
@@ -1087,6 +1088,7 @@ export function builtInPieces(): MidiPiece[] {
     furEliseMusicBox(),
     mughamNocturne(),
     bakuNights(),
+    arshinMalAlan(),
   ];
 }
 

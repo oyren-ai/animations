@@ -1,5 +1,6 @@
 import { Composition } from "remotion";
 import { createMidiMetadata, createMidiShell, type MidiSceneSpec } from "../components/MidiShell.tsx";
+import { MIDI_ARSHIN_MAL_ALAN } from "../midi-arshin/scene.ts";
 import { MIDI_BAKU_NIGHTS } from "../midi-baku-nights/scene.ts";
 import { MIDI_BUMBLEBEE } from "../midi-bumblebee/scene.ts";
 import { MIDI_CANON_VOICES } from "../midi-canon/scene.ts";
@@ -9,13 +10,14 @@ import { VIDEO } from "../settings.ts";
 
 export interface MidiCompositionDef { id: string; spec: MidiSceneSpec; defaultMidi: string }
 
-/** Five MIDI-driven scenes (three public-domain transcriptions + two original compositions). */
+/** Six MIDI-driven scenes (public-domain transcriptions + original compositions). */
 export const MIDI_COMPOSITION_DEFS: MidiCompositionDef[] = [
   { id: "MidiBumblebee", spec: MIDI_BUMBLEBEE, defaultMidi: "flight-of-the-bumblebee.mid" },
   { id: "MidiCanonVoices", spec: MIDI_CANON_VOICES, defaultMidi: "canon-in-d-five-voices.mid" },
   { id: "MidiFurEliseMusicBox", spec: MIDI_FUR_ELISE_MUSIC_BOX, defaultMidi: "fur-elise-music-box.mid" },
   { id: "MidiMughamNocturne", spec: MIDI_MUGHAM_NOCTURNE, defaultMidi: "mugham-nocturne.mid" },
   { id: "MidiBakuNights", spec: MIDI_BAKU_NIGHTS, defaultMidi: "baku-nights.mid" },
+  { id: "MidiArshinMalAlan", spec: MIDI_ARSHIN_MAL_ALAN, defaultMidi: "arshin-mal-alan-askars-song.mid" },
 ];
 
 const COMPONENTS = MIDI_COMPOSITION_DEFS.map((def) => ({
