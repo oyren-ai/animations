@@ -347,6 +347,8 @@ export function simulateHarmonicSorting(seed = 20261117): HarmonicSortingTrace {
     666, // 11.10s
   );
 
+  cachedSortFeatures = null;
+  cachedSortAudio = null;
   cachedSortTrace = {
     seed,
     initial,

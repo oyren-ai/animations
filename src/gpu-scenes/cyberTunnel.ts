@@ -70,15 +70,15 @@ float sampleSpectrum(float normAngle) {
 float tunnelRadius(vec3 p) {
   float twist = sin(p.z * 0.14 - u_time * 0.65) * 0.42 + u_time * 0.22;
   vec2 q = rot2d(twist) * p.xy;
-  float ang = atan(q.y, q.x);
+  float r = length(q);
+  float ang = r > 1e-5 ? atan(q.y, q.x) : 0.0;
   float symAng = abs(ang) / 3.14159265;
   float spec = sampleSpectrum(symAng);
 
   // Octagonal facet shaping so walls fill rectangular corners strongly
   vec2 aq = abs(q);
   float octMetric = max(max(aq.x, aq.y), (aq.x + aq.y) * 0.70710678);
-  float euclidean = length(q) + 1e-4;
-  float shapeScale = octMetric / euclidean;
+  float shapeScale = r > 1e-5 ? max(0.9238795, octMetric / r) : 1.0;
 
   float ribWave = sin(p.z * 3.2 - u_time * 4.0) * 0.065;
   float specExtrude = spec * (0.24 + 0.16 * u_bass);
@@ -113,7 +113,8 @@ vec3 evalScene(vec2 uvCentered, float chromaShift) {
     float pulseFront = fract(p.z * 0.08 - u_time * 1.45);
     float kickWave = exp(-abs(pulseFront - 0.5) * 14.0) * (0.35 + 1.25 * u_kick);
 
-    float angNorm = abs(atan(p.y, p.x)) / 3.14159265;
+    float rayR = length(p.xy);
+    float angNorm = rayR > 1e-5 ? abs(atan(p.y, p.x)) / 3.14159265 : 0.0;
     float spec = sampleSpectrum(angNorm);
 
     vec3 cyan = vec3(0.14, 0.74, 0.98);

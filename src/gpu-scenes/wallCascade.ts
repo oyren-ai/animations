@@ -125,6 +125,7 @@ function signedSegmentDistance(
 }
 
 let cachedCascadeTrace: WallCascadeTrace | null = null;
+let cachedCascadeFeatures: { buffer: StereoBuffer; features: FrameAudioFeatures[] } | null = null;
 let cachedCascadeAudio: { buffer: StereoBuffer; wav: Uint8Array; features: FrameAudioFeatures[] } | null = null;
 
 export function simulateWallCascade(seed = 20261116): WallCascadeTrace {
@@ -342,6 +343,8 @@ export function simulateWallCascade(seed = 20261116): WallCascadeTrace {
     });
   }
 
+  cachedCascadeFeatures = null;
+  cachedCascadeAudio = null;
   cachedCascadeTrace = {
     seed,
     frames,
@@ -353,8 +356,6 @@ export function simulateWallCascade(seed = 20261116): WallCascadeTrace {
   };
   return cachedCascadeTrace;
 }
-
-let cachedCascadeFeatures: { buffer: StereoBuffer; features: FrameAudioFeatures[] } | null = null;
 
 export function buildWallCascadeFeatures(
   trace = simulateWallCascade(),

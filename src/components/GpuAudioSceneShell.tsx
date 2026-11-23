@@ -168,16 +168,27 @@ export function GpuAudioSceneShell({ slug }: { slug: GpuAudioSceneSlug }) {
   const [handle] = useState(() => delayRender(`Load bundled font for ${slug}`));
 
   useEffect(() => {
+    let cancelled = false;
     ensureGpuSceneFontsLoaded()
       .then((sets) => {
+        if (cancelled) return;
         if (!sets.every((s) => s.length > 0)) {
           throw new Error("Bundled font failed to load");
         }
         setReady(true);
-        continueRender(handle);
       })
-      .catch(cancelRender);
+      .catch((error) => {
+        if (!cancelled) cancelRender(error);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [handle]);
+
+  // Child stages paint in useLayoutEffect during the ready commit before this effect resumes capture.
+  useEffect(() => {
+    if (ready) continueRender(handle);
+  }, [ready, handle]);
 
   return (
     <AbsoluteFill style={{ background: "#080d18" }}>
