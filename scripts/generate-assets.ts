@@ -18,6 +18,8 @@ import { PATATE_COMPOSITIONS, simulatePatate } from "../src/patate/sim.ts";
 import { synthesizePatateWav } from "../src/patate/audio.ts";
 import { COMEBACK_COMPOSITIONS, simulateComeback, synthesizeComebackWav } from "../src/comebacks/index.ts";
 import { GPU_AUDIO_COMPOSITIONS, synthesizeGpuAudioSceneWav } from "../src/gpu-scenes/index.ts";
+import { synthesizeShowcaseWav } from "../src/repo-showcase/audio.ts";
+import { SHOWCASE_TOTAL_FRAMES } from "../src/repo-showcase/timing.ts";
 import {
   synthesize,
   synthesizeCountryMapWav,
@@ -190,6 +192,17 @@ for (const comeback of COMEBACK_COMPOSITIONS) {
     `${comeback.id}: overtake=${trace.overtakeFrame}/${trace.raceFrames}; victory=${trace.victoryFrame}/${trace.raceFrames}; ${comeback.totalFrames} frames (${(comeback.totalFrames / VIDEO.fps).toFixed(2)}s)`,
   );
 }
+
+const showcaseWav = synthesizeShowcaseWav();
+writeFileSync(new URL("../public/generated/animations-repo-showcase.wav", import.meta.url), showcaseWav);
+results.push({
+  id: "AnimationsRepoShowcase",
+  frames: SHOWCASE_TOTAL_FRAMES,
+  channels: 2,
+  sampleRate: 48000,
+  audioDigest: createHash("sha256").update(showcaseWav).digest("hex"),
+});
+console.log(`AnimationsRepoShowcase: English voice + 48 kHz stereo bed; ${SHOWCASE_TOTAL_FRAMES} frames (${(SHOWCASE_TOTAL_FRAMES / VIDEO.fps).toFixed(2)}s)`);
 
 writeFileSync(new URL("../public/generated/manifest.json", import.meta.url), JSON.stringify({ fps: VIDEO.fps, results }, null, 2) + "\n");
 console.log("Generated audio and manifest for " + results.length + " compositions.");
