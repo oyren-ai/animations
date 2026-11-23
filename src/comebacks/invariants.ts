@@ -56,6 +56,52 @@ export interface ComebackInvariantReport {
   runnerUpFinalStageRemainingRatio: number;
 }
 
+/** Adds the final overtake event in frame order and resolves the race's common outcome fields. */
+export function resolveComebackOutcome({
+  provisionalWinner,
+  victoryFrame,
+  raceFrames,
+  leftProgress,
+  rightProgress,
+  events,
+  overtakePitchStep,
+}: {
+  provisionalWinner: ComebackSide | null;
+  victoryFrame: number;
+  raceFrames: number;
+  leftProgress: Float32Array;
+  rightProgress: Float32Array;
+  events: ComebackEvent[];
+  overtakePitchStep: number;
+}): Pick<ComebackTraceBase, "winner" | "earlyLeader" | "overtakeFrame"> {
+  const winner: ComebackSide =
+    provisionalWinner ??
+    (rightProgress[raceFrames - 1] >= leftProgress[raceFrames - 1] ? "right" : "left");
+  const earlyCheck = Math.floor(0.65 * victoryFrame);
+  const earlyLeader: ComebackSide =
+    leftProgress[earlyCheck] >= rightProgress[earlyCheck] ? "left" : "right";
+
+  let overtakeFrame = victoryFrame;
+  for (let f = victoryFrame; f >= 1; f--) {
+    const wProg = winner === "right" ? rightProgress[f - 1] : leftProgress[f - 1];
+    const lProg = winner === "right" ? leftProgress[f - 1] : rightProgress[f - 1];
+    if (wProg < lProg) {
+      overtakeFrame = f;
+      break;
+    }
+  }
+  events.push({
+    frame: overtakeFrame,
+    side: winner,
+    kind: "overtake",
+    stageIndex: 9,
+    intensity: 1,
+    pitchStep: overtakePitchStep,
+  });
+  events.sort((a, b) => a.frame - b.frame);
+  return { winner, earlyLeader, overtakeFrame };
+}
+
 /**
  * Enforces the three non-negotiable mathematical comeback invariants:
  * 1. earlyLeader !== winner: at t = 0.65 * victoryFrame (and 0.65 * raceFrames),
@@ -161,12 +207,18 @@ export function verifyComebackInvariants(trace: ComebackTraceBase): ComebackInva
   };
 }
 
+export function nextXorshift32State(state: number, zeroFallback: number): number {
+  let s = state | 0 || zeroFallback;
+  s ^= s << 13;
+  s ^= s >>> 17;
+  s ^= s << 5;
+  return s;
+}
+
 export function createRng(seed: number): () => number {
   let s = seed | 0 || 0x51f15e55;
   return () => {
-    s ^= s << 13;
-    s ^= s >>> 17;
-    s ^= s << 5;
+    s = nextXorshift32State(s, 0x51f15e55);
     return (s >>> 0) / 4294967296;
   };
 }

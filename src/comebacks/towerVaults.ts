@@ -4,6 +4,8 @@ import { assertReelSafeBox, drawReelText, type ReelBox } from "../shared/reelUti
 import { theme } from "../theme.ts";
 import {
   createRng,
+  nextXorshift32State,
+  resolveComebackOutcome,
   drawBottomProgressPills,
   drawFullBleedDualChamber,
   drawHookHeaderCard,
@@ -160,12 +162,8 @@ export const VAULT_CONFIGS: Record<VaultComebackSlug, VaultSceneConfig> = {
 };
 
 function nextLaneRand(state: LaneMutState): number {
-  let s = state.rngState | 0 || 0x13579bdf;
-  s ^= s << 13;
-  s ^= s >>> 17;
-  s ^= s << 5;
-  state.rngState = s;
-  return (s >>> 0) / 4294967296;
+  state.rngState = nextXorshift32State(state.rngState, 0x13579bdf);
+  return (state.rngState >>> 0) / 4294967296;
 }
 
 function cloneSnap(s: LaneMutState): LaneSnapshot {
@@ -593,30 +591,15 @@ export function simulateVaultComeback(slug: VaultComebackSlug): VaultComebackTra
     }
   }
 
-  const resolvedWinner: ComebackSide = winner ?? (rightProgress[raceFrames - 1] >= leftProgress[raceFrames - 1] ? "right" : "left");
-  const earlyCheck = Math.floor(0.65 * victoryFrame);
-  const earlyLeader: ComebackSide =
-    leftProgress[earlyCheck] >= rightProgress[earlyCheck] ? "left" : "right";
-
-  // Find final overtake frame where resolvedWinner takes and holds the lead
-  let overtakeFrame = victoryFrame;
-  for (let f = victoryFrame; f >= 1; f--) {
-    const wProg = resolvedWinner === "right" ? rightProgress[f - 1] : leftProgress[f - 1];
-    const lProg = resolvedWinner === "right" ? leftProgress[f - 1] : rightProgress[f - 1];
-    if (wProg < lProg) {
-      overtakeFrame = f;
-      break;
-    }
-  }
-  events.push({
-    frame: overtakeFrame,
-    side: resolvedWinner,
-    kind: "overtake",
-    stageIndex: 9,
-    intensity: 1,
-    pitchStep: 10,
+  const { winner: resolvedWinner, earlyLeader, overtakeFrame } = resolveComebackOutcome({
+    provisionalWinner: winner,
+    victoryFrame,
+    raceFrames,
+    leftProgress,
+    rightProgress,
+    events,
+    overtakePitchStep: 10,
   });
-  events.sort((a, b) => a.frame - b.frame);
 
   const runnerUpRemHp =
     resolvedWinner === "right"

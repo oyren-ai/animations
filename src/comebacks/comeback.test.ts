@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 import test from "node:test";
 import { createStereoBuffer, measureStereoLufsAndPeak } from "../audio-reactive/synth.ts";
@@ -19,6 +20,38 @@ import type { ComebackTraceBase } from "./invariants.ts";
 import { addShepardSuspenseRiser } from "./audio.ts";
 import { reconstructSplitterAt, simulateSplitterFortress } from "./splitterFortress.ts";
 import { reconstructLaneBallsAt, simulateVaultComeback } from "./towerVaults.ts";
+
+function comebackFingerprint(trace: ReturnType<typeof simulateComeback>): string {
+  // Snapshot maps are checked through reconstructed states at their boundaries below.
+  const withoutSnapshots = Object.fromEntries(
+    Object.entries(trace).filter(([key]) => !key.endsWith("Snapshots")),
+  );
+  const frames = [29, 30, 31, 60];
+  let states: unknown = null;
+  if (trace.slug === "splitter-wall-escape") {
+    states = frames.map((frame) => reconstructSplitterAt(trace, frame));
+  } else if (trace.slug !== "afterburner-lap-comeback") {
+    states = frames.map((frame) =>
+      (["left", "right"] as const).map((side) => reconstructLaneBallsAt(trace, side, frame)),
+    );
+  }
+  return createHash("sha256")
+    .update(JSON.stringify({ trace: withoutSnapshots, states }))
+    .digest("hex");
+}
+
+test("seeded comeback traces and snapshot boundary states match the pre-refactor baseline", () => {
+  clearComebackCaches();
+  const actual = Object.fromEntries(
+    COMEBACK_COMPOSITIONS.map(({ slug }) => [slug, comebackFingerprint(simulateComeback(slug))]),
+  );
+  assert.deepEqual(actual, {
+    "tower-linear-vs-exponential": "55a91667f3f89c98d25b7ed4c882c5a9e40478d3460d7f067327b098366d27e8",
+    "titan-hammer-vs-swarm": "563b47d3e9b11408f1f1dc2f3e3e23b5f38239ba41634ff56408b214257ec236",
+    "splitter-wall-escape": "6520f517a9d3170fab65f39f3732844be014130050dd1a90f4c8d19e3b77002f",
+    "afterburner-lap-comeback": "84c9f03f425d90d8163d38ae448dc78eb5c24c5e304fe6650bda18b73fcc30c3",
+  });
+});
 
 function createMockCanvas2D() {
   const filledRects: { x: number; y: number; w: number; h: number }[] = [];
