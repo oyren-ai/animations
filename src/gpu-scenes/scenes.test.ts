@@ -262,3 +262,10 @@ test("GPU shell resumes Remotion after the ready stage commits and cancels unmou
   assert.match(loadingEffect, /cancelled/);
   assert.match(shell, /if \(ready\) continueRender\(handle\)/);
 });
+
+test("GPU scene renderers and shell contain no raw hex or rgba colors", () => {
+  for (const file of ["cyberTunnel.ts", "harmonicSorting.ts", "wallCascade.ts", "../components/GpuAudioSceneShell.tsx"]) {
+    const source = readFileSync(new URL(file, import.meta.url), "utf8");
+    assert.ok(!/(?:#[\da-f]{3,8}\b|rgba\s*\()/i.test(source), `${file} must use shared theme colors`);
+  }
+});

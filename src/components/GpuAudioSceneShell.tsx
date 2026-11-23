@@ -191,7 +191,7 @@ export function GpuAudioSceneShell({ slug }: { slug: GpuAudioSceneSlug }) {
   }, [ready, handle]);
 
   return (
-    <AbsoluteFill style={{ background: "#080d18" }}>
+    <AbsoluteFill style={{ background: theme.colors.gpuHud.shellBackground }}>
       {ready && (
         <>
           <Sequence durationInFrames={SCENE_FRAMES}>

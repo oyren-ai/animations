@@ -15,6 +15,7 @@ import {
 } from "../audio-reactive/synth.ts";
 import { CLOSING_FRAMES, SCENE_FRAMES, TOTAL_FRAMES, VIDEO } from "../settings.ts";
 import { assertReelSafeBox, drawReelText, type ReelBox } from "../shared/reelUtils.ts";
+import { colorWithAlpha, theme } from "../theme.ts";
 
 export const CYBER_TUNNEL_BPM = 124;
 export const CYBER_TUNNEL_SCENE_FRAMES = SCENE_FRAMES; // 720 (12s)
@@ -424,9 +425,10 @@ export function paintCyberTunnelFallback2D(
   const cx = width * 0.5 + Math.sin(sec * 0.85) * 42;
   const cy = height * 0.5 + Math.cos(sec * 0.68) * 58;
   const bg = ctx.createRadialGradient(cx, cy, 40, cx, cy, Math.hypot(width, height) * 0.65);
+  // The center glow is computed from the current kick and bass; fixed palette colors live in theme.
   bg.addColorStop(0, `rgb(${Math.round(45 + 140 * feature.kickImpulse)}, ${Math.round(70 + 80 * feature.bass)}, 165)`);
-  bg.addColorStop(0.5, "#0d1a33");
-  bg.addColorStop(1, "#070d1c");
+  bg.addColorStop(0.5, theme.colors.gpuHud.cyberBackgroundMid);
+  bg.addColorStop(1, theme.colors.gpuHud.cyberBackgroundFar);
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, width, height);
 
@@ -446,8 +448,8 @@ export function paintCyberTunnelFallback2D(
     ctx.rotate(twist);
     ctx.strokeStyle =
       i % 3 === 0
-        ? `rgba(200, 255, 133, ${(0.22 + 0.65 * specVal).toFixed(3)})`
-        : `rgba(56, 189, 248, ${(0.18 + 0.55 * (1 - depth)).toFixed(3)})`;
+        ? colorWithAlpha(theme.colors.gpuHud.limeRgb, 0.22 + 0.65 * specVal)
+        : colorWithAlpha(theme.colors.gpuHud.cyanRgb, 0.18 + 0.55 * (1 - depth));
     ctx.lineWidth = Math.max(1.5, (1 - depth) * 5.5 + feature.kickImpulse * 2.5);
     ctx.beginPath();
     for (let k = 0; k < 8; k++) {
@@ -488,8 +490,8 @@ export function paintCyberTunnelHud(
   assertReelSafeBox(cardBox);
 
   ctx.save();
-  ctx.fillStyle = "rgba(8, 13, 24, 0.72)";
-  ctx.strokeStyle = `rgba(200, 255, 133, ${(0.35 + 0.45 * feature.kickImpulse).toFixed(3)})`;
+  ctx.fillStyle = theme.colors.gpuHud.cyberCard;
+  ctx.strokeStyle = colorWithAlpha(theme.colors.gpuHud.limeRgb, 0.35 + 0.45 * feature.kickImpulse);
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.roundRect(cardBox.left, cardBox.top, cardBox.right - cardBox.left, cardBox.bottom - cardBox.top, 18);
@@ -499,7 +501,7 @@ export function paintCyberTunnelHud(
   drawReelText(ctx, boxes, "CYBER SYNTH TUNNEL", 92, 280, {
     size: 32,
     weight: 800,
-    color: "#f8fafc",
+    color: theme.colors.gpuHud.ink,
     maxWidth: 560,
   });
   drawReelText(
@@ -511,7 +513,7 @@ export function paintCyberTunnelHud(
     {
       size: 20,
       weight: 600,
-      color: "#c8ff85",
+      color: theme.colors.primary,
       maxWidth: 560,
     },
   );
@@ -526,8 +528,8 @@ export function paintCyberTunnelHud(
   };
   assertReelSafeBox(eqBox);
 
-  ctx.fillStyle = "rgba(8, 13, 24, 0.68)";
-  ctx.strokeStyle = "rgba(116, 185, 209, 0.34)";
+  ctx.fillStyle = theme.colors.gpuHud.cyberSpectrum;
+  ctx.strokeStyle = theme.colors.gpuHud.cyberSpectrumBorder;
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.roundRect(eqBox.left, eqBox.top, eqBox.right - eqBox.left, eqBox.bottom - eqBox.top, 16);
@@ -544,7 +546,7 @@ export function paintCyberTunnelHud(
     const val = feature.spectrumBins[b];
     const bh = Math.max(4, val * maxBarH);
     const bx = barAreaLeft + b * barStep;
-    ctx.fillStyle = b < 8 ? "#c8ff85" : b < 20 ? "#38bdf8" : "#f472b6";
+    ctx.fillStyle = b < 8 ? theme.colors.primary : b < 20 ? theme.colors.gpuHud.cyan : theme.colors.gpuHud.pink;
     ctx.fillRect(bx, barBottom - bh, Math.max(4, barStep - 4), bh);
   }
 
@@ -552,7 +554,7 @@ export function paintCyberTunnelHud(
   drawReelText(ctx, boxes, `BEAT ${beatNum}/4`, 654, 1480, {
     size: 22,
     weight: 700,
-    color: "#f8fafc",
+    color: theme.colors.gpuHud.ink,
     maxWidth: 210,
   });
   drawReelText(
@@ -564,7 +566,7 @@ export function paintCyberTunnelHud(
     {
       size: 20,
       weight: 600,
-      color: "#74b9d1",
+      color: theme.colors.accent,
       maxWidth: 210,
     },
   );
