@@ -92,6 +92,35 @@ export const theme = {
       titanWakeBright: "rgba(251, 191, 36, 0.72)",
       titanCorona: "#f97316",
     },
+    // Showcase colors are centralized here; the source guard allows color literals only in this theme.
+    showcase: {
+      backdrop: "#05080d",
+      ink: "#f7fafc",
+      flashWhite: "#ffffff",
+      muted: "rgba(241,245,249,0.5)",
+      softInk: "rgba(241,245,249,0.82)",
+      accentRgb: "116,185,209",
+      auroraLimeRgb: "200,255,133",
+      auroraVioletRgb: "140,104,255",
+      surfaces: {
+        hookPlate: "rgba(5,9,14,0.95)",
+        caption: "rgba(5,9,14,0.94)",
+        window: "rgba(7,12,18,0.95)",
+        titleBar: "rgba(20,32,43,0.96)",
+        terminal: "rgba(12,19,28,0.97)",
+      },
+      hookPlateClear: "rgba(5,9,14,0)",
+      captionBorder: "rgba(200,255,133,0.38)",
+      windowBorder: "rgba(116,185,209,0.4)",
+      windowControls: ["#ff5f57", "#febc2e", "#28c840"],
+      subtleLine: "rgba(255,255,255,0.08)",
+      strongLine: "rgba(255,255,255,0.1)",
+      chipBorder: "rgba(255,255,255,0.25)",
+      backdropGrid: "rgba(116,185,209,0.07)",
+      vignetteClear: "rgba(0,0,0,0)",
+      vignetteEdge: "rgba(0,0,0,0.5)",
+      remixEditedPrimary: "#ff7ad9",
+    },
   },
   fontFamily: "Inter Variable",
   ease: { out: Easing.bezier(0.16, 1, 0.3, 1), in: Easing.bezier(0.7, 0, 0.84, 0) },
@@ -103,3 +132,4 @@ export const theme = {
 
 export const easeOut = (value: number) => 1 - (1 - Math.max(0, Math.min(1, value))) ** 3;
 export const easeIn = (value: number) => Math.max(0, Math.min(1, value)) ** 3;
+export const colorWithAlpha = (rgb: string, alpha: number) => `rgba(${rgb},${alpha})`;
