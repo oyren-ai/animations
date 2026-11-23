@@ -72,6 +72,7 @@ export interface ShowcaseTiming {
   readonly beats: readonly BeatWindow[];
   readonly cues: readonly CaptionCue[];
   readonly segments: readonly SceneSegment[];
+  readonly cutFrames: readonly number[];
   readonly remix: {
     readonly editFrame: number;
     readonly commandFrame: number;
@@ -176,6 +177,9 @@ export function buildShowcaseTiming(
       offsetY: entry.offsetY,
     };
   });
+  const remixBeat = beats.find((beat) => beat.id === "l4");
+  const cutFrames = [...segments.map((segment) => segment.fromFrame), remixBeat?.fromFrame ?? 0, beats[last].fromFrame]
+    .filter((frame) => frame > 0);
 
   const remixLine = lines[lines.findIndex((candidate) => candidate.id === "l4")];
   const remixWord = (word: string) => {
@@ -192,6 +196,7 @@ export function buildShowcaseTiming(
     beats,
     cues,
     segments,
+    cutFrames,
     remix: {
       editFrame: remixWord("change"),
       commandFrame,

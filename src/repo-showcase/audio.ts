@@ -97,9 +97,7 @@ function composeBed(bed: StereoBuffer, timing: ShowcaseTiming): void {
     }
   }
 
-  const remixBeat = timing.beats.find((beat) => beat.id === "l4");
-  const cuts = [...timing.segments.map((segment) => segment.fromFrame), remixBeat?.fromFrame ?? 0, timing.endCard.fromFrame].filter((frame) => frame > 0);
-  for (const [index, frame] of cuts.entries()) {
+  for (const [index, frame] of timing.cutFrames.entries()) {
     addSnare(bed, { startSec: frame / SHOWCASE_FPS, gain: 0.2, pan: index % 2 ? 0.3 : -0.3, seed: 100 + index });
   }
 

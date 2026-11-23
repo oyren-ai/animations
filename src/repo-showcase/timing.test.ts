@@ -77,6 +77,13 @@ test("scene segments tile each scene beat and cut just before the named word", (
   assert.equal(segmentAtFrame(timing, timing.totalFrames - 1), null, "the end card has no scene layer");
 });
 
+test("one timing list supplies every audio accent and visual cut flash", () => {
+  const remixBeat = timing.beats.find((beat) => beat.id === "l4");
+  const expected = [...timing.segments.map((segment) => segment.fromFrame), remixBeat?.fromFrame ?? 0, timing.endCard.fromFrame]
+    .filter((frame) => frame > 0);
+  assert.deepEqual(timing.cutFrames, expected, "keep every boundary in its original order, including coincident accents");
+});
+
 test("every spoken word is captioned by its own phrase at the moment it is spoken", () => {
   for (const line of SHOWCASE_LINES) assert.ok(timing.cues.some((cue) => cue.lineId === line.id));
   const phraseCount = SHOWCASE_LINES.reduce((sum, line) => sum + line.phrases.length, 0);
