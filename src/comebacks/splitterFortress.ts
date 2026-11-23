@@ -4,6 +4,7 @@ import { type ReelBox } from "../shared/reelUtils.ts";
 import { theme } from "../theme.ts";
 import {
   createRng,
+  nextXorshift32State,
   drawBottomProgressPills,
   drawFullBleedDualChamber,
   drawHookHeaderCard,
@@ -89,12 +90,8 @@ export interface SplitterComebackTrace extends ComebackTraceBase {
 }
 
 function nextSplitterRand(s: SplitterState): number {
-  let x = s.rngState | 0 || 0x2468ace1;
-  x ^= x << 13;
-  x ^= x >>> 17;
-  x ^= x << 5;
-  s.rngState = x;
-  return (x >>> 0) / 4294967296;
+  s.rngState = nextXorshift32State(s.rngState, 0x2468ace1);
+  return (s.rngState >>> 0) / 4294967296;
 }
 
 function snapSplitter(s: SplitterState): SplitterSnapshot {

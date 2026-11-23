@@ -161,12 +161,18 @@ export function verifyComebackInvariants(trace: ComebackTraceBase): ComebackInva
   };
 }
 
+export function nextXorshift32State(state: number, zeroFallback: number): number {
+  let s = state | 0 || zeroFallback;
+  s ^= s << 13;
+  s ^= s >>> 17;
+  s ^= s << 5;
+  return s;
+}
+
 export function createRng(seed: number): () => number {
   let s = seed | 0 || 0x51f15e55;
   return () => {
-    s ^= s << 13;
-    s ^= s >>> 17;
-    s ^= s << 5;
+    s = nextXorshift32State(s, 0x51f15e55);
     return (s >>> 0) / 4294967296;
   };
 }

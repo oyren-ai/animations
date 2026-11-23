@@ -4,6 +4,7 @@ import { assertReelSafeBox, drawReelText, type ReelBox } from "../shared/reelUti
 import { theme } from "../theme.ts";
 import {
   createRng,
+  nextXorshift32State,
   drawBottomProgressPills,
   drawFullBleedDualChamber,
   drawHookHeaderCard,
@@ -160,12 +161,8 @@ export const VAULT_CONFIGS: Record<VaultComebackSlug, VaultSceneConfig> = {
 };
 
 function nextLaneRand(state: LaneMutState): number {
-  let s = state.rngState | 0 || 0x13579bdf;
-  s ^= s << 13;
-  s ^= s >>> 17;
-  s ^= s << 5;
-  state.rngState = s;
-  return (s >>> 0) / 4294967296;
+  state.rngState = nextXorshift32State(state.rngState, 0x13579bdf);
+  return (state.rngState >>> 0) / 4294967296;
 }
 
 function cloneSnap(s: LaneMutState): LaneSnapshot {
