@@ -4,7 +4,7 @@
 
 ## Mathematical comeback contract
 
-`verifyComebackInvariants(trace)` rejects any seed or parameter set that violates three timing and margin bounds over `raceFrames` (typically `1140-1260` frames at `60 fps`, followed by `180` frames for `GetTheCodeEndCard`):
+`verifyComebackInvariants(trace)` rejects any seed or parameter set that violates three timing and margin bounds over `raceFrames` (`1200-1620` frames at `60 fps`, followed by `180` frames for `GetTheCodeEndCard`):
 
 1. **Early blowout (`earlyLeader !== winner`)**: At `checkFrame = Math.floor(0.65 * victoryFrame)`, the eventual runner-up leads the eventual winner by at least `0.50` (`50%` of total goal progress, such as `8/10` floors broken against `1/10`).
 2. **Late overtake window (`[0.82 * raceFrames, 0.96 * raceFrames]`)**: Both `overtakeFrame` (the final lead change) and `victoryFrame` (when the winner reaches `1.00` progress) fall inside `82%-96%` of `raceFrames`, leaving at least `72` frames (`1.2 s`) of victory hold before the closing card.
@@ -16,13 +16,16 @@ All four compositions separate visual world bounds from typography bounds:
 
 - **Edge-to-edge arena (`x: 0..1080`, `y: 0..1920`)**: Twin race shafts, brick fortresses, shockwave rings, laser beams, and energy grids span all `1080 x 1920` pixels (`>= 95%` active pixels with `max(R, G, B) > 8`, including top `y < 220` and bottom `y > 1560`).
 - **Platform HUD safe zone (`x: 60..900`, `y: 220..1560`)**: Every hook headline, live counter, HP label, and progress pill passes through `drawReelText` and `assertReelSafeBox` in `src/shared/reelUtils.ts`, keeping `x: 900..1080` open for right-rail social chrome.
+- **Phone readability**: On-screen text is at least `42px` in the `1080px` source frame (about `15px` when played at `390px` wide). Shorter rule and status copy keeps that size inside the safe zone.
+- **Frame fidelity**: Ball-state checkpoints are saved after each checkpoint frame is stepped. Regression tests compare reconstruction with a straight-through replay at frames `29`, `30`, `31`, `59`, `60`, and around victory.
 
 ## Stereo suspense and overtake audio
 
 `src/comebacks/audio.ts` synthesizes 48 kHz stereo 16-bit PCM WAV files offline via `src/audio-reactive/synth.ts` (`Uint8Array` and `DataView` only, with zero Node `Buffer` calls in browser-imported modules):
 
 - **Spatial lane separation**: Left-lane hits pan to `-0.62` and right-lane hits pan to `+0.62` using constant-power `panGains()`.
-- **Endgame tension riser**: Once the early leader reaches `0.85` progress, a heartbeat kick pulse and rising Shepard harmonic shimmer accelerate toward `overtakeFrame`.
+- **Endgame tension riser**: Once the early leader reaches `0.80` progress, a heartbeat kick pulse and rising Shepard harmonic shimmer accelerate toward `overtakeFrame`.
+- **Click-free octave wrap**: Each Shepard voice wraps while its spectral bell is silent; a sample-level regression checks both wrap points.
 - **Overtake sub-bass drop**: At `overtakeFrame` and `victoryFrame`, a pitched sub-bass drop (`150 Hz -> 46 Hz`) and major-9th pad chord resolve into a steady `-14 LUFS` bed (`<= -1.5 dBTP` true peak) that carries smoothly under `GetTheCodeEndCard`.
 
 ## Compositions

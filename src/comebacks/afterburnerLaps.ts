@@ -1,6 +1,7 @@
 import type { FrameAudioFeatures } from "../audio-reactive/synth.ts";
 import { CLOSING_FRAMES, VIDEO } from "../settings.ts";
 import { assertReelSafeBox, drawReelText, type ReelBox } from "../shared/reelUtils.ts";
+import { theme } from "../theme.ts";
 import {
   drawBottomProgressPills,
   drawFullBleedDualChamber,
@@ -62,6 +63,10 @@ interface RacerState {
 }
 
 let cachedAfterburnerTrace: AfterburnerComebackTrace | null = null;
+
+export function clearAfterburnerTraceCache(): void {
+  cachedAfterburnerTrace = null;
+}
 
 export function simulateAfterburnerLaps(): AfterburnerComebackTrace {
   if (cachedAfterburnerTrace) return cachedAfterburnerTrace;
@@ -451,13 +456,13 @@ export function paintAfterburnerLapsFrame(
   drawReelText(
     ctx,
     boxes,
-    `LAPS   ${trace.leftLapsPerFrame[f]}   vs   ${trace.rightLapsPerFrame[f]}   / 100`,
+    `LAPS ${trace.leftLapsPerFrame[f]} vs ${trace.rightLapsPerFrame[f]}`,
     480,
     952,
     {
-      size: 36,
+      size: 48,
       weight: 900,
-      color: overtaken ? SPEEDWAY_PALETTE.rightAccent : "#f8fafc",
+      color: overtaken ? SPEEDWAY_PALETTE.rightAccent : theme.colors.comebackHudInk,
       align: "center",
       maxWidth: 580,
     },
@@ -467,9 +472,9 @@ export function paintAfterburnerLapsFrame(
   // 6. Safe-zone Viral Hook Header & Bottom Progress Pills
   drawHookHeaderCard(ctx, boxes, {
     highlightBadge: "+18% BOUNCE",
-    hookLine1: "vs STEADY 900 KM/H:",
-    hookLine2: "First racer to 100 vertical laps!",
-    subline: "LEFT CONSTANT CRUISER  ·  RIGHT COMPOUNDS +18% / GATE",
+    hookLine1: "vs 900 KM/H:",
+    hookLine2: "First to 100 vertical laps!",
+    subline: "STEADY vs +18% PER GATE",
     leftValue: "900 km/h",
     leftFormula: `LAP ${trace.leftLapsPerFrame[f]} / 100`,
     leftAccent: SPEEDWAY_PALETTE.leftAccent,
@@ -481,24 +486,24 @@ export function paintAfterburnerLapsFrame(
   });
 
   const statusBanner = won
-    ? `AFTERBURNER WINS ${trace.rightLapsPerFrame[f]} TO ${trace.leftLapsPerFrame[f]}!`
+    ? `BOOST WINS · ${trace.rightLapsPerFrame[f]}:${trace.leftLapsPerFrame[f]}`
     : overtaken
-      ? "RELATIVISTIC MACH OVERTAKE!"
+      ? "BOOST OVERTAKES!"
       : trace.leftLapsPerFrame[f] >= 80
-        ? `LEFT AT ${trace.leftLapsPerFrame[f]}/100 LAPS · AFTERBURNER IGNITING!`
+        ? `CRUISER ${trace.leftLapsPerFrame[f]} · BOOST RISING`
         : undefined;
 
   drawBottomProgressPills(ctx, boxes, {
-    leftLabel: `CRUISER ${trace.leftLapsPerFrame[f]}/100 LAPS`,
+    leftLabel: `CRUISER ${trace.leftLapsPerFrame[f]}/100`,
     leftProgress: trace.leftProgress[f],
     leftAccent: SPEEDWAY_PALETTE.leftAccent,
     rightLabel: won
-      ? "AFTERBURNER 100/100 · WINNER!"
-      : `AFTERBURNER ${trace.rightLapsPerFrame[f]}/100`,
+      ? "BOOST 100 WIN"
+      : `BOOST ${trace.rightLapsPerFrame[f]}/100`,
     rightProgress: trace.rightProgress[f],
     rightAccent: SPEEDWAY_PALETTE.rightAccent,
     statusBanner,
-    bannerAccent: won || overtaken ? SPEEDWAY_PALETTE.rightAccent : "#fde047",
+    bannerAccent: won || overtaken ? SPEEDWAY_PALETTE.rightAccent : undefined,
   });
 
   return boxes;

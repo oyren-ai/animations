@@ -35,7 +35,7 @@ function rightEventHz(pitchStep: number): number {
 /**
  * Adds a continuous 4-octave Shepard harmonic riser leading directly into overtakeSec.
  */
-function addShepardSuspenseRiser(
+export function addShepardSuspenseRiser(
   buf: StereoBuffer,
   startSec: number,
   endSec: number,
@@ -56,12 +56,12 @@ function addShepardSuspenseRiser(
       (0.28 + 0.72 * prog * prog);
 
     // Sweep 2.2 Shepard octaves upward as progress approaches overtake
-    const sweepPos = (prog * 2.2) % 1;
     let sumL = 0;
     let sumR = 0;
 
     for (let oct = 0; oct < 4; oct++) {
-      const normOct = (oct + sweepPos) / 4; // 0 .. 1 across ~110 Hz -> 1760 Hz
+      // Each voice wraps only where its spectral bell is silent; a shared wrap clicks.
+      const normOct = ((oct + prog * 2.2) % 4) / 4; // 0 .. 1 across ~110 Hz -> 1760 Hz
       const freq = 110 * Math.pow(2, normOct * 4);
       phases[oct] += (2 * Math.PI * freq) / buf.sampleRate;
       // Raised-cosine spectral bell so octaves wrap seamlessly

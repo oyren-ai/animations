@@ -2,6 +2,7 @@ import type { FrameAudioFeatures } from "../audio-reactive/synth.ts";
 import { CLOSING_FRAMES, VIDEO } from "../settings.ts";
 import type { ReelBox } from "../shared/reelUtils.ts";
 import {
+  clearAfterburnerTraceCache,
   paintAfterburnerLapsFrame,
   simulateAfterburnerLaps,
   type AfterburnerComebackTrace,
@@ -13,11 +14,13 @@ import {
 } from "./audio.ts";
 import { verifyComebackInvariants, type ComebackSlug } from "./invariants.ts";
 import {
+  clearSplitterTraceCache,
   paintSplitterFortressFrame,
   simulateSplitterFortress,
   type SplitterComebackTrace,
 } from "./splitterFortress.ts";
 import {
+  clearVaultTraceCache,
   paintVaultComebackFrame,
   simulateVaultComeback,
   type VaultComebackTrace,
@@ -98,6 +101,13 @@ export function simulateComeback(slug: ComebackSlug): ComebackTrace {
 }
 
 const AUDIO_BUNDLE_CACHE = new Map<ComebackSlug, ComebackAudioBundle>();
+
+export function clearComebackCaches(): void {
+  AUDIO_BUNDLE_CACHE.clear();
+  clearVaultTraceCache();
+  clearSplitterTraceCache();
+  clearAfterburnerTraceCache();
+}
 
 export function buildComebackAudio(slug: ComebackSlug): ComebackAudioBundle {
   const cached = AUDIO_BUNDLE_CACHE.get(slug);

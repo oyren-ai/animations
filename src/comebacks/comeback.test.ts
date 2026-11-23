@@ -1,12 +1,13 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { measureStereoLufsAndPeak } from "../audio-reactive/synth.ts";
+import { createStereoBuffer, measureStereoLufsAndPeak } from "../audio-reactive/synth.ts";
 import { VIDEO } from "../settings.ts";
 import { assertReelSafeBox, REEL_SAFE_BOUNDS } from "../shared/reelUtils.ts";
 import {
   buildComebackAudio,
   buildComebackFeatures,
+  clearComebackCaches,
   COMEBACK_COMPOSITIONS,
   paintComebackFrame,
   simulateComeback,
@@ -14,9 +15,13 @@ import {
   verifyComebackInvariants,
 } from "./index.ts";
 import type { ComebackTraceBase } from "./invariants.ts";
+import { addShepardSuspenseRiser } from "./audio.ts";
+import { reconstructSplitterAt, simulateSplitterFortress } from "./splitterFortress.ts";
+import { reconstructLaneBallsAt, simulateVaultComeback } from "./towerVaults.ts";
 
 function createMockCanvas2D() {
   const filledRects: { x: number; y: number; w: number; h: number }[] = [];
+  const drawnText: { text: string; size: number }[] = [];
   let currentFont = "700 24px Inter";
   const gradientStub = { addColorStop() {} };
 
@@ -54,7 +59,10 @@ function createMockCanvas2D() {
     translate() {},
     rotate() {},
     scale() {},
-    fillText() {},
+    fillText(str: string) {
+      const match = /(\d+(?:\.\d+)?)px/.exec(currentFont);
+      drawnText.push({ text: str, size: match ? Number(match[1]) : 0 });
+    },
     createLinearGradient() {
       return gradientStub;
     },
@@ -75,8 +83,33 @@ function createMockCanvas2D() {
     },
   } as unknown as CanvasRenderingContext2D;
 
-  return { ctx, filledRects };
+  return { ctx, filledRects, drawnText };
 }
+
+test("snapshot reconstruction equals straight-through state across checkpoint boundaries and victory", () => {
+  const boundaryFrames = [29, 30, 31, 59, 60];
+  const splitter = simulateSplitterFortress();
+  for (const frame of [...boundaryFrames, splitter.victoryFrame, splitter.victoryFrame + 1]) {
+    assert.deepStrictEqual(
+      reconstructSplitterAt(splitter, frame),
+      reconstructSplitterAt(splitter, frame, true),
+      `Splitter frame ${frame} differs from straight-through replay`,
+    );
+  }
+
+  for (const slug of ["tower-linear-vs-exponential", "titan-hammer-vs-swarm"] as const) {
+    const trace = simulateVaultComeback(slug);
+    for (const side of ["left", "right"] as const) {
+      for (const frame of [...boundaryFrames, trace.victoryFrame, trace.victoryFrame + 1]) {
+        assert.deepStrictEqual(
+          reconstructLaneBallsAt(trace, side, frame),
+          reconstructLaneBallsAt(trace, side, frame, true),
+          `${slug} ${side} frame ${frame} differs from straight-through replay`,
+        );
+      }
+    }
+  }
+});
 
 test("verifyComebackInvariants rejects non-comeback, early-win, and blowout-finish traces", () => {
   const makeDummy = (overrides: Partial<ComebackTraceBase>): ComebackTraceBase => {
@@ -173,7 +206,7 @@ test("All 4 comeback Shorts render full-bleed 1080x1920 arenas and keep every HU
     ];
 
     for (const f of sampleFrames) {
-      const { ctx, filledRects } = createMockCanvas2D();
+      const { ctx, filledRects, drawnText } = createMockCanvas2D();
       const boxes = paintComebackFrame(ctx, trace, features, f, VIDEO.width, VIDEO.height);
       assert.ok(
         filledRects.some(
@@ -187,6 +220,27 @@ test("All 4 comeback Shorts render full-bleed 1080x1920 arenas and keep every HU
         assert.ok(box.left >= REEL_SAFE_BOUNDS.left - 0.5 && box.right <= REEL_SAFE_BOUNDS.right + 0.5);
         assert.ok(box.top >= REEL_SAFE_BOUNDS.top - 0.5 && box.bottom <= REEL_SAFE_BOUNDS.bottom + 0.5);
       }
+      for (const item of drawnText) {
+        assert.ok(
+          item.size >= 42,
+          `${comp.id} frame ${f}: "${item.text}" uses ${item.size}px source type (${(item.size * 390 / VIDEO.width).toFixed(1)}px at 390px playback)`,
+        );
+      }
+    }
+  }
+});
+
+test("Shepard riser crosses both octave wraps without a sample pop", () => {
+  const buffer = createStereoBuffer(240, 60);
+  addShepardSuspenseRiser(buffer, 0, 4, 0.16);
+  for (const wrap of [1, 2]) {
+    const sample = Math.round((4 * buffer.sampleRate * wrap) / 2.2);
+    for (const channel of [buffer.left, buffer.right]) {
+      let maxJump = 0;
+      for (let i = sample - 3; i <= sample + 3; i++) {
+        maxJump = Math.max(maxJump, Math.abs(channel[i] - channel[i - 1]));
+      }
+      assert.ok(maxJump < 0.01, `wrap ${wrap} has ${maxJump.toFixed(4)} sample jump`);
     }
   }
 });
@@ -194,6 +248,7 @@ test("All 4 comeback Shorts render full-bleed 1080x1920 arenas and keep every HU
 test("48 kHz stereo comeback audio hits -14 LUFS, <= -1.5 dBTP, stereo width, and 0 Node Buffer calls", () => {
   const savedBuffer = (globalThis as Record<string, unknown>).Buffer;
   try {
+    clearComebackCaches();
     (globalThis as Record<string, unknown>).Buffer = undefined;
 
     for (const comp of COMEBACK_COMPOSITIONS) {

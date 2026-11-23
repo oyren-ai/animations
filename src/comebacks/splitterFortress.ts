@@ -83,6 +83,7 @@ export interface WallShatterBurst {
 
 export interface SplitterComebackTrace extends ComebackTraceBase {
   slug: "splitter-wall-escape";
+  victorySubstep: number;
   wallMaxBricks: Float64Array;
   leftBrokenPerFrame: Uint8Array;
   rightBrokenPerFrame: Uint8Array;
@@ -149,7 +150,7 @@ function stepSplitterSubstep(
   const minX = 558;
   const maxX = 1062;
   const r = 6.5;
-  const weight = s.nDrawn > 0 ? s.logicalBalls / s.nDrawn : 1;
+  let weight = s.nDrawn > 0 ? s.logicalBalls / s.nDrawn : 1;
 
   const tripleSwarm = (brokenWallIdx: number) => {
     const prevDrawn = s.nDrawn;
@@ -174,6 +175,7 @@ function stepSplitterSubstep(
       s.bvy[idx] = dir * Math.cos(ang) * SPLITTER_SPEED;
     }
     s.nDrawn = targetDrawn;
+    weight = s.nDrawn > 0 ? s.logicalBalls / s.nDrawn : 1;
 
     onBurst?.(brokenWallIdx);
     onEvent?.({
@@ -250,6 +252,10 @@ function stepSplitterSubstep(
 
 let cachedSplitterTrace: SplitterComebackTrace | null = null;
 
+export function clearSplitterTraceCache(): void {
+  cachedSplitterTrace = null;
+}
+
 export function simulateSplitterFortress(): SplitterComebackTrace {
   if (cachedSplitterTrace) return cachedSplitterTrace;
 
@@ -301,12 +307,9 @@ export function simulateSplitterFortress(): SplitterComebackTrace {
   const dt = 1 / (VIDEO.fps * SUBSTEPS);
   let winner: ComebackSide | null = null;
   let victoryFrame = raceFrames - 1;
+  let victorySubstep = SUBSTEPS - 1;
 
   for (let f = 0; f < raceFrames; f++) {
-    if (f % SNAP_EVERY === 0) {
-      rightSnapshots.set(f, snapSplitter(right));
-    }
-
     if (f > 0 && winner === null) {
       for (let sub = 0; sub < SUBSTEPS; sub++) {
         // Step Left steady laser cutter (450 bricks/s)
@@ -344,6 +347,7 @@ export function simulateSplitterFortress(): SplitterComebackTrace {
         if (right.brokenWalls >= FORTRESS_WALLS || leftBroken >= FORTRESS_WALLS) {
           winner = right.brokenWalls >= FORTRESS_WALLS ? "right" : "left";
           victoryFrame = f;
+          victorySubstep = sub;
           events.push({
             frame: f,
             side: winner,
@@ -380,6 +384,9 @@ export function simulateSplitterFortress(): SplitterComebackTrace {
       right.brokenWalls < FORTRESS_WALLS ? right.wallRemBricks[right.brokenWalls] : 0;
     leftTotalCutPerFrame[f] = leftTotalCut;
     rightBallsPerFrame[f] = right.logicalBalls;
+    if (f % SNAP_EVERY === 0) {
+      rightSnapshots.set(f, snapSplitter(right));
+    }
   }
 
   const resolvedWinner: ComebackSide =
@@ -431,6 +438,7 @@ export function simulateSplitterFortress(): SplitterComebackTrace {
     earlyLeader,
     overtakeFrame,
     victoryFrame,
+    victorySubstep,
     leftProgress,
     rightProgress,
     runnerUpFinalStageRemainingRatio,
@@ -448,14 +456,20 @@ export function simulateSplitterFortress(): SplitterComebackTrace {
   return cachedSplitterTrace;
 }
 
-function reconstructSplitterAt(trace: SplitterComebackTrace, frame: number): SplitterState {
+export function reconstructSplitterAt(
+  trace: SplitterComebackTrace,
+  frame: number,
+  fromStart = false,
+): SplitterState {
   const clamped = Math.max(0, Math.min(trace.raceFrames - 1, frame));
-  const snapFrame = clamped - (clamped % SNAP_EVERY);
+  const snapFrame = fromStart ? 0 : clamped - (clamped % SNAP_EVERY);
   const state = restoreSplitter(trace.rightSnapshots.get(snapFrame)!);
   const dt = 1 / (VIDEO.fps * SUBSTEPS);
   for (let f = snapFrame + 1; f <= clamped; f++) {
     const post = f > trace.victoryFrame;
+    if (post && trace.winner !== "right") break;
     for (let sub = 0; sub < SUBSTEPS; sub++) {
+      if (f === trace.victoryFrame && sub > trace.victorySubstep) break;
       stepSplitterSubstep(state, post ? dt * 0.4 : dt, f);
     }
   }
@@ -596,8 +610,11 @@ export function paintSplitterFortressFrame(
   for (let i = 0; i < splitterState.nDrawn; i++) {
     const x = splitterState.bx[i];
     const y = splitterState.by[i];
+    const vy = splitterState.bvy[i];
+    const streakLen = Math.abs(vy) * 0.011;
+    const streakTop = vy >= 0 ? y - streakLen : y;
     ctx.globalAlpha = 0.3;
-    ctx.fillRect(x - 2.5, y - splitterState.bvy[i] * 0.011, 5, Math.abs(splitterState.bvy[i]) * 0.011 + 4);
+    ctx.fillRect(x - 2.5, streakTop, 5, streakLen + 4);
     ctx.globalAlpha = 0.95;
     ctx.beginPath();
     ctx.arc(x, y, splitterState.nDrawn === 1 ? 11 : 6, 0, Math.PI * 2);
@@ -626,13 +643,13 @@ export function paintSplitterFortressFrame(
   drawHookHeaderCard(ctx, boxes, {
     highlightBadge: "1 SPLITTER",
     hookLine1: "vs 450 BRICKS/S:",
-    hookLine2: "Who breaks 10 fortress walls first?",
-    subline: "LEFT STEADY LASER  ·  RIGHT ×3 BALLS EVERY WALL",
+    hookLine2: "Who breaks 10 walls first?",
+    subline: "LASER vs ×3 BALLS PER WALL",
     leftValue: `${formatCompactInt(trace.leftTotalCutPerFrame[f])} cut`,
-    leftFormula: "450 BRICKS / SEC LASER",
+    leftFormula: "450 BRICKS/S",
     leftAccent: FORTRESS_PALETTE.leftAccent,
     rightValue: `${formatCompactInt(trace.rightBallsPerFrame[f])} balls`,
-    rightFormula: "×3 BALLS PER WALL",
+    rightFormula: "×3 / WALL",
     rightAccent: FORTRESS_PALETTE.rightAccent,
     leaderSide,
     overtaken,
@@ -641,24 +658,24 @@ export function paintSplitterFortressFrame(
   const leftPct = Math.round(trace.leftProgress[f] * 100);
   const rightPct = Math.round(trace.rightProgress[f] * 100);
   const statusBanner = won
-    ? `SPLITTER ESCAPES FIRST! (${leftPct}% vs 100%)`
+    ? `SPLITTER WINS · ${leftPct}%:100%`
     : overtaken
-      ? "19,683-BALL AVALANCHE OVERTAKE!"
+      ? "SPLITTER OVERTAKES!"
       : trace.leftBrokenPerFrame[f] >= 8
-        ? `LASER AT WALL ${trace.leftBrokenPerFrame[f] + 1}/10 · SPLITTER MULTIPLYING!`
+        ? `LASER ${trace.leftBrokenPerFrame[f] + 1}/10 · BALLS GROW`
         : undefined;
 
   drawBottomProgressPills(ctx, boxes, {
-    leftLabel: `LASER ${trace.leftBrokenPerFrame[f]}/10 · ${leftPct}%`,
+    leftLabel: `LASER ${trace.leftBrokenPerFrame[f]}/10 ${leftPct}%`,
     leftProgress: trace.leftProgress[f],
     leftAccent: FORTRESS_PALETTE.leftAccent,
     rightLabel: won
-      ? "SPLITTER 10/10 · WINNER!"
-      : `SPLITTER ${trace.rightBrokenPerFrame[f]}/10 · ${rightPct}%`,
+      ? "BALLS 10/10 WIN"
+      : `BALLS ${trace.rightBrokenPerFrame[f]}/10 ${rightPct}%`,
     rightProgress: trace.rightProgress[f],
     rightAccent: FORTRESS_PALETTE.rightAccent,
     statusBanner,
-    bannerAccent: won || overtaken ? FORTRESS_PALETTE.rightAccent : "#fde047",
+    bannerAccent: won || overtaken ? FORTRESS_PALETTE.rightAccent : undefined,
   });
 
   return boxes;

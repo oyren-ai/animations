@@ -1,6 +1,7 @@
 import type { FrameAudioFeatures } from "../audio-reactive/synth.ts";
 import { CLOSING_FRAMES, VIDEO } from "../settings.ts";
 import { assertReelSafeBox, drawReelText, type ReelBox } from "../shared/reelUtils.ts";
+import { theme } from "../theme.ts";
 import {
   createRng,
   drawBottomProgressPills,
@@ -77,6 +78,7 @@ export interface ShockwaveVisual {
 
 export interface VaultComebackTrace extends ComebackTraceBase {
   slug: VaultComebackSlug;
+  victorySubstep: number;
   floorMaxHp: Float64Array;
   totalVaultHp: number;
   leftCountPerFrame: Float64Array;
@@ -499,6 +501,10 @@ function computeVaultProgress(s: LaneMutState, floorMaxHp: readonly number[]): n
 
 const TRACE_CACHE = new Map<VaultComebackSlug, VaultComebackTrace>();
 
+export function clearVaultTraceCache(): void {
+  TRACE_CACHE.clear();
+}
+
 export function simulateVaultComeback(slug: VaultComebackSlug): VaultComebackTrace {
   const cached = TRACE_CACHE.get(slug);
   if (cached) return cached;
@@ -532,13 +538,9 @@ export function simulateVaultComeback(slug: VaultComebackSlug): VaultComebackTra
   const dt = 1 / (VIDEO.fps * SUBSTEPS);
   let winner: ComebackSide | null = null;
   let victoryFrame = raceFrames - 1;
+  let victorySubstep = SUBSTEPS - 1;
 
   for (let f = 0; f < raceFrames; f++) {
-    if (f % SNAP_EVERY === 0) {
-      leftSnapshots.set(f, cloneSnap(left));
-      rightSnapshots.set(f, cloneSnap(right));
-    }
-
     if (f > 0 && winner === null) {
       for (let sub = 0; sub < SUBSTEPS; sub++) {
         const tSec = (f - 1) / VIDEO.fps + (sub + 1) * dt;
@@ -568,6 +570,7 @@ export function simulateVaultComeback(slug: VaultComebackSlug): VaultComebackTra
         if (right.brokenFloors >= TOWER_FLOORS || left.brokenFloors >= TOWER_FLOORS) {
           winner = right.brokenFloors >= TOWER_FLOORS ? "right" : "left";
           victoryFrame = f;
+          victorySubstep = sub;
           events.push({
             frame: f,
             side: winner,
@@ -602,6 +605,10 @@ export function simulateVaultComeback(slug: VaultComebackSlug): VaultComebackTra
       left.brokenFloors < TOWER_FLOORS ? left.floorRemainingHp[left.brokenFloors] : 0;
     rightActiveHpPerFrame[f] =
       right.brokenFloors < TOWER_FLOORS ? right.floorRemainingHp[right.brokenFloors] : 0;
+    if (f % SNAP_EVERY === 0) {
+      leftSnapshots.set(f, cloneSnap(left));
+      rightSnapshots.set(f, cloneSnap(right));
+    }
   }
 
   const resolvedWinner: ComebackSide = winner ?? (rightProgress[raceFrames - 1] >= leftProgress[raceFrames - 1] ? "right" : "left");
@@ -653,6 +660,7 @@ export function simulateVaultComeback(slug: VaultComebackSlug): VaultComebackTra
     earlyLeader,
     overtakeFrame,
     victoryFrame,
+    victorySubstep,
     leftProgress,
     rightProgress,
     runnerUpFinalStageRemainingRatio,
@@ -677,13 +685,14 @@ export function simulateVaultComeback(slug: VaultComebackSlug): VaultComebackTra
   return trace;
 }
 
-function reconstructLaneBallsAt(
+export function reconstructLaneBallsAt(
   trace: VaultComebackTrace,
   side: ComebackSide,
   frame: number,
+  fromStart = false,
 ): LaneMutState {
   const clamped = Math.max(0, Math.min(trace.raceFrames - 1, frame));
-  const snapFrame = clamped - (clamped % SNAP_EVERY);
+  const snapFrame = fromStart ? 0 : clamped - (clamped % SNAP_EVERY);
   const snaps = side === "left" ? trace.leftSnapshots : trace.rightSnapshots;
   const state = restoreSnap(snaps.get(snapFrame)!);
   const dt = 1 / (VIDEO.fps * SUBSTEPS);
@@ -692,6 +701,7 @@ function reconstructLaneBallsAt(
     const postVictory = f > trace.victoryFrame;
     if (postVictory && side !== trace.winner) break;
     for (let sub = 0; sub < SUBSTEPS; sub++) {
+      if (f === trace.victoryFrame && sub > trace.victorySubstep) break;
       const tSec = (f - 1) / VIDEO.fps + (sub + 1) * dt;
       stepLaneSubstep(state, trace.config, side, tSec, postVictory ? dt * 0.45 : dt, f);
     }
@@ -762,35 +772,36 @@ export function paintVaultComebackFrame(
       ctx.fillStyle = isCurrent ? "#ffffff" : "rgba(255, 255, 255, 0.35)";
       ctx.fillRect(slabLeft, y, slabW, isCurrent ? 3 : 1.5);
 
-      // Safe-zone HP text ONLY on active floor when inside y: 470..1410 and x: 68..892
+      // Large active-floor label; the first floor sits below the expanded hook card.
       if (isCurrent && y >= 480 && y <= 1400) {
-        const textX = side === "left" ? 270 : 718;
-        const hpStr = `FLOOR ${idx + 1} · ${formatCompactInt(Math.ceil(remHp))} HP`;
+        const textX = side === "left" ? 270 : 710;
+        const tagTop = Math.max(592, y - 64);
+        const hpStr = `F${idx + 1} · ${formatCompactInt(Math.ceil(remHp))} HP`;
         const tagBox: ReelBox = {
           label: `floor-hp-${side}-${idx}`,
-          left: textX - 155,
-          top: y - 30,
-          right: textX + 155,
-          bottom: y - 4,
+          left: textX - 190,
+          top: tagTop,
+          right: textX + 190,
+          bottom: tagTop + 62,
         };
         assertReelSafeBox(tagBox);
-        ctx.fillStyle = "rgba(7, 11, 22, 0.86)";
+        ctx.fillStyle = theme.colors.comebackHudSurface;
         ctx.beginPath();
-        ctx.roundRect(tagBox.left, tagBox.top, 310, 26, 7);
+        ctx.roundRect(tagBox.left, tagBox.top, 380, 62, 14);
         ctx.fill();
-        drawReelText(ctx, boxes, hpStr, textX, y - 10, {
-          size: 15.5,
+        drawReelText(ctx, boxes, hpStr, textX, tagTop + 47, {
+          size: 42,
           weight: 800,
-          color: "#f8fafc",
+          color: theme.colors.comebackHudInk,
           align: "center",
-          maxWidth: 290,
+          maxWidth: 356,
         });
       }
     }
   };
 
-  drawLaneFloors("left", leftState.brokenFloors, trace.leftActiveHpPerFrame[f], cfg.palette.leftAccent);
-  drawLaneFloors("right", rightState.brokenFloors, trace.rightActiveHpPerFrame[f], cfg.palette.rightAccent);
+  drawLaneFloors("left", trace.leftBrokenPerFrame[f], trace.leftActiveHpPerFrame[f], cfg.palette.leftAccent);
+  drawLaneFloors("right", trace.rightBrokenPerFrame[f], trace.rightActiveHpPerFrame[f], cfg.palette.rightAccent);
 
   // 3. Draw shattering floor debris + shockwave rings
   for (const br of trace.floorBreaks) {
@@ -831,9 +842,12 @@ export function paintVaultComebackFrame(
     for (let i = 0; i < s.nDrawn; i++) {
       const x = s.bx[i];
       const y = s.by[i];
+      const vy = s.bvy[i];
+      const streakLen = Math.abs(vy) * 0.012;
+      const streakTop = vy >= 0 ? y - streakLen : y;
       // Motion streak
       ctx.globalAlpha = 0.32;
-      ctx.fillRect(x - 2.5, y - s.bvy[i] * 0.012, 5, Math.abs(s.bvy[i]) * 0.012 + 4);
+      ctx.fillRect(x - 2.5, streakTop, 5, streakLen + 4);
       ctx.globalAlpha = 0.94;
       ctx.beginPath();
       ctx.arc(x, y, 5.5, 0, Math.PI * 2);
@@ -890,12 +904,12 @@ export function paintVaultComebackFrame(
       highlightBadge: "1 BALL",
       hookLine1: "vs 5,000 BALLS:",
       hookLine2: "Which 10-floor vault falls first?",
-      subline: "IDENTICAL DOUBLING-HP VAULTS  ·  LINEAR vs EXPONENTIAL",
+      subline: "SAME VAULTS · LINEAR vs ×10",
       leftValue: `${formatCompactInt(trace.leftCountPerFrame[f])} balls`,
-      leftFormula: "+600 BALLS / SEC",
+      leftFormula: "+600 BALLS/S",
       leftAccent: cfg.palette.leftAccent,
       rightValue: `${formatCompactInt(trace.rightCountPerFrame[f])} balls`,
-      rightFormula: "×10 EVERY 4.5 SEC",
+      rightFormula: "×10 / 4.5 S",
       rightAccent: cfg.palette.rightAccent,
       leaderSide,
       overtaken,
@@ -904,8 +918,8 @@ export function paintVaultComebackFrame(
     drawHookHeaderCard(ctx, boxes, {
       highlightBadge: "1 TITAN ORB",
       hookLine1: "vs 4,000 SWARM:",
-      hookLine2: "×2 damage per bounce vs steady swarm!",
-      subline: "IDENTICAL 10-CHAMBER ARMOR  ·  CLEAVES ON OVERKILL",
+      hookLine2: "×2 damage per bounce",
+      subline: "SAME ARMOR · ORB vs SWARM",
       leftValue: "4,000 × 1 dmg",
       leftFormula: `${trace.leftBrokenPerFrame[f]}/10 CHAMBERS`,
       leftAccent: cfg.palette.leftAccent,
@@ -920,11 +934,11 @@ export function paintVaultComebackFrame(
   const leftPct = Math.round(trace.leftProgress[f] * 100);
   const rightPct = Math.round(trace.rightProgress[f] * 100);
   const statusBanner = won
-    ? `RIGHT WINS PHOTO FINISH! (${leftPct}% vs 100%)`
+    ? `RIGHT WINS · ${leftPct}%:100%`
     : overtaken
-      ? "LAST-SECOND OVERTAKE!"
+      ? "RIGHT OVERTAKES!"
       : trace.leftBrokenPerFrame[f] >= 8
-        ? `LEFT ON FLOOR ${trace.leftBrokenPerFrame[f] + 1}/10 · CAN RIGHT CATCH UP?`
+        ? `LEFT ${trace.leftBrokenPerFrame[f] + 1}/10 · CAN RIGHT WIN?`
         : undefined;
 
   drawBottomProgressPills(ctx, boxes, {
@@ -932,12 +946,12 @@ export function paintVaultComebackFrame(
     leftProgress: trace.leftProgress[f],
     leftAccent: cfg.palette.leftAccent,
     rightLabel: won
-      ? "RIGHT 10/10 · WINNER!"
+      ? "RIGHT 10/10 WIN"
       : `RIGHT ${trace.rightBrokenPerFrame[f]}/10 · ${rightPct}%`,
     rightProgress: trace.rightProgress[f],
     rightAccent: cfg.palette.rightAccent,
     statusBanner,
-    bannerAccent: won || overtaken ? cfg.palette.rightAccent : "#fde047",
+    bannerAccent: won || overtaken ? cfg.palette.rightAccent : undefined,
   });
 
   return boxes;

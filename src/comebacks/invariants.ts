@@ -1,5 +1,8 @@
 import { VIDEO } from "../settings.ts";
 import { assertReelSafeBox, drawReelText, type ReelBox } from "../shared/reelUtils.ts";
+import { theme } from "../theme.ts";
+
+const hud = theme.colors;
 
 export type ComebackSlug =
   | "tower-linear-vs-exponential"
@@ -58,7 +61,7 @@ export interface ComebackInvariantReport {
  * 1. earlyLeader !== winner: at t = 0.65 * victoryFrame (and 0.65 * raceFrames),
  *    the eventual loser leads by >= 0.50 progress margin.
  * 2. lateOvertake: both overtakeFrame and victoryFrame lie within [0.82 * raceFrames, 0.96 * raceFrames],
- *    leaving >= 60 frames (>= 1.0s) victory hold before the 3s closing card.
+ *    leaving >= 72 frames (>= 1.2s) victory hold before the 3s closing card.
  * 3. photoFinish: at victoryFrame, runner-up has reached >= 0.90 of total goal
  *    (and for 10-stage races, final stage has < 0.15 remaining HP).
  */
@@ -119,9 +122,9 @@ export function verifyComebackInvariants(trace: ComebackTraceBase): ComebackInva
   }
 
   const victoryHoldFrames = raceFrames - victoryFrame;
-  if (victoryHoldFrames < 60) {
+  if (victoryHoldFrames < 72) {
     throw new Error(
-      `${trace.slug}: victoryHoldFrames=${victoryHoldFrames} (< 60 frames / 1.0s hold)`,
+      `${trace.slug}: victoryHoldFrames=${victoryHoldFrames} (< 72 frames / 1.2s hold)`,
     );
   }
 
@@ -277,11 +280,11 @@ export function drawFullBleedDualChamber(
   ctx.restore();
 
   // Center neon spine divider (x: 536..544, y: 0..1920)
-  ctx.fillStyle = "#060913";
+  ctx.fillStyle = hud.comebackDividerDark;
   ctx.fillRect(midX - 4, 0, 8, height);
   ctx.save();
   ctx.globalAlpha = 0.65 + kickImpulse * 0.3;
-  ctx.fillStyle = "#e2e8f0";
+  ctx.fillStyle = hud.comebackDividerLight;
   ctx.fillRect(midX - 1, 0, 2, height);
   ctx.restore();
 }
@@ -303,7 +306,7 @@ export interface HookHeaderSpec {
 
 /**
  * Draws the viral hook header + split live counters strictly inside REEL_SAFE_BOUNDS
- * (x: 68..892, y: 226..444), keeping x: 900..1080 clear for Shorts/Reels right-rail icons.
+ * (x: 66..894, y: 226..580), keeping x: 900..1080 clear for Shorts/Reels right-rail icons.
  */
 export function drawHookHeaderCard(
   ctx: CanvasRenderingContext2D,
@@ -315,13 +318,13 @@ export function drawHookHeaderCard(
     left: 66,
     top: 226,
     right: 894,
-    bottom: 446,
+    bottom: 580,
   };
   assertReelSafeBox(card);
 
   ctx.save();
-  ctx.fillStyle = "rgba(7, 11, 22, 0.86)";
-  ctx.strokeStyle = spec.overtaken ? spec.rightAccent : "rgba(226, 232, 240, 0.28)";
+  ctx.fillStyle = hud.comebackHudSurface;
+  ctx.strokeStyle = spec.overtaken ? spec.rightAccent : hud.comebackHudBorder;
   ctx.lineWidth = spec.overtaken ? 2.6 : 1.6;
   ctx.beginPath();
   ctx.roundRect(card.left, card.top, card.right - card.left, card.bottom - card.top, 20);
@@ -333,11 +336,11 @@ export function drawHookHeaderCard(
     label: `highlight-${spec.highlightBadge}`,
     left: 84,
     top: 240,
-    right: 274,
-    bottom: 278,
+    right: 370,
+    bottom: 300,
   };
   assertReelSafeBox(pillBox);
-  ctx.fillStyle = "#fde047";
+  ctx.fillStyle = hud.comebackHudHighlight;
   ctx.beginPath();
   ctx.roundRect(
     pillBox.left,
@@ -348,46 +351,46 @@ export function drawHookHeaderCard(
   );
   ctx.fill();
 
-  drawReelText(ctx, boxes, spec.highlightBadge, 179, 267, {
-    size: 22,
+  drawReelText(ctx, boxes, spec.highlightBadge, 227, 284, {
+    size: 44,
     weight: 900,
-    color: "#090d16",
+    color: hud.comebackHudHighlightInk,
     align: "center",
-    maxWidth: 176,
+    maxWidth: 264,
   });
 
-  drawReelText(ctx, boxes, spec.hookLine1, 288, 268, {
-    size: 27,
+  drawReelText(ctx, boxes, spec.hookLine1, 386, 284, {
+    size: 44,
     weight: 800,
-    color: "#f8fafc",
-    maxWidth: 588,
+    color: hud.comebackHudInk,
+    maxWidth: 486,
   });
 
-  drawReelText(ctx, boxes, spec.hookLine2, 86, 308, {
-    size: 26,
+  drawReelText(ctx, boxes, spec.hookLine2, 86, 347, {
+    size: 44,
     weight: 800,
-    color: "#f8fafc",
+    color: hud.comebackHudInk,
     maxWidth: 790,
   });
 
-  drawReelText(ctx, boxes, spec.subline, 86, 338, {
-    size: 16.5,
+  drawReelText(ctx, boxes, spec.subline, 86, 402, {
+    size: 42,
     weight: 700,
-    color: "#94a3b8",
+    color: hud.comebackHudMuted,
     maxWidth: 790,
   });
 
-  // Left live counter sub-card (x: 82..472, y: 350..434)
+  // Left live counter sub-card (x: 82..472, y: 425..567)
   const leftCard: ReelBox = {
     label: "left-live-counter",
     left: 82,
-    top: 350,
+    top: 425,
     right: 472,
-    bottom: 434,
+    bottom: 567,
   };
   assertReelSafeBox(leftCard);
-  ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
-  ctx.strokeStyle = spec.leaderSide === "left" ? spec.leftAccent : "rgba(148, 163, 184, 0.28)";
+  ctx.fillStyle = hud.comebackHudCounter;
+  ctx.strokeStyle = spec.leaderSide === "left" ? spec.leftAccent : hud.comebackHudCounterBorder;
   ctx.lineWidth = spec.leaderSide === "left" ? 2.2 : 1.2;
   ctx.beginPath();
   ctx.roundRect(
@@ -400,30 +403,30 @@ export function drawHookHeaderCard(
   ctx.fill();
   ctx.stroke();
 
-  drawReelText(ctx, boxes, spec.leftValue, 98, 392, {
-    size: 31,
+  drawReelText(ctx, boxes, spec.leftValue, 98, 486, {
+    size: 50,
     weight: 900,
     color: spec.leftAccent,
     maxWidth: 356,
   });
-  drawReelText(ctx, boxes, spec.leftFormula, 98, 421, {
-    size: 16.5,
+  drawReelText(ctx, boxes, spec.leftFormula, 98, 545, {
+    size: 42,
     weight: 700,
-    color: "#cbd5e1",
+    color: hud.comebackHudSoftInk,
     maxWidth: 356,
   });
 
-  // Right live counter sub-card (x: 488..878, y: 350..434)
+  // Right live counter sub-card (x: 488..878, y: 425..567)
   const rightCard: ReelBox = {
     label: "right-live-counter",
     left: 488,
-    top: 350,
+    top: 425,
     right: 878,
-    bottom: 434,
+    bottom: 567,
   };
   assertReelSafeBox(rightCard);
-  ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
-  ctx.strokeStyle = spec.leaderSide === "right" ? spec.rightAccent : "rgba(148, 163, 184, 0.28)";
+  ctx.fillStyle = hud.comebackHudCounter;
+  ctx.strokeStyle = spec.leaderSide === "right" ? spec.rightAccent : hud.comebackHudCounterBorder;
   ctx.lineWidth = spec.leaderSide === "right" ? 2.5 : 1.2;
   ctx.beginPath();
   ctx.roundRect(
@@ -436,16 +439,16 @@ export function drawHookHeaderCard(
   ctx.fill();
   ctx.stroke();
 
-  drawReelText(ctx, boxes, spec.rightValue, 504, 392, {
-    size: 31,
+  drawReelText(ctx, boxes, spec.rightValue, 504, 486, {
+    size: 50,
     weight: 900,
     color: spec.rightAccent,
     maxWidth: 356,
   });
-  drawReelText(ctx, boxes, spec.rightFormula, 504, 421, {
-    size: 16.5,
+  drawReelText(ctx, boxes, spec.rightFormula, 504, 545, {
+    size: 42,
     weight: 700,
-    color: "#cbd5e1",
+    color: hud.comebackHudSoftInk,
     maxWidth: 356,
   });
 
@@ -465,7 +468,7 @@ export interface BottomProgressSpec {
 
 /**
  * Draws twin live progress bars + optional OVERTAKE / PHOTO FINISH status banner
- * strictly inside REEL_SAFE_BOUNDS (x: 66..894, y: 1432..1550).
+ * strictly inside REEL_SAFE_BOUNDS (x: 66..894, y: 1418..1554).
  */
 export function drawBottomProgressPills(
   ctx: CanvasRenderingContext2D,
@@ -477,14 +480,14 @@ export function drawBottomProgressPills(
   if (spec.statusBanner) {
     const bannerBox: ReelBox = {
       label: "comeback-status-banner",
-      left: 160,
-      top: 1432,
-      right: 800,
-      bottom: 1476,
+      left: 120,
+      top: 1418,
+      right: 840,
+      bottom: 1478,
     };
     assertReelSafeBox(bannerBox);
-    ctx.fillStyle = "rgba(7, 11, 22, 0.92)";
-    ctx.strokeStyle = spec.bannerAccent ?? "#fde047";
+    ctx.fillStyle = hud.comebackHudBanner;
+    ctx.strokeStyle = spec.bannerAccent ?? hud.comebackHudHighlight;
     ctx.lineWidth = 2.4;
     ctx.beginPath();
     ctx.roundRect(
@@ -497,12 +500,12 @@ export function drawBottomProgressPills(
     ctx.fill();
     ctx.stroke();
 
-    drawReelText(ctx, boxes, spec.statusBanner, 480, 1462, {
-      size: 21,
+    drawReelText(ctx, boxes, spec.statusBanner, 480, 1460, {
+      size: 42,
       weight: 900,
-      color: spec.bannerAccent ?? "#fde047",
+      color: spec.bannerAccent ?? hud.comebackHudHighlight,
       align: "center",
-      maxWidth: 600,
+      maxWidth: 680,
     });
   }
 
@@ -517,17 +520,17 @@ export function drawBottomProgressPills(
     const pill: ReelBox = {
       label: id,
       left,
-      top: 1486,
+      top: 1490,
       right,
-      bottom: 1550,
+      bottom: 1554,
     };
     assertReelSafeBox(pill);
     const w = right - left;
     const h = pill.bottom - pill.top;
     const p = Math.max(0, Math.min(1, progress));
 
-    ctx.fillStyle = "rgba(7, 11, 22, 0.88)";
-    ctx.strokeStyle = p >= 0.999 ? "#fde047" : accent;
+    ctx.fillStyle = hud.comebackHudPill;
+    ctx.strokeStyle = p >= 0.999 ? hud.comebackHudHighlight : accent;
     ctx.lineWidth = p >= 0.999 ? 2.6 : 1.8;
     ctx.beginPath();
     ctx.roundRect(left, pill.top, w, h, 14);
@@ -537,15 +540,15 @@ export function drawBottomProgressPills(
     // Progress fill track at bottom of pill
     const barLeft = left + 12;
     const barW = w - 24;
-    ctx.fillStyle = "rgba(148, 163, 184, 0.22)";
+    ctx.fillStyle = hud.comebackHudTrack;
     ctx.fillRect(barLeft, pill.bottom - 14, barW, 7);
     ctx.fillStyle = accent;
     ctx.fillRect(barLeft, pill.bottom - 14, barW * p, 7);
 
-    drawReelText(ctx, boxes, label, left + 14, pill.top + 34, {
-      size: 20,
+    drawReelText(ctx, boxes, label, left + 14, pill.top + 36, {
+      size: 42,
       weight: 800,
-      color: "#f8fafc",
+      color: hud.comebackHudInk,
       maxWidth: w - 28,
     });
   };
