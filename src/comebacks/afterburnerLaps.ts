@@ -7,6 +7,7 @@ import {
   drawFullBleedDualChamber,
   drawHookHeaderCard,
   formatCompactInt,
+  resolveComebackOutcome,
   type ComebackEvent,
   type ComebackSide,
   type ComebackTraceBase,
@@ -195,30 +196,15 @@ export function simulateAfterburnerLaps(): AfterburnerComebackTrace {
     rightKmhPerFrame[f] = right.speedKmh;
   }
 
-  const resolvedWinner: ComebackSide =
-    winner ?? (rightProgress[raceFrames - 1] >= leftProgress[raceFrames - 1] ? "right" : "left");
-  const earlyCheck = Math.floor(0.65 * victoryFrame);
-  const earlyLeader: ComebackSide =
-    leftProgress[earlyCheck] >= rightProgress[earlyCheck] ? "left" : "right";
-
-  let overtakeFrame = victoryFrame;
-  for (let f = victoryFrame; f >= 1; f--) {
-    const wProg = resolvedWinner === "right" ? rightProgress[f - 1] : leftProgress[f - 1];
-    const lProg = resolvedWinner === "right" ? leftProgress[f - 1] : rightProgress[f - 1];
-    if (wProg < lProg) {
-      overtakeFrame = f;
-      break;
-    }
-  }
-  events.push({
-    frame: overtakeFrame,
-    side: resolvedWinner,
-    kind: "overtake",
-    stageIndex: 9,
-    intensity: 1,
-    pitchStep: 18,
+  const { winner: resolvedWinner, earlyLeader, overtakeFrame } = resolveComebackOutcome({
+    provisionalWinner: winner,
+    victoryFrame,
+    raceFrames,
+    leftProgress,
+    rightProgress,
+    events,
+    overtakePitchStep: 18,
   });
-  events.sort((a, b) => a.frame - b.frame);
 
   const runnerUpProg =
     resolvedWinner === "right" ? leftProgress[victoryFrame] : rightProgress[victoryFrame];
