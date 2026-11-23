@@ -11,25 +11,35 @@ import {
   useVideoConfig,
 } from "remotion";
 import { paintPhysics, paintWave } from "../ball-drop/paint.ts";
-import { simulate, type Style } from "../ball-drop/sim.ts";
-import { prepareCountryMap, type CountryMapSlug } from "../country-maps/fourier.ts";
+import { simulate } from "../ball-drop/sim.ts";
+import { prepareCountryMap } from "../country-maps/fourier.ts";
 import { paintCountryMap } from "../country-maps/paint.ts";
 import { paintAurora } from "../repo-showcase/backdrop.ts";
 import { paintShowcaseOverlay } from "../repo-showcase/overlay.ts";
 import { SHOWCASE_TIMING, type SceneSegment } from "../repo-showcase/timing.ts";
 import { VIDEO } from "../settings.ts";
 import { paintStringArenaFrame } from "../string-arena/paint.ts";
-import { simulateStringRound, type StringRoundSlug } from "../string-arena/sim.ts";
+import { simulateStringRound } from "../string-arena/sim.ts";
 import { theme } from "../theme.ts";
 
 let showcaseFontsPromise: Promise<FontFace[][]> | undefined;
 function ensureShowcaseFontsLoaded() {
-  const family = JSON.stringify(theme.fontFamily);
-  showcaseFontsPromise ??= Promise.all([
-    document.fonts.load("500 24px " + family),
-    document.fonts.load("650 28px " + family),
-    document.fonts.load("800 64px " + family),
-  ]);
+  if (!showcaseFontsPromise) {
+    const family = JSON.stringify(theme.fontFamily);
+    const loading = Promise.all([
+      document.fonts.load("500 24px " + family),
+      document.fonts.load("650 28px " + family),
+      document.fonts.load("800 64px " + family),
+    ]).then((sets) => {
+      if (!sets.every((set) => set.length > 0)) throw new Error("Bundled font failed to load");
+      return sets;
+    });
+    const retryable = loading.catch((error) => {
+      if (showcaseFontsPromise === retryable) showcaseFontsPromise = undefined;
+      throw error;
+    });
+    showcaseFontsPromise = retryable;
+  }
   return showcaseFontsPromise;
 }
 
@@ -50,21 +60,20 @@ function cached<T>(store: Map<string, T>, key: string, make: () => T): T {
 
 // Every painter here is the same function the standalone composition uses, so the footage is the repo's own.
 function scenePainter(segment: SceneSegment): ScenePainter {
-  const variant = segment.variant ?? "";
   switch (segment.scene) {
     case "pendulum":
       return (ctx, sceneFrame) => paintWave(ctx, sceneFrame);
     case "ball-drop": {
-      const trace = cached(ballTraces, variant, () => simulate(variant as Style));
+      const trace = cached(ballTraces, segment.variant, () => simulate(segment.variant));
       return (ctx, sceneFrame) => paintPhysics(ctx, trace, sceneFrame);
     }
     case "string-arena": {
-      const trace = cached(stringTraces, variant, () => simulateStringRound(variant as StringRoundSlug));
+      const trace = cached(stringTraces, segment.variant, () => simulateStringRound(segment.variant));
       return (ctx, sceneFrame) =>
         paintStringArenaFrame(ctx, trace, sceneFrame, { isCombined: false, globalFrame: sceneFrame, atlas: null, fadeOutAtEnd: false });
     }
     case "country-map": {
-      const map = cached(countryMaps, variant, () => prepareCountryMap(variant as CountryMapSlug));
+      const map = cached(countryMaps, segment.variant, () => prepareCountryMap(segment.variant));
       return (ctx, sceneFrame) => paintCountryMap(ctx, map, sceneFrame);
     }
   }
@@ -129,14 +138,24 @@ export function RepoShowcaseShell() {
   const [handle] = useState(() => delayRender("Load bundled font for AnimationsRepoShowcase"));
 
   useEffect(() => {
+    let cancelled = false;
     ensureShowcaseFontsLoaded()
-      .then((sets) => {
-        if (!sets.every((set) => set.length > 0)) throw new Error("Bundled font failed to load");
+      .then(() => {
+        if (cancelled) return;
         setReady(true);
-        continueRender(handle);
       })
-      .catch(cancelRender);
+      .catch((error) => {
+        if (!cancelled) cancelRender(error);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [handle]);
+
+  // Paint child canvases in the ready commit before Remotion captures the frame.
+  useEffect(() => {
+    if (ready) continueRender(handle);
+  }, [ready, handle]);
 
   return (
     <AbsoluteFill style={{ background: theme.colors.showcase.backdrop }}>

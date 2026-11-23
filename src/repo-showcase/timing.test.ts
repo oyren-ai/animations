@@ -3,6 +3,7 @@ import test from "node:test";
 import { SCENE_PLAN, SHOWCASE_LINES } from "./script.ts";
 import {
   beatAtFrame,
+  buildShowcaseTiming,
   cueAtFrame,
   segmentAtFrame,
   SHOWCASE_FPS,
@@ -77,12 +78,20 @@ test("scene segments tile each scene beat and cut just before the named word", (
   assert.equal(segmentAtFrame(timing, timing.totalFrames - 1), null, "the end card has no scene layer");
 });
 
+test("one timing list supplies every audio accent and visual cut flash", () => {
+  const remixBeat = timing.beats.find((beat) => beat.id === "l4");
+  const expected = [...timing.segments.map((segment) => segment.fromFrame), remixBeat?.fromFrame ?? 0, timing.endCard.fromFrame]
+    .filter((frame) => frame > 0);
+  assert.deepEqual(timing.cutFrames, expected, "keep every boundary in its original order, including coincident accents");
+});
+
 test("every spoken word is captioned by its own phrase at the moment it is spoken", () => {
   for (const line of SHOWCASE_LINES) assert.ok(timing.cues.some((cue) => cue.lineId === line.id));
   const phraseCount = SHOWCASE_LINES.reduce((sum, line) => sum + line.phrases.length, 0);
   assert.equal(timing.cues.length, phraseCount);
   for (const [index, cue] of timing.cues.entries()) {
-    if (index > 0) assert.ok(cue.fromFrame >= timing.cues[index - 1].toFrame - 1, "cues overlap");
+    if (index > 0) assert.ok(cue.fromFrame >= timing.cues[index - 1].toFrame, "cues overlap");
+    assert.ok(cue.toFrame <= timing.totalFrames, "cue extends beyond the video");
     assert.ok(cue.toFrame - cue.fromFrame >= 15, `cue "${cue.text}" shorter than 0.25 s`);
   }
   for (const line of timing.lines) {
@@ -92,6 +101,20 @@ test("every spoken word is captioned by its own phrase at the moment it is spoke
       assert.ok(cue.text.includes(word.text.replace(/[^\w']/g, "")), `"${word.text}" not in "${cue.text}"`);
     }
   }
+});
+
+test("a neighboring early word mark cannot extend the previous caption into it", () => {
+  const shiftedVoice = {
+    ...SHOWCASE_VOICE_DATA,
+    lines: SHOWCASE_VOICE_DATA.lines.map((clip, index) => index === 1
+      ? { ...clip, words: clip.words.map((word, wordIndex) => wordIndex === 0 ? { ...word, startMs: -34 } : word) }
+      : clip),
+  };
+  const shifted = buildShowcaseTiming(shiftedVoice);
+  const previous = shifted.cues.filter((cue) => cue.lineId === "l1").at(-1);
+  const next = shifted.cues.find((cue) => cue.lineId === "l2");
+  assert.ok(previous && next);
+  assert.ok(previous.toFrame <= next.fromFrame, `captions overlap at ${previous.toFrame}/${next.fromFrame}`);
 });
 
 test("caption words carry their own frames so the spoken word can be highlighted", () => {

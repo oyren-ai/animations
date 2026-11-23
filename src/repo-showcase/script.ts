@@ -1,6 +1,9 @@
 // Script, scene plan and on-screen copy for AnimationsRepoShowcase.
 // Pure data: no Node imports, so the browser bundle and the tests share one source of truth.
 import { theme } from "../theme.ts";
+import type { Style } from "../ball-drop/sim.ts";
+import type { CountryMapSlug } from "../country-maps/fourier.ts";
+import type { StringRoundSlug } from "../string-arena/sim.ts";
 
 export const SHOWCASE_VOICE = { provider: "speechify", model: "simba-3.5", voiceId: "carly" } as const;
 
@@ -50,13 +53,10 @@ export const SHOWCASE_LINES: readonly ShowcaseLine[] = [
   },
 ];
 
-export interface ScenePlanEntry {
+interface ScenePlanFields {
   readonly line: ShowcaseLineId;
   /** The cut lands just before this spoken word; null means the start of the line's beat. */
   readonly atWord: string | null;
-  readonly scene: ShowcaseSceneId;
-  /** String round slug, drop style slug or country map slug. Pendulum waves have none. */
-  readonly variant: string | null;
   /** Frame of the source scene that plays at the cut. */
   readonly sceneStartFrame: number;
   /** Source frames advanced per video frame. */
@@ -66,6 +66,14 @@ export interface ScenePlanEntry {
   /** Vertical shift in pixels, so the arena clears the hook headline plate. */
   readonly offsetY: number;
 }
+
+type ScenePlanVariant =
+  | { readonly scene: "string-arena"; readonly variant: StringRoundSlug }
+  | { readonly scene: "ball-drop"; readonly variant: Style }
+  | { readonly scene: "country-map"; readonly variant: CountryMapSlug }
+  | { readonly scene: "pendulum"; readonly variant: null };
+
+export type ScenePlanEntry = ScenePlanFields & ScenePlanVariant;
 
 // Every scene here is a composition that lives on main, so a viewer can find each one in the repo.
 export const SCENE_PLAN: readonly ScenePlanEntry[] = [

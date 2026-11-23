@@ -320,12 +320,10 @@ function paintEndCard(ctx: CanvasRenderingContext2D, boxes: ReelBox[], frame: nu
 }
 
 function cutFlashAlpha(frame: number, timing: ShowcaseTiming): number {
-  const remixBeat = timing.beats.find((candidate) => candidate.id === "l4");
-  const boundaries = [...timing.segments.map((segment) => segment.fromFrame), remixBeat?.fromFrame ?? 0, timing.endCard.fromFrame];
   let alpha = 0;
-  for (const boundary of boundaries) {
+  for (const boundary of timing.cutFrames) {
     const since = frame - boundary;
-    if (boundary > 0 && since >= 0 && since < 5) alpha = Math.max(alpha, 0.34 * (1 - since / 5));
+    if (since >= 0 && since < 5) alpha = Math.max(alpha, 0.34 * (1 - since / 5));
   }
   return alpha;
 }
