@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { measureStereoLufsAndPeak } from "../audio-reactive/synth.ts";
 import { VIDEO } from "../settings.ts";
@@ -12,6 +13,7 @@ import {
 } from "./cyberTunnel.ts";
 import {
   buildHarmonicSortingAudio,
+  buildHarmonicSortingFeatures,
   paintHarmonicSortingFrame,
   simulateHarmonicSorting,
   SORT_ITEM_COUNT,
@@ -19,6 +21,7 @@ import {
 import { GPU_AUDIO_COMPOSITIONS, synthesizeGpuAudioSceneWav } from "./index.ts";
 import {
   buildWallCascadeAudio,
+  buildWallCascadeFeatures,
   HARMONIC_STRINGS,
   paintWallCascadeFrame,
   simulateWallCascade,
@@ -214,4 +217,48 @@ test("GPU_AUDIO_COMPOSITIONS and browser feature builders run cleanly without No
   } finally {
     (globalThis as Record<string, unknown>).Buffer = savedBuffer;
   }
+});
+
+test("changing the sorting seed invalidates both feature and encoded-audio caches", () => {
+  const traceA = simulateHarmonicSorting(20261117);
+  const featuresA = buildHarmonicSortingFeatures(traceA);
+  const audioA = buildHarmonicSortingAudio(traceA);
+  const traceB = simulateHarmonicSorting(20261119);
+  assert.notDeepEqual(traceB.initial, traceA.initial);
+  const featuresB = buildHarmonicSortingFeatures(traceB);
+  const audioB = buildHarmonicSortingAudio(traceB);
+  assert.ok(featuresB !== featuresA, "new seed reused earlier sorting features");
+  assert.ok(audioB !== audioA, "new seed reused earlier sorting WAV");
+  assert.strictEqual(audioB.buffer, featuresB.buffer);
+});
+
+test("changing the cascade seed invalidates both feature and encoded-audio caches", () => {
+  const traceA = simulateWallCascade(20261116);
+  const featuresA = buildWallCascadeFeatures(traceA);
+  const audioA = buildWallCascadeAudio(traceA);
+  const traceB = simulateWallCascade(20261119);
+  assert.notStrictEqual(traceB, traceA);
+  const featuresB = buildWallCascadeFeatures(traceB);
+  const audioB = buildWallCascadeAudio(traceB);
+  assert.ok(featuresB !== featuresA, "new seed reused earlier cascade features");
+  assert.ok(audioB !== audioA, "new seed reused earlier cascade WAV");
+  assert.strictEqual(audioB.buffer, featuresB.buffer);
+});
+
+test("tunnel radius guards near-axis angle and division", () => {
+  const radius = CYBER_TUNNEL_FRAGMENT_SHADER.split("float tunnelRadius(vec3 p) {")[1]?.split("vec3 evalScene")[0];
+  assert.ok(radius, "tunnelRadius shader function missing");
+  assert.match(radius, /float r = length\(q\);/);
+  assert.match(radius, /r > 1e-5 \? atan\(q\.y, q\.x\) : 0\.0/);
+  assert.match(radius, /r > 1e-5 \? max\(0\.9238795, octMetric \/ r\) : 1\.0/);
+  assert.doesNotMatch(radius, /length\(q\) \+ 1e-4/);
+});
+
+test("GPU shell resumes Remotion after the ready stage commits and cancels unmounted font loads", () => {
+  const shell = readFileSync(new URL("../components/GpuAudioSceneShell.tsx", import.meta.url), "utf8");
+  const loadingEffect = shell.slice(shell.lastIndexOf("ensureGpuSceneFontsLoaded()")).split("}, [handle]);")[0];
+  assert.ok(loadingEffect, "font loading effect missing");
+  assert.doesNotMatch(loadingEffect, /continueRender\(handle\)/);
+  assert.match(loadingEffect, /cancelled/);
+  assert.match(shell, /if \(ready\) continueRender\(handle\)/);
 });
