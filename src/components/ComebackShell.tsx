@@ -96,7 +96,7 @@ export function ComebackShell({ slug }: { slug: ComebackSlug }) {
   }, [handle]);
 
   return (
-    <AbsoluteFill style={{ background: "#090e1c" }}>
+    <AbsoluteFill style={{ background: theme.colors.comebackHudShellBackground }}>
       {ready && (
         <>
           <Sequence durationInFrames={def.raceFrames}>

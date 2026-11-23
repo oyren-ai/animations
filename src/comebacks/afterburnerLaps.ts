@@ -25,16 +25,8 @@ export const RIGHT_MAX_OVERDRIVE_KMH = 13000;
 const KMH_TO_LAPS_PER_SEC = 5.22 / LEFT_STEADY_KMH; // 900 km/h => 5.22 laps/s
 const SUBSTEPS = 16;
 
-const SPEEDWAY_PALETTE: DualChamberPalette = {
-  leftBgTop: "#140e2e",
-  leftBgBottom: "#211548",
-  leftGrid: "#8b5cf6",
-  leftAccent: "#a78bfa",
-  rightBgTop: "#071c2b",
-  rightBgBottom: "#0b2e46",
-  rightGrid: "#06b6d4",
-  rightAccent: "#22d3ee",
-};
+const SPEEDWAY_PALETTE: DualChamberPalette = theme.colors.comebackHudAfterburnerPalette;
+const SPEEDWAY_EFFECTS = theme.colors.comebackHudAfterburnerEffects;
 
 export interface GateFlash {
   frame: number;
@@ -333,7 +325,8 @@ export function paintAfterburnerLapsFrame(
     const gy = gf.atTop ? TRACK_TOP_Y : TRACK_BOTTOM_Y;
     ctx.save();
     ctx.globalAlpha = (1 - p) * (0.45 + gf.machRatio * 0.5);
-    ctx.strokeStyle = gf.side === "left" ? SPEEDWAY_PALETTE.leftAccent : "#ffffff";
+    ctx.strokeStyle =
+      gf.side === "left" ? SPEEDWAY_PALETTE.leftAccent : theme.colors.comebackHudPureWhite;
     ctx.lineWidth = 4 * (1 - p) + 1;
     ctx.beginPath();
     ctx.arc(gx, gy, 24 + p * 180, 0, Math.PI * 2);
@@ -354,8 +347,14 @@ export function paintAfterburnerLapsFrame(
     leftCenterX,
     Math.max(lTrailTop + 1, lTrailBot),
   );
-  lGrad.addColorStop(0, lDir === 1 ? "rgba(167, 139, 250, 0)" : "rgba(167, 139, 250, 0.75)");
-  lGrad.addColorStop(1, lDir === 1 ? "rgba(167, 139, 250, 0.75)" : "rgba(167, 139, 250, 0)");
+  lGrad.addColorStop(
+    0,
+    lDir === 1 ? SPEEDWAY_EFFECTS.leftTrailClear : SPEEDWAY_EFFECTS.leftTrailBright,
+  );
+  lGrad.addColorStop(
+    1,
+    lDir === 1 ? SPEEDWAY_EFFECTS.leftTrailBright : SPEEDWAY_EFFECTS.leftTrailClear,
+  );
   ctx.fillStyle = lGrad;
   ctx.fillRect(leftCenterX - 18, lTrailTop, 36, Math.max(4, lTrailBot - lTrailTop));
 
@@ -363,7 +362,7 @@ export function paintAfterburnerLapsFrame(
   ctx.beginPath();
   ctx.arc(leftCenterX, ly, 22, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = theme.colors.comebackHudPureWhite;
   ctx.beginPath();
   ctx.arc(leftCenterX, ly, 10, 0, Math.PI * 2);
   ctx.fill();
@@ -380,9 +379,9 @@ export function paintAfterburnerLapsFrame(
     // Full-track relativistic plasma ribbon wake when supersonic!
     ctx.globalAlpha = Math.min(0.68, (machNorm - 0.3) * 0.85);
     const ribGrad = ctx.createLinearGradient(rightCenterX - 90, 0, rightCenterX + 90, 0);
-    ribGrad.addColorStop(0, "rgba(34, 211, 238, 0)");
-    ribGrad.addColorStop(0.5, "#22d3ee");
-    ribGrad.addColorStop(1, "rgba(34, 211, 238, 0)");
+    ribGrad.addColorStop(0, SPEEDWAY_EFFECTS.rightTrailClear);
+    ribGrad.addColorStop(0.5, SPEEDWAY_PALETTE.rightAccent);
+    ribGrad.addColorStop(1, SPEEDWAY_EFFECTS.rightTrailClear);
     ctx.fillStyle = ribGrad;
     ctx.fillRect(rightCenterX - 90, TRACK_TOP_Y, 180, TRACK_LENGTH_PX);
   }
@@ -397,8 +396,14 @@ export function paintAfterburnerLapsFrame(
     rightCenterX,
     Math.max(rTrailTop + 1, rTrailBot),
   );
-  rGrad.addColorStop(0, rDir === 1 ? "rgba(34, 211, 238, 0)" : "rgba(255, 255, 255, 0.92)");
-  rGrad.addColorStop(1, rDir === 1 ? "rgba(255, 255, 255, 0.92)" : "rgba(34, 211, 238, 0)");
+  rGrad.addColorStop(
+    0,
+    rDir === 1 ? SPEEDWAY_EFFECTS.rightTrailClear : SPEEDWAY_EFFECTS.rightTrailBright,
+  );
+  rGrad.addColorStop(
+    1,
+    rDir === 1 ? SPEEDWAY_EFFECTS.rightTrailBright : SPEEDWAY_EFFECTS.rightTrailClear,
+  );
   ctx.fillStyle = rGrad;
   const beamHalfW = 14 + machNorm * 28;
   ctx.fillRect(
@@ -410,7 +415,7 @@ export function paintAfterburnerLapsFrame(
 
   // Mach shock cone V-wings
   if (rightKmh >= 900) {
-    ctx.strokeStyle = "#fde047";
+    ctx.strokeStyle = theme.colors.comebackHudHighlight;
     ctx.lineWidth = 3.2;
     ctx.beginPath();
     ctx.moveTo(rightCenterX - 58, ry - rDir * 44);
@@ -423,7 +428,7 @@ export function paintAfterburnerLapsFrame(
   ctx.beginPath();
   ctx.arc(rightCenterX, ry, 20 + machNorm * 14, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = theme.colors.comebackHudPureWhite;
   ctx.beginPath();
   ctx.arc(rightCenterX, ry, 10 + machNorm * 6, 0, Math.PI * 2);
   ctx.fill();
@@ -439,8 +444,10 @@ export function paintAfterburnerLapsFrame(
   };
   assertReelSafeBox(scoreCard);
   ctx.save();
-  ctx.fillStyle = "rgba(7, 11, 22, 0.84)";
-  ctx.strokeStyle = overtaken ? SPEEDWAY_PALETTE.rightAccent : "rgba(226, 232, 240, 0.25)";
+  ctx.fillStyle = theme.colors.comebackHudSurface;
+  ctx.strokeStyle = overtaken
+    ? SPEEDWAY_PALETTE.rightAccent
+    : theme.colors.comebackHudBorder;
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.roundRect(

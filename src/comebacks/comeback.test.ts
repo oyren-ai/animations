@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import test from "node:test";
 import { createStereoBuffer, measureStereoLufsAndPeak } from "../audio-reactive/synth.ts";
 import { VIDEO } from "../settings.ts";
 import { assertReelSafeBox, REEL_SAFE_BOUNDS } from "../shared/reelUtils.ts";
+import { theme } from "../theme.ts";
 import {
   buildComebackAudio,
   buildComebackFeatures,
@@ -26,9 +27,9 @@ function createMockCanvas2D() {
   const gradientStub = { addColorStop() {} };
 
   const ctx = {
-    fillStyle: "#000",
-    strokeStyle: "#fff",
-    shadowColor: "#000",
+    fillStyle: theme.colors.background,
+    strokeStyle: theme.colors.ink,
+    shadowColor: theme.colors.background,
     shadowBlur: 0,
     globalAlpha: 1,
     lineWidth: 1,
@@ -303,5 +304,16 @@ test("browser-imported comeback modules never reference Node Buffer", () => {
   for (const file of files) {
     const source = readFileSync(new URL(file, import.meta.url), "utf8");
     assert.ok(!/\bBuffer\b/.test(source), `${file} must use Uint8Array and DataView, not Node Buffer`);
+  }
+});
+
+test("comeback renderers and shell contain no raw hex or rgba colors", () => {
+  const files = readdirSync(new URL(".", import.meta.url))
+    .filter((file) => file.endsWith(".ts"))
+    .concat("../components/ComebackShell.tsx");
+  const rawColor = /(?:#[\da-f]{3,8}\b|rgba?\s*\()/i;
+  for (const file of files) {
+    const source = readFileSync(new URL(file, import.meta.url), "utf8");
+    assert.ok(!rawColor.test(source), `${file} must use theme.colors.comebackHud* tokens`);
   }
 });

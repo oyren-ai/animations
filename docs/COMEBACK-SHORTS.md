@@ -26,7 +26,7 @@ All four compositions separate visual world bounds from typography bounds:
 - **Spatial lane separation**: Left-lane hits pan to `-0.62` and right-lane hits pan to `+0.62` using constant-power `panGains()`.
 - **Endgame tension riser**: Once the early leader reaches `0.80` progress, a heartbeat kick pulse and rising Shepard harmonic shimmer accelerate toward `overtakeFrame`.
 - **Click-free octave wrap**: Each Shepard voice wraps while its spectral bell is silent; a sample-level regression checks both wrap points.
-- **Overtake sub-bass drop**: At `overtakeFrame` and `victoryFrame`, a pitched sub-bass drop (`150 Hz -> 46 Hz`) and major-9th pad chord resolve into a steady `-14 LUFS` bed (`<= -1.5 dBTP` true peak) that carries smoothly under `GetTheCodeEndCard`.
+- **Overtake sub-bass drop**: At `overtakeFrame` and `victoryFrame`, a pitched sub-bass drop (`176 Hz -> 44 Hz`) and major-9th pad chord resolve into a steady `-14 LUFS` bed (`<= -1.5 dBTP` true peak) that carries smoothly under `GetTheCodeEndCard`.
 
 ## Compositions
 

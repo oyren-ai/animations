@@ -1,6 +1,7 @@
 import type { FrameAudioFeatures } from "../audio-reactive/synth.ts";
 import { CLOSING_FRAMES, VIDEO } from "../settings.ts";
 import { type ReelBox } from "../shared/reelUtils.ts";
+import { theme } from "../theme.ts";
 import {
   createRng,
   drawBottomProgressPills,
@@ -29,16 +30,8 @@ export function fortressWallY(index: number): number {
   return FORTRESS_FIRST_WALL_Y + index * FORTRESS_WALL_STEP_Y;
 }
 
-const FORTRESS_PALETTE: DualChamberPalette = {
-  leftBgTop: "#240b1f",
-  leftBgBottom: "#381030",
-  leftGrid: "#db2777",
-  leftAccent: "#f472b6",
-  rightBgTop: "#07211b",
-  rightBgBottom: "#0c352b",
-  rightGrid: "#10b981",
-  rightAccent: "#34d399",
-};
+const FORTRESS_PALETTE: DualChamberPalette = theme.colors.comebackHudFortressPalette;
+const FORTRESS_EFFECTS = theme.colors.comebackHudFortressEffects;
 
 // Identical 10-wall brick counts on both Left and Right (total = 7,850 bricks). The steady 450 bricks/s laser finishes
 // at 7,850 / 450 = 17.4 s, so the last wall is sized to leave it under 8% short when the Splitter breaks through.
@@ -542,10 +535,10 @@ export function paintSplitterFortressFrame(
         }
 
         ctx.fillStyle = isNextCut
-          ? "#ffffff"
+          ? theme.colors.comebackHudPureWhite
           : wIdx === broken
             ? accent
-            : "rgba(148, 163, 184, 0.42)";
+            : FORTRESS_EFFECTS.futureWall;
         ctx.globalAlpha = wIdx === broken ? 0.92 : 0.55;
         ctx.fillRect(bx, by, cellW - 3, cellH - 3);
       }
@@ -574,7 +567,7 @@ export function paintSplitterFortressFrame(
     ctx.save();
     for (const ex of emitters) {
       // Wide outer plasma beam
-      ctx.strokeStyle = "rgba(244, 114, 182, 0.34)";
+      ctx.strokeStyle = FORTRESS_EFFECTS.laserGlow;
       ctx.lineWidth = 11 + feat.kickImpulse * 6;
       ctx.beginPath();
       ctx.moveTo(ex, 22);
@@ -582,7 +575,7 @@ export function paintSplitterFortressFrame(
       ctx.stroke();
 
       // Core white-hot beam
-      ctx.strokeStyle = "#fdf2f8";
+      ctx.strokeStyle = FORTRESS_EFFECTS.laserCore;
       ctx.lineWidth = 3.2;
       ctx.beginPath();
       ctx.moveTo(ex, 22);
@@ -590,7 +583,7 @@ export function paintSplitterFortressFrame(
       ctx.stroke();
     }
     // Cutting spark flare at target brick
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = theme.colors.comebackHudPureWhite;
     ctx.beginPath();
     ctx.arc(
       leftTarget.laserTargetX,
@@ -630,7 +623,8 @@ export function paintSplitterFortressFrame(
     const baseLeft = b.side === "left" ? 22 : 562;
     ctx.save();
     ctx.globalAlpha = (1 - p) * 0.88;
-    ctx.fillStyle = b.side === "left" ? FORTRESS_PALETTE.leftAccent : "#6ee7b7";
+    ctx.fillStyle =
+      b.side === "left" ? FORTRESS_PALETTE.leftAccent : FORTRESS_EFFECTS.rightDebris;
     for (let k = 0; k < 12; k++) {
       const px = baseLeft + k * 42 + Math.cos(k * 1.7 + b.wallIndex) * age * 3;
       const py = b.y + age * (2.8 + (k % 3) * 1.6) + 0.12 * age * age;

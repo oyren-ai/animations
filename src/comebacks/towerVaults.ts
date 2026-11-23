@@ -135,16 +135,7 @@ export const VAULT_CONFIGS: Record<VaultComebackSlug, VaultSceneConfig> = {
     rightBallSpeed: 1660,
     titanSpeedGrowth: 1.068, // unused in multiply-balls mode
     titanMaxSpeed: 2750, // unused in multiply-balls mode
-    palette: {
-      leftBgTop: "#130e29",
-      leftBgBottom: "#1d1440",
-      leftGrid: "#7c3aed",
-      leftAccent: "#a78bfa",
-      rightBgTop: "#0b1d16",
-      rightBgBottom: "#112f22",
-      rightGrid: "#4ade80",
-      rightAccent: "#c8ff85",
-    },
+    palette: theme.colors.comebackHudTowerPalette,
   },
   "titan-hammer-vs-swarm": {
     slug: "titan-hammer-vs-swarm",
@@ -164,16 +155,7 @@ export const VAULT_CONFIGS: Record<VaultComebackSlug, VaultSceneConfig> = {
     rightBallSpeed: 480,
     titanSpeedGrowth: 1.09,
     titanMaxSpeed: 2750,
-    palette: {
-      leftBgTop: "#0a192c",
-      leftBgBottom: "#0f2744",
-      leftGrid: "#0284c7",
-      leftAccent: "#38bdf8",
-      rightBgTop: "#231208",
-      rightBgBottom: "#381c0b",
-      rightGrid: "#ea580c",
-      rightAccent: "#fbbf24",
-    },
+    palette: theme.colors.comebackHudTitanPalette,
   },
 };
 
@@ -759,17 +741,19 @@ export function paintVaultComebackFrame(
       const isCurrent = idx === broken;
 
       // Dark armor base across full lane width
-      ctx.fillStyle = "rgba(9, 14, 28, 0.9)";
+      ctx.fillStyle = theme.colors.comebackHudVaultEffects.floorArmor;
       ctx.fillRect(slabLeft, y, slabW, VAULT_FLOOR_THICKNESS);
 
       // Remaining HP neon fill bar
-      ctx.fillStyle = isCurrent ? accent : "rgba(148, 163, 184, 0.38)";
+      ctx.fillStyle = isCurrent ? accent : theme.colors.comebackHudVaultEffects.futureFloor;
       ctx.globalAlpha = isCurrent ? 0.92 : 0.58;
       ctx.fillRect(slabLeft, y, slabW * hpRatio, VAULT_FLOOR_THICKNESS);
       ctx.globalAlpha = 1;
 
       // Crisp top specular edge
-      ctx.fillStyle = isCurrent ? "#ffffff" : "rgba(255, 255, 255, 0.35)";
+      ctx.fillStyle = isCurrent
+        ? theme.colors.comebackHudPureWhite
+        : theme.colors.comebackHudVaultEffects.futureSpecular;
       ctx.fillRect(slabLeft, y, slabW, isCurrent ? 3 : 1.5);
 
       // Large active-floor label; the first floor sits below the expanded hook card.
@@ -827,7 +811,9 @@ export function paintVaultComebackFrame(
     const p = age / 26;
     ctx.save();
     ctx.globalAlpha = (1 - p) * sw.strength * 0.78;
-    ctx.strokeStyle = sw.side === "left" ? cfg.palette.leftAccent : "#fef08a";
+    ctx.strokeStyle = sw.side === "left"
+      ? cfg.palette.leftAccent
+      : theme.colors.comebackHudVaultEffects.titanShockwave;
     ctx.lineWidth = 4.5 * (1 - p) + 1.2;
     ctx.beginPath();
     ctx.arc(sw.x, sw.y, 22 + p * 230 * sw.strength, 0, Math.PI * 2);
@@ -870,26 +856,36 @@ export function paintVaultComebackFrame(
     const wakeLen = Math.min(260, 40 + rightState.titanBounces * 13);
     const wakeTop = tvy >= 0 ? ty - wakeLen : ty;
     const wakeGrad = ctx.createLinearGradient(tx, wakeTop, tx, wakeTop + wakeLen);
-    wakeGrad.addColorStop(0, tvy >= 0 ? "rgba(251, 191, 36, 0)" : "rgba(251, 191, 36, 0.72)");
-    wakeGrad.addColorStop(1, tvy >= 0 ? "rgba(251, 191, 36, 0.72)" : "rgba(251, 191, 36, 0)");
+    wakeGrad.addColorStop(
+      0,
+      tvy >= 0
+        ? theme.colors.comebackHudVaultEffects.titanWakeClear
+        : theme.colors.comebackHudVaultEffects.titanWakeBright,
+    );
+    wakeGrad.addColorStop(
+      1,
+      tvy >= 0
+        ? theme.colors.comebackHudVaultEffects.titanWakeBright
+        : theme.colors.comebackHudVaultEffects.titanWakeClear,
+    );
     ctx.fillStyle = wakeGrad;
     ctx.fillRect(tx - r * 0.72, wakeTop, r * 1.44, wakeLen);
 
     // Outer corona ring
     ctx.globalAlpha = 0.35 + feat.kickImpulse * 0.35;
-    ctx.fillStyle = "#f97316";
+    ctx.fillStyle = theme.colors.comebackHudVaultEffects.titanCorona;
     ctx.beginPath();
     ctx.arc(tx, ty, r * 1.55, 0, Math.PI * 2);
     ctx.fill();
 
     // Solar core
     ctx.globalAlpha = 1;
-    ctx.fillStyle = "#fbbf24";
+    ctx.fillStyle = cfg.palette.rightAccent;
     ctx.beginPath();
     ctx.arc(tx, ty, r, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = theme.colors.comebackHudPureWhite;
     ctx.beginPath();
     ctx.arc(tx, ty, r * 0.52, 0, Math.PI * 2);
     ctx.fill();
