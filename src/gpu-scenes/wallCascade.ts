@@ -13,6 +13,7 @@ import {
 } from "../audio-reactive/synth.ts";
 import { CLOSING_FRAMES, SCENE_FRAMES, TOTAL_FRAMES, VIDEO } from "../settings.ts";
 import { assertReelSafeBox, drawReelText, type ReelBox } from "../shared/reelUtils.ts";
+import { colorWithAlpha, theme } from "../theme.ts";
 
 export const WALL_CASCADE_BOUNDS = {
   left: 0,
@@ -39,14 +40,14 @@ export interface HarmonicStringDef {
 }
 
 export const HARMONIC_STRINGS: readonly HarmonicStringDef[] = [
-  { index: 0, ax: 0, ay: 180, bx: 1080, by: 520, frequency: 293.665, noteName: "D4", color: "#38bdf8" },
-  { index: 1, ax: 1080, ay: 180, bx: 0, by: 520, frequency: 349.228, noteName: "F4", color: "#c8ff85" },
-  { index: 2, ax: 0, ay: 640, bx: 1080, by: 960, frequency: 391.995, noteName: "G4", color: "#f472b6" },
-  { index: 3, ax: 1080, ay: 640, bx: 0, by: 960, frequency: 440.0, noteName: "A4", color: "#a78bfa" },
-  { index: 4, ax: 0, ay: 960, bx: 1080, by: 1280, frequency: 523.251, noteName: "C5", color: "#2dd4bf" },
-  { index: 5, ax: 1080, ay: 960, bx: 0, by: 1280, frequency: 587.33, noteName: "D5", color: "#fbbf24" },
-  { index: 6, ax: 0, ay: 1400, bx: 1080, by: 1740, frequency: 659.255, noteName: "E5", color: "#38bdf8" },
-  { index: 7, ax: 1080, ay: 1400, bx: 0, by: 1740, frequency: 880.0, noteName: "A5", color: "#c8ff85" },
+  { index: 0, ax: 0, ay: 180, bx: 1080, by: 520, frequency: 293.665, noteName: "D4", color: theme.colors.gpuHud.cyan },
+  { index: 1, ax: 1080, ay: 180, bx: 0, by: 520, frequency: 349.228, noteName: "F4", color: theme.colors.primary },
+  { index: 2, ax: 0, ay: 640, bx: 1080, by: 960, frequency: 391.995, noteName: "G4", color: theme.colors.gpuHud.pink },
+  { index: 3, ax: 1080, ay: 640, bx: 0, by: 960, frequency: 440.0, noteName: "A4", color: theme.colors.gpuHud.violet },
+  { index: 4, ax: 0, ay: 960, bx: 1080, by: 1280, frequency: 523.251, noteName: "C5", color: theme.colors.gpuHud.teal },
+  { index: 5, ax: 1080, ay: 960, bx: 0, by: 1280, frequency: 587.33, noteName: "D5", color: theme.colors.gpuHud.amber },
+  { index: 6, ax: 0, ay: 1400, bx: 1080, by: 1740, frequency: 659.255, noteName: "E5", color: theme.colors.gpuHud.cyan },
+  { index: 7, ax: 1080, ay: 1400, bx: 0, by: 1740, frequency: 880.0, noteName: "A5", color: theme.colors.primary },
 ] as const;
 
 export interface CascadeEvent {
@@ -88,13 +89,13 @@ export interface WallCascadeTrace {
 }
 
 const ORB_PALETTE = [
-  "#c8ff85",
-  "#38bdf8",
-  "#f472b6",
-  "#2dd4bf",
-  "#a78bfa",
-  "#fbbf24",
-  "#60a5fa",
+  theme.colors.primary,
+  theme.colors.gpuHud.cyan,
+  theme.colors.gpuHud.pink,
+  theme.colors.gpuHud.teal,
+  theme.colors.gpuHud.violet,
+  theme.colors.gpuHud.amber,
+  theme.colors.gpuHud.blue,
 ] as const;
 
 function createRng(seed: number) {
@@ -125,6 +126,7 @@ function signedSegmentDistance(
 }
 
 let cachedCascadeTrace: WallCascadeTrace | null = null;
+let cachedCascadeFeatures: { buffer: StereoBuffer; features: FrameAudioFeatures[] } | null = null;
 let cachedCascadeAudio: { buffer: StereoBuffer; wav: Uint8Array; features: FrameAudioFeatures[] } | null = null;
 
 export function simulateWallCascade(seed = 20261116): WallCascadeTrace {
@@ -342,6 +344,8 @@ export function simulateWallCascade(seed = 20261116): WallCascadeTrace {
     });
   }
 
+  cachedCascadeFeatures = null;
+  cachedCascadeAudio = null;
   cachedCascadeTrace = {
     seed,
     frames,
@@ -353,8 +357,6 @@ export function simulateWallCascade(seed = 20261116): WallCascadeTrace {
   };
   return cachedCascadeTrace;
 }
-
-let cachedCascadeFeatures: { buffer: StereoBuffer; features: FrameAudioFeatures[] } | null = null;
 
 export function buildWallCascadeFeatures(
   trace = simulateWallCascade(),
@@ -490,9 +492,9 @@ export function paintWallCascadeFrame(
 
   // 1. Full-bleed 1080x1920 rich dark acoustic chamber gradient (zero black margins)
   const bg = ctx.createLinearGradient(0, 0, width, height);
-  bg.addColorStop(0, "#091326");
-  bg.addColorStop(0.5, "#0d1b33");
-  bg.addColorStop(1, "#12132e");
+  bg.addColorStop(0, theme.colors.gpuHud.wallBackgroundTop);
+  bg.addColorStop(0.5, theme.colors.gpuHud.wallBackgroundMid);
+  bg.addColorStop(1, theme.colors.gpuHud.wallBackgroundBottom);
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, width, height);
 
@@ -512,7 +514,7 @@ export function paintWallCascadeFrame(
         wave += Math.exp(-Math.abs(d - r) * 0.032) * Math.max(0, 1 - age * 1.6);
       }
       const intensity = Math.min(1, Math.max(0.08, 0.14 + wave * 0.42 + feat.kickImpulse * 0.18));
-      ctx.fillStyle = `rgba(116, 185, 209, ${(intensity * 0.36).toFixed(3)})`;
+      ctx.fillStyle = colorWithAlpha(theme.colors.gpuHud.accentRgb, intensity * 0.36);
       const dotR = 2.2 + intensity * 3.8;
       ctx.beginPath();
       ctx.arc(gx, gy, dotR, 0, Math.PI * 2);
@@ -530,7 +532,7 @@ export function paintWallCascadeFrame(
     ctx.strokeStyle =
       ev.kind === "string" && ev.stringIndex !== undefined
         ? HARMONIC_STRINGS[ev.stringIndex].color
-        : "#38bdf8";
+        : theme.colors.gpuHud.cyan;
     ctx.globalAlpha = Math.max(0, alpha);
     ctx.lineWidth = ev.kind === "string" ? 3.2 : 2.4;
     ctx.beginPath();
@@ -591,7 +593,7 @@ export function paintWallCascadeFrame(
     ctx.arc(orb.x, orb.y, orb.r, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = theme.colors.gpuHud.white;
     ctx.globalAlpha = 0.78;
     ctx.beginPath();
     ctx.arc(orb.x - orb.r * 0.24, orb.y - orb.r * 0.24, orb.r * 0.36, 0, Math.PI * 2);
@@ -601,13 +603,13 @@ export function paintWallCascadeFrame(
 
   // 6. Glowing true-edge perimeter energy rails at x=0, x=1080, y=0, y=1920
   const railThickness = 10;
-  ctx.fillStyle = `rgba(56, 189, 248, ${(0.32 + 0.68 * state.wallEnergy.left).toFixed(3)})`;
+  ctx.fillStyle = colorWithAlpha(theme.colors.gpuHud.cyanRgb, 0.32 + 0.68 * state.wallEnergy.left);
   ctx.fillRect(0, 0, railThickness, height);
-  ctx.fillStyle = `rgba(200, 255, 133, ${(0.32 + 0.68 * state.wallEnergy.right).toFixed(3)})`;
+  ctx.fillStyle = colorWithAlpha(theme.colors.gpuHud.limeRgb, 0.32 + 0.68 * state.wallEnergy.right);
   ctx.fillRect(width - railThickness, 0, railThickness, height);
-  ctx.fillStyle = `rgba(244, 114, 182, ${(0.32 + 0.68 * state.wallEnergy.top).toFixed(3)})`;
+  ctx.fillStyle = colorWithAlpha(theme.colors.gpuHud.pinkRgb, 0.32 + 0.68 * state.wallEnergy.top);
   ctx.fillRect(0, 0, width, railThickness);
-  ctx.fillStyle = `rgba(45, 212, 191, ${(0.32 + 0.68 * state.wallEnergy.bottom).toFixed(3)})`;
+  ctx.fillStyle = colorWithAlpha(theme.colors.gpuHud.tealRgb, 0.32 + 0.68 * state.wallEnergy.bottom);
   ctx.fillRect(0, height - railThickness, width, railThickness);
 
   // 7. Reel-safe HUD cards (strictly inside x: 60..900, y: 220..1560)
@@ -622,8 +624,8 @@ export function paintWallCascadeFrame(
   assertReelSafeBox(topCard);
 
   ctx.save();
-  ctx.fillStyle = "rgba(8, 15, 29, 0.74)";
-  ctx.strokeStyle = "rgba(200, 255, 133, 0.42)";
+  ctx.fillStyle = theme.colors.gpuHud.wallTopCard;
+  ctx.strokeStyle = theme.colors.gpuHud.wallTopBorder;
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.roundRect(topCard.left, topCard.top, topCard.right - topCard.left, topCard.bottom - topCard.top, 18);
@@ -633,13 +635,13 @@ export function paintWallCascadeFrame(
   drawReelText(ctx, boxes, "POLYPHONIC WALL CASCADE", 92, 280, {
     size: 30,
     weight: 800,
-    color: "#f8fafc",
+    color: theme.colors.gpuHud.ink,
     maxWidth: 590,
   });
   drawReelText(ctx, boxes, "8 HARMONIC STRINGS · STEREO PANNED", 92, 320, {
     size: 20,
     weight: 600,
-    color: "#c8ff85",
+    color: theme.colors.primary,
     maxWidth: 590,
   });
 
@@ -652,8 +654,8 @@ export function paintWallCascadeFrame(
   };
   assertReelSafeBox(bottomCard);
 
-  ctx.fillStyle = "rgba(8, 15, 29, 0.72)";
-  ctx.strokeStyle = "rgba(56, 189, 248, 0.36)";
+  ctx.fillStyle = theme.colors.gpuHud.wallBottomCard;
+  ctx.strokeStyle = theme.colors.gpuHud.wallBottomBorder;
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.roundRect(
@@ -675,7 +677,7 @@ export function paintWallCascadeFrame(
     {
       size: 23,
       weight: 700,
-      color: "#f1f5f9",
+      color: theme.colors.ink,
       maxWidth: 760,
     },
   );

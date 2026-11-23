@@ -14,6 +14,7 @@ import {
 } from "../audio-reactive/synth.ts";
 import { CLOSING_FRAMES, SCENE_FRAMES, TOTAL_FRAMES, VIDEO } from "../settings.ts";
 import { assertReelSafeBox, drawReelText, type ReelBox } from "../shared/reelUtils.ts";
+import { theme } from "../theme.ts";
 
 export const SORT_ITEM_COUNT = 96;
 export const SORT_SCENE_FRAMES = SCENE_FRAMES; // 720
@@ -323,7 +324,7 @@ export function simulateHarmonicSorting(seed = 20261117): HarmonicSortingTrace {
     "radix",
     "LSD RADIX SORT",
     "O(n·k) BUCKETS",
-    "#c8ff85",
+    theme.colors.primary,
     initial,
     radixSteps,
     408, // 6.80s
@@ -332,7 +333,7 @@ export function simulateHarmonicSorting(seed = 20261117): HarmonicSortingTrace {
     "quick",
     "QUICK SORT",
     "O(n log n) PIVOT",
-    "#38bdf8",
+    theme.colors.gpuHud.cyan,
     initial,
     quickSteps,
     552, // 9.20s
@@ -341,12 +342,14 @@ export function simulateHarmonicSorting(seed = 20261117): HarmonicSortingTrace {
     "heap",
     "MAX-HEAP SORT",
     "O(n log n) SIFT",
-    "#f472b6",
+    theme.colors.gpuHud.pink,
     initial,
     heapSteps,
     666, // 11.10s
   );
 
+  cachedSortFeatures = null;
+  cachedSortAudio = null;
   cachedSortTrace = {
     seed,
     initial,
@@ -488,7 +491,7 @@ export function buildHarmonicSortingAudio(
 }
 
 function valueColor(val: number, sortedVerified: boolean, active: boolean): string {
-  if (active) return "#ffffff";
+  if (active) return theme.colors.gpuHud.white;
   const norm = (val - 1) / (SORT_ITEM_COUNT - 1);
   const hue = Math.round(188 + norm * 135) % 360; // cyan -> indigo -> magenta -> lime
   const sat = sortedVerified ? 92 : 84;
@@ -543,19 +546,23 @@ export function paintHarmonicSortingFrame(
       ctx.fillRect(x + 0.8, bandBottom - barH, Math.max(2, colW - 1.6), barH);
 
       // Bright top cap on every bar
-      ctx.fillStyle = isCursor ? "#ffffff" : isVerified ? "#c8ff85" : "rgba(255,255,255,0.72)";
+      ctx.fillStyle = isCursor
+        ? theme.colors.gpuHud.white
+        : isVerified
+          ? theme.colors.primary
+          : theme.colors.gpuHud.sortActiveCap;
       ctx.fillRect(x + 0.8, bandBottom - barH, Math.max(2, colW - 1.6), 4);
 
       // Full-band vertical laser beam on active read/write cursors
       if (isCursor) {
-        ctx.fillStyle = "rgba(255, 255, 255, 0.24)";
+        ctx.fillStyle = theme.colors.gpuHud.sortCursorBeam;
         ctx.fillRect(x, bandTop, colW, bandH);
       }
     }
 
     // Crisp horizontal divider line between full-bleed bands
     if (bIdx > 0) {
-      ctx.fillStyle = "rgba(248, 250, 252, 0.35)";
+      ctx.fillStyle = theme.colors.gpuHud.sortDivider;
       ctx.fillRect(0, bandTop - 1.5, width, 3);
     }
 
@@ -571,8 +578,8 @@ export function paintHarmonicSortingFrame(
     assertReelSafeBox(cardBox);
 
     ctx.save();
-    ctx.fillStyle = "rgba(8, 13, 24, 0.78)";
-    ctx.strokeStyle = st.sorted ? "#c8ff85" : algo.accent;
+    ctx.fillStyle = theme.colors.gpuHud.sortCard;
+    ctx.strokeStyle = st.sorted ? theme.colors.primary : algo.accent;
     ctx.lineWidth = st.sorted ? 2.5 : 1.8;
     ctx.beginPath();
     ctx.roundRect(
@@ -589,7 +596,7 @@ export function paintHarmonicSortingFrame(
     drawReelText(ctx, boxes, `${algo.title} (${algo.complexity})${statusBadge}`, 90, cardTop + 42, {
       size: 25,
       weight: 800,
-      color: st.sorted ? "#c8ff85" : "#f8fafc",
+      color: st.sorted ? theme.colors.primary : theme.colors.gpuHud.ink,
       maxWidth: 720,
     });
 
@@ -600,7 +607,7 @@ export function paintHarmonicSortingFrame(
     drawReelText(ctx, boxes, statsLine, 90, cardTop + 76, {
       size: 19,
       weight: 600,
-      color: "#cbd5e1",
+      color: theme.colors.gpuHud.softInk,
       maxWidth: 720,
     });
     ctx.restore();
