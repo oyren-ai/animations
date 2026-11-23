@@ -34,3 +34,48 @@ test("unexpected encoder filters fail explicitly", () => {
   assert.throws(() => pngToBt709(["-c:v", "libx264"]), /filter/);
   assert.throws(() => pngToBt709(["-vf", "scale=540:960"]), /filter changed/);
 });
+
+test("scripts/render.mjs deduplicates overridden --crf and other default flags", async () => {
+  const renderModUrl = new URL("../scripts/render.mjs", import.meta.url).href;
+  const { buildRenderCliArgs } = (await import(renderModUrl)) as {
+    buildRenderCliArgs: (cli: string, argv: string[]) => { output: string; args: string[] };
+  };
+
+  const defaults = buildRenderCliArgs("/bin/remotion", []);
+  assert.deepEqual(defaults.args, [
+    "/bin/remotion",
+    "render",
+    "src/index.ts",
+    "PinballBumperMatrix",
+    "out/pinball-bumper-matrix.mp4",
+    "--codec=h264",
+    "--pixel-format=yuv420p",
+    "--crf=18",
+    "--concurrency=1",
+  ]);
+
+  const gpuOverride = buildRenderCliArgs("/bin/remotion", [
+    "CyberSynthShaderTunnel",
+    "out/cyber-synth-shader-tunnel.mp4",
+    "--gl=angle",
+    "--crf=17",
+    "--audio-codec=aac",
+    "--audio-bitrate=192k",
+  ]);
+  const crfFlags = gpuOverride.args.filter((a) => a === "--crf" || a.startsWith("--crf="));
+  assert.deepEqual(crfFlags, ["--crf=17"], "Expected --crf=17 only, without duplicate --crf=18");
+  assert.ok(gpuOverride.args.includes("--codec=h264"));
+  assert.ok(gpuOverride.args.includes("--pixel-format=yuv420p"));
+  assert.ok(gpuOverride.args.includes("--concurrency=1"));
+
+  const splitFlagOverride = buildRenderCliArgs("/bin/remotion", [
+    "PolyphonicWallCascade",
+    "out/wall.mp4",
+    "--crf",
+    "16",
+    "--concurrency",
+    "2",
+  ]);
+  assert.ok(!splitFlagOverride.args.includes("--crf=18"));
+  assert.ok(!splitFlagOverride.args.includes("--concurrency=1"));
+});
