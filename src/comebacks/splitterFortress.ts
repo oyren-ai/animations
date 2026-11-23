@@ -5,6 +5,7 @@ import { theme } from "../theme.ts";
 import {
   createRng,
   nextXorshift32State,
+  resolveComebackOutcome,
   drawBottomProgressPills,
   drawFullBleedDualChamber,
   drawHookHeaderCard,
@@ -379,30 +380,15 @@ export function simulateSplitterFortress(): SplitterComebackTrace {
     }
   }
 
-  const resolvedWinner: ComebackSide =
-    winner ?? (rightProgress[raceFrames - 1] >= leftProgress[raceFrames - 1] ? "right" : "left");
-  const earlyCheck = Math.floor(0.65 * victoryFrame);
-  const earlyLeader: ComebackSide =
-    leftProgress[earlyCheck] >= rightProgress[earlyCheck] ? "left" : "right";
-
-  let overtakeFrame = victoryFrame;
-  for (let f = victoryFrame; f >= 1; f--) {
-    const wProg = resolvedWinner === "right" ? rightProgress[f - 1] : leftProgress[f - 1];
-    const lProg = resolvedWinner === "right" ? leftProgress[f - 1] : rightProgress[f - 1];
-    if (wProg < lProg) {
-      overtakeFrame = f;
-      break;
-    }
-  }
-  events.push({
-    frame: overtakeFrame,
-    side: resolvedWinner,
-    kind: "overtake",
-    stageIndex: 9,
-    intensity: 1,
-    pitchStep: 14,
+  const { winner: resolvedWinner, earlyLeader, overtakeFrame } = resolveComebackOutcome({
+    provisionalWinner: winner,
+    victoryFrame,
+    raceFrames,
+    leftProgress,
+    rightProgress,
+    events,
+    overtakePitchStep: 14,
   });
-  events.sort((a, b) => a.frame - b.frame);
 
   const runnerUpRem =
     resolvedWinner === "right"
