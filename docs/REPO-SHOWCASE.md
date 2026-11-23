@@ -11,10 +11,10 @@ The voice, captions and end card claim only what `main` holds when the video is 
 | Beat | Spoken line | On screen (scene exists on `main`) |
 | :-- | :-- | :-- |
 | 1 hook | Every animation on your screen right now is TypeScript. And the whole repo is open source. | string arena, headline from frame 0 |
-| 2 physics | Deterministic physics at 60 frames per second. Pendulum waves, ball drops, and string battles. Zero After Effects. | pendulum wave, ball drop, string arena |
+| 2 physics | Pendulum waves. Ball drops. String battles. All deterministic, all 60 frames per second, zero After Effects. | pendulum wave, ball drop, string arena |
 | 3 math | Fourier epicycles redraw entire country borders from spinning circles. | country map (epicycles) |
 | 4 remix | Open it in an Oyren Codespace, change a line, and render in your browser. No local setup. | editor + terminal with real repo commands |
-| 5 end | Star it, fork it, remix it. | `github.com/oyren-ai/animations` + `oyren.ai/codespaces`, "AI-generated voiceover" |
+| 5 end | Star it, fork it, remix it. | `github.com/oyren-ai/animations` + `oyren.ai/codespaces`, "Voiceover: AI-generated" |
 
 ## Voice and timing
 

@@ -52,7 +52,7 @@ function collectWords(node: Mark | Mark[], text: string, out: { text: string; st
 
 function run(cmd: string, args: string[]): string {
   const result = spawnSync(cmd, args, { encoding: "utf8" });
-  if (result.status !== 0) throw new Error(`${cmd} failed: ${result.stderr?.slice(0, 300)}`);
+  if (result.status !== 0) throw new Error(`${cmd} failed: ${result.error?.message || result.stderr?.trim().slice(0, 300) || `exit status ${result.status}`}`);
   return result.stdout.trim();
 }
 

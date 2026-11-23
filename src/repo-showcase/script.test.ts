@@ -90,3 +90,9 @@ test("the voiceover is an English Speechify voice, not the French Patate voice",
   }
   assert.match(SHOWCASE_COPY.end.disclosure, /AI-generated/);
 });
+
+test("the published script table matches every spoken line and the on-screen disclosure", () => {
+  const doc = read("../../docs/REPO-SHOWCASE.md");
+  for (const line of SHOWCASE_LINES) assert.ok(doc.includes(line.text), `${line.id} differs from the spoken script`);
+  assert.ok(doc.includes(SHOWCASE_COPY.end.disclosure), "the documented disclosure differs from the end card");
+});
