@@ -352,6 +352,8 @@ function catmullRom(p0: number, p1: number, p2: number, p3: number, t: number): 
   );
 }
 
+const TRUE_PEAK_FRACTIONS = [0.25, 0.5, 0.75] as const;
+
 function measureChannelTruePeakLinear(channel: Float32Array): number {
   let maxPeak = 0;
   const n = channel.length;
@@ -363,7 +365,7 @@ function measureChannelTruePeakLinear(channel: Float32Array): number {
       const p1 = channel[i];
       const p2 = channel[i + 1];
       const p3 = channel[i + 2];
-      for (const frac of [0.25, 0.5, 0.75]) {
+      for (const frac of TRUE_PEAK_FRACTIONS) {
         const interp = Math.abs(catmullRom(p0, p1, p2, p3, frac));
         if (interp > maxPeak) maxPeak = interp;
       }
@@ -372,10 +374,7 @@ function measureChannelTruePeakLinear(channel: Float32Array): number {
   return maxPeak;
 }
 
-export function measureStereoLufsAndPeak(
-  left: Float32Array,
-  right: Float32Array,
-): { integratedLufs: number; truePeakDb: number; samplePeakDb: number } {
+function measureStereoIntegratedLufs(left: Float32Array, right: Float32Array): number {
   const kwL = applyKWeighting48k(left);
   const kwR = applyKWeighting48k(right);
   const blockSamples = Math.round(0.4 * STEREO_SAMPLE_RATE); // 400 ms gating block
@@ -418,7 +417,14 @@ export function measureStereoLufsAndPeak(
         : meanAbs;
   }
 
-  const integratedLufs = -0.691 + 10 * Math.log10(Math.max(1e-12, integratedZ));
+  return -0.691 + 10 * Math.log10(Math.max(1e-12, integratedZ));
+}
+
+export function measureStereoLufsAndPeak(
+  left: Float32Array,
+  right: Float32Array,
+): { integratedLufs: number; truePeakDb: number; samplePeakDb: number } {
+  const integratedLufs = measureStereoIntegratedLufs(left, right);
   let samplePeak = 0;
   for (let i = 0; i < left.length; i++) {
     samplePeak = Math.max(samplePeak, Math.abs(left[i]), Math.abs(right[i]));
@@ -444,9 +450,9 @@ export function calibrateStereoMaster(
   const ceilingLinear = 10 ** ((ceilingDbTp - 0.28) / 20);
 
   for (let pass = 0; pass < 3; pass++) {
-    const current = measureStereoLufsAndPeak(buf.left, buf.right);
-    if (!Number.isFinite(current.integratedLufs) || current.integratedLufs < -65) break;
-    const deltaDb = Math.max(-18, Math.min(24, targetLufs - current.integratedLufs));
+    const currentLufs = measureStereoIntegratedLufs(buf.left, buf.right);
+    if (!Number.isFinite(currentLufs) || currentLufs < -65) break;
+    const deltaDb = Math.max(-18, Math.min(24, targetLufs - currentLufs));
     const linearGain = 10 ** (deltaDb / 20);
     for (let i = 0; i < buf.left.length; i++) {
       buf.left[i] = ceilingLinear * Math.tanh((buf.left[i] * linearGain) / ceilingLinear);
