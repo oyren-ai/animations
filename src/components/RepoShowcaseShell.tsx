@@ -16,6 +16,7 @@ import { prepareCountryMap } from "../country-maps/fourier.ts";
 import { paintCountryMap } from "../country-maps/paint.ts";
 import { paintAurora } from "../repo-showcase/backdrop.ts";
 import { paintShowcaseOverlay } from "../repo-showcase/overlay.ts";
+import { createRenderGate } from "../repo-showcase/renderGate.ts";
 import { SHOWCASE_TIMING, type SceneSegment } from "../repo-showcase/timing.ts";
 import { VIDEO } from "../settings.ts";
 import { paintStringArenaFrame } from "../string-arena/paint.ts";
@@ -135,7 +136,15 @@ export function RepoShowcaseShell() {
   const { fps } = useVideoConfig();
   if (fps !== VIDEO.fps) throw new Error("RepoShowcaseShell requires 60 fps");
   const [ready, setReady] = useState(false);
-  const [handle] = useState(() => delayRender("Load bundled font for AnimationsRepoShowcase"));
+  const renderGate = useMemo(
+    () => createRenderGate(() => delayRender("Load bundled font for AnimationsRepoShowcase"), continueRender, cancelRender),
+    [],
+  );
+
+  useLayoutEffect(() => {
+    renderGate.start();
+    return () => renderGate.release(); // settle a pending font load on unmount
+  }, [renderGate]);
 
   useEffect(() => {
     let cancelled = false;
@@ -145,17 +154,17 @@ export function RepoShowcaseShell() {
         setReady(true);
       })
       .catch((error) => {
-        if (!cancelled) cancelRender(error);
+        if (!cancelled) renderGate.fail(error);
       });
     return () => {
       cancelled = true;
     };
-  }, [handle]);
+  }, [renderGate]);
 
   // Paint child canvases in the ready commit before Remotion captures the frame.
   useEffect(() => {
-    if (ready) continueRender(handle);
-  }, [ready, handle]);
+    if (ready) renderGate.release();
+  }, [ready, renderGate]);
 
   return (
     <AbsoluteFill style={{ background: theme.colors.showcase.backdrop }}>

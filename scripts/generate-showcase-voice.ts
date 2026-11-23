@@ -4,13 +4,13 @@
 //
 // Usage: SPEECHIFY_API_KEY=... node --import tsx scripts/generate-showcase-voice.ts
 // The key is read from the environment, never printed and never written to a file.
-import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SHOWCASE_LINES, SHOWCASE_VOICE } from "../src/repo-showcase/script.ts";
 import { leadingSilenceMs } from "../src/repo-showcase/wav.ts";
+import { runCommand as run } from "./lib/run-command.ts";
 
 const key = process.env.SPEECHIFY_API_KEY?.trim();
 if (!key) throw new Error("Set SPEECHIFY_API_KEY to generate the voiceover");
@@ -48,12 +48,6 @@ function collectWords(node: Mark | Mark[], text: string, out: { text: string; st
     });
   }
   for (const child of node.chunks ?? []) collectWords(child, text, out);
-}
-
-function run(cmd: string, args: string[]): string {
-  const result = spawnSync(cmd, args, { encoding: "utf8" });
-  if (result.status !== 0) throw new Error(`${cmd} failed: ${result.error?.message || result.stderr?.trim().slice(0, 300) || `exit status ${result.status}`}`);
-  return result.stdout.trim();
 }
 
 async function synthesize(text: string) {
