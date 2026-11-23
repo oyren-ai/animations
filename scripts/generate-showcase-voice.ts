@@ -10,6 +10,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SHOWCASE_LINES, SHOWCASE_VOICE } from "../src/repo-showcase/script.ts";
+import { leadingSilenceMs } from "../src/repo-showcase/wav.ts";
 
 const key = process.env.SPEECHIFY_API_KEY?.trim();
 if (!key) throw new Error("Set SPEECHIFY_API_KEY to generate the voiceover");
@@ -47,32 +48,6 @@ function collectWords(node: Mark | Mark[], text: string, out: { text: string; st
     });
   }
   for (const child of node.chunks ?? []) collectWords(child, text, out);
-}
-
-/** Milliseconds of leading silence (below -45 dBFS) in a 16-bit PCM wav. */
-function leadingSilenceMs(wav: Uint8Array): number {
-  const view = new DataView(wav.buffer, wav.byteOffset, wav.byteLength);
-  let offset = 12;
-  let sampleRate = 24000;
-  let channels = 1;
-  while (offset + 8 <= wav.byteLength) {
-    const id = String.fromCharCode(wav[offset], wav[offset + 1], wav[offset + 2], wav[offset + 3]);
-    const size = view.getUint32(offset + 4, true);
-    if (id === "fmt ") {
-      channels = view.getUint16(offset + 10, true);
-      sampleRate = view.getUint32(offset + 12, true);
-    }
-    if (id === "data") {
-      const threshold = 32768 * 10 ** (-45 / 20);
-      const frames = Math.floor(Math.min(size, wav.byteLength - offset - 8) / 2 / channels);
-      for (let i = 0; i < frames; i++) {
-        if (Math.abs(view.getInt16(offset + 8 + i * 2 * channels, true)) > threshold) return (i / sampleRate) * 1000;
-      }
-      return 0;
-    }
-    offset += 8 + size + (size % 2);
-  }
-  return 0;
 }
 
 function run(cmd: string, args: string[]): string {

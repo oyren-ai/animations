@@ -18,6 +18,7 @@ import {
 } from "../audio-reactive/synth.ts";
 import { SHOWCASE_FPS, SHOWCASE_TIMING, type ShowcaseTiming } from "./timing.ts";
 import { SHOWCASE_VOICE_DATA } from "./voice.generated.ts";
+import { parsePcm16Wav } from "./wav.ts";
 
 const BPM = 124;
 const BEAT = 60 / BPM;
@@ -32,32 +33,14 @@ export interface DecodedWav {
 
 /** Decodes a 16-bit PCM wav (mono or stereo) without any Node-specific helpers. */
 export function decodeStereoPcm16Wav(bytes: Uint8Array): DecodedWav {
-  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  let offset = 12;
-  let channels = 0;
-  let sampleRate = 0;
-  while (offset + 8 <= bytes.byteLength) {
-    const id = String.fromCharCode(bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3]);
-    const size = view.getUint32(offset + 4, true);
-    if (id === "fmt ") {
-      if (view.getUint16(offset + 8, true) !== 1 || view.getUint16(offset + 22, true) !== 16) throw new Error("expected 16-bit PCM wav");
-      channels = view.getUint16(offset + 10, true);
-      sampleRate = view.getUint32(offset + 12, true);
-    }
-    if (id === "data") {
-      if (channels < 1 || channels > 2) throw new Error("expected a mono or stereo wav");
-      const frames = Math.floor(Math.min(size, bytes.byteLength - offset - 8) / 2 / channels);
-      const left = new Float32Array(frames);
-      const right = new Float32Array(frames);
-      for (let i = 0; i < frames; i++) {
-        left[i] = view.getInt16(offset + 8 + i * 2 * channels, true) / 32768;
-        right[i] = channels === 2 ? view.getInt16(offset + 8 + (i * 2 + 1) * 2, true) / 32768 : left[i];
-      }
-      return { sampleRate, left, right };
-    }
-    offset += 8 + size + (size % 2);
+  const wav = parsePcm16Wav(bytes);
+  const left = new Float32Array(wav.frames);
+  const right = new Float32Array(wav.frames);
+  for (let i = 0; i < wav.frames; i++) {
+    left[i] = wav.samples[i * wav.channels] / 32768;
+    right[i] = wav.channels === 2 ? wav.samples[i * 2 + 1] / 32768 : left[i];
   }
-  throw new Error("wav without a data chunk");
+  return { sampleRate: wav.sampleRate, left, right };
 }
 
 /** Reads the five committed voice clips (48 kHz mono) as float samples, one array per script line. */
