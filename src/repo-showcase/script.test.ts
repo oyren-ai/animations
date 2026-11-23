@@ -31,12 +31,12 @@ test("every caption phrase fits two caption lines", () => {
   }
 });
 
-test("claim rule: nothing viewer-facing mentions what main does not hold (shaders, comebacks)", () => {
+test("the script claims only the scenes shown in this short", () => {
   const forbidden = /shader|webgl|glsl|comeback|audio-reactive|photo[- ]finish/i;
   const everything = [...SHOWCASE_LINES.map((line) => line.text), ...collectStrings(SHOWCASE_COPY)];
   assert.ok(everything.length > 15);
   for (const text of everything) {
-    assert.doesNotMatch(text, forbidden, `claim not backed by main: ${text}`);
+    assert.doesNotMatch(text, forbidden, `claim has no matching scene in this short: ${text}`);
   }
 });
 

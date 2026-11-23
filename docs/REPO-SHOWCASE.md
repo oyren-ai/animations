@@ -4,7 +4,7 @@ A 24 s, 1080x1920, 60 fps short that introduces this repo with a natural English
 
 ## Claim rule
 
-The voice, captions and end card claim only what `main` holds when the video is posted. Today that is TypeScript scenes for physics, pendulum waves, string arenas, ball-drop merges and Fourier country maps. Shader scenes (#6) and comebacks (#8) are not on `main`, so nothing in the video says the repo has them, and every scene shown is one a viewer can find in the repo.
+The voice, captions and end card claim only what `main` holds when the video is posted. This short shows TypeScript scenes for physics, pendulum waves, string arenas, ball-drop merges and Fourier country maps. Those scenes remain on `main` alongside the shader scenes from #6 and comeback races from #8, and every scene shown is one a viewer can find in the repo.
 
 ## Script (voice is spoken exactly as written; cuts come from the measured clips)
 

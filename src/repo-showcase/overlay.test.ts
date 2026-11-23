@@ -108,10 +108,17 @@ test("the end card names the repo, the remix link and the AI voice disclosure", 
   }
 });
 
-test("claim rule: nothing painted over the whole short mentions shaders or comebacks", () => {
+test("the overlay does not claim unshown shaders or comeback scenes", () => {
   const forbidden = /shader|webgl|glsl|comeback|audio-reactive|photo[- ]finish/i;
   for (let frame = 0; frame < timing.totalFrames; frame += 11) {
     for (const box of paintAt(frame)) assert.doesNotMatch(box.label, forbidden, `frame ${frame}: ${box.label}`);
+  }
+});
+
+test("showcase production modules and shell use shared theme color tokens", () => {
+  for (const file of ["backdrop.ts", "overlay.ts", "script.ts", "../components/RepoShowcaseShell.tsx"]) {
+    const source = readFileSync(new URL(file, import.meta.url), "utf8");
+    assert.ok(!/(?:#[\da-f]{3,8}\b|rgba?\s*\()/i.test(source), `${file} has a raw color outside theme.ts`);
   }
 });
 

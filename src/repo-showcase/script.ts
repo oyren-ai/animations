@@ -1,5 +1,6 @@
 // Script, scene plan and on-screen copy for AnimationsRepoShowcase.
 // Pure data: no Node imports, so the browser bundle and the tests share one source of truth.
+import { theme } from "../theme.ts";
 
 export const SHOWCASE_VOICE = { provider: "speechify", model: "simba-3.5", voiceId: "carly" } as const;
 
@@ -84,10 +85,17 @@ export const SHOWCASE_COPY = {
   remix: {
     title: "Oyren Codespace · animations",
     file: "src/theme.ts",
-    code: ["export const theme = {", "  colors: {", '    background: "#080d12",', '    primary: "#c8ff85",', '    accent: "#74b9d1",', "  },"],
+    code: [
+      "export const theme = {",
+      "  colors: {",
+      `    background: "${theme.colors.background}",`,
+      `    primary: "${theme.colors.primary}",`,
+      `    accent: "${theme.colors.accent}",`,
+      "  },",
+    ],
     editLineIndex: 3,
-    valueBefore: '"#c8ff85"',
-    valueAfter: '"#ff7ad9"',
+    valueBefore: `"${theme.colors.primary}"`,
+    valueAfter: `"${theme.colors.showcase.remixEditedPrimary}"`,
     command: "pnpm render PendulumWave out/pendulum-wave.mp4",
     done: "✓ 1080x1920 · 60 fps · out/pendulum-wave.mp4",
   },

@@ -3,31 +3,25 @@
 // REEL_SAFE_BOUNDS, and the painter returns the boxes so tests can check them. Pure and browser-safe.
 import { VIDEO } from "../settings.ts";
 import { drawReelText, type ReelBox } from "../shared/reelUtils.ts";
-import { easeOut, theme } from "../theme.ts";
+import { colorWithAlpha, easeOut, theme } from "../theme.ts";
 import { SHOWCASE_COPY } from "./script.ts";
 import { beatAtFrame, cueAtFrame, SHOWCASE_TIMING, type ShowcaseTiming } from "./timing.ts";
 
 export const CAPTION_PANEL = { left: 60, right: 900, top: 1290, bottom: 1540 } as const;
 export const REMIX_WINDOW = { left: 60, right: 900, top: 250, bottom: 1230 } as const;
 
-const SANS = '"Inter Variable", Inter, sans-serif';
+const SANS = `"${theme.fontFamily}", Inter, sans-serif`;
 const MONO = 'ui-monospace, "JetBrains Mono", "SF Mono", Consolas, "DejaVu Sans Mono", monospace';
-const WHITE = "#f7fafc";
-const MUTED = "rgba(241,245,249,0.5)";
-const SOFT = "rgba(241,245,249,0.82)";
+const SHOWCASE = theme.colors.showcase;
+const WHITE = SHOWCASE.ink;
+const MUTED = SHOWCASE.muted;
+const SOFT = SHOWCASE.softInk;
 const LIME = theme.colors.primary;
 const BLUE = theme.colors.accent;
-const NAVY = "5,9,14";
 const CENTER_X = 480;
 
-/** Every filled surface as rgba(). Kept off near-black so no panel reads as empty to the pixel-fill gate. */
-export const SHOWCASE_SURFACES = {
-  hookPlate: `rgba(${NAVY},0.95)`,
-  caption: `rgba(${NAVY},0.94)`,
-  window: "rgba(7,12,18,0.95)",
-  titleBar: "rgba(20,32,43,0.96)",
-  terminal: "rgba(12,19,28,0.97)",
-} as const;
+/** Filled surfaces stay above near-black, including the terminal panel. */
+export const SHOWCASE_SURFACES = SHOWCASE.surfaces;
 
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
 
@@ -127,10 +121,10 @@ function drawCaptionWords(
 function paintHook(ctx: CanvasRenderingContext2D, boxes: ReelBox[]): void {
   // A near-opaque plate hides the scene's own header and cards so the headline is the only text up here.
   const plate = ctx.createLinearGradient(0, 190, 0, 880);
-  plate.addColorStop(0, `rgba(${NAVY},0)`);
+  plate.addColorStop(0, SHOWCASE.hookPlateClear);
   plate.addColorStop(0.06, SHOWCASE_SURFACES.hookPlate);
   plate.addColorStop(0.72, SHOWCASE_SURFACES.hookPlate);
-  plate.addColorStop(1, `rgba(${NAVY},0)`);
+  plate.addColorStop(1, SHOWCASE.hookPlateClear);
   ctx.fillStyle = plate;
   ctx.fillRect(0, 190, VIDEO.width, 690);
   ctx.fillStyle = LIME;
@@ -159,7 +153,7 @@ function paintCaption(ctx: CanvasRenderingContext2D, boxes: ReelBox[], frame: nu
   const fadeOut = index === lineCues.length - 1 ? clamp01((cue.toFrame - frame) / 5) : 1;
   ctx.save();
   ctx.globalAlpha = Math.min(fadeIn, fadeOut);
-  roundedPanel(ctx, CAPTION_PANEL, 40, SHOWCASE_SURFACES.caption, "rgba(200,255,133,0.38)");
+  roundedPanel(ctx, CAPTION_PANEL, 40, SHOWCASE_SURFACES.caption, SHOWCASE.captionBorder);
   const words = cue.words.map((word) => ({
     text: word.text,
     color: frame < word.startFrame ? MUTED : frame < word.endFrame ? LIME : WHITE,
@@ -193,7 +187,7 @@ function drawCodeLine(
     const width = ctx.measureText(shown).width;
     if (shown.trim() !== "") {
       if (edit && token === valueBefore && edit.selectAlpha > 0) {
-        ctx.fillStyle = `rgba(116,185,209,${edit.selectAlpha})`;
+        ctx.fillStyle = colorWithAlpha(SHOWCASE.accentRgb, edit.selectAlpha);
         ctx.fillRect(cursor - 6, baseline - CODE_SIZE + 4, width + 12, CODE_SIZE + 12);
       }
       const color =
@@ -216,9 +210,9 @@ function paintRemix(ctx: CanvasRenderingContext2D, boxes: ReelBox[], frame: numb
   ctx.save();
   ctx.globalAlpha = enter;
   ctx.translate(0, (1 - enter) * 36);
-  roundedPanel(ctx, W, 30, SHOWCASE_SURFACES.window, "rgba(116,185,209,0.4)");
+  roundedPanel(ctx, W, 30, SHOWCASE_SURFACES.window, SHOWCASE.windowBorder);
   roundedPanel(ctx, { left: W.left, top: W.top, right: W.right, bottom: W.top + 70 }, [30, 30, 0, 0], SHOWCASE_SURFACES.titleBar);
-  for (const [index, color] of ["#ff5f57", "#febc2e", "#28c840"].entries()) {
+  for (const [index, color] of SHOWCASE.windowControls.entries()) {
     ctx.beginPath();
     ctx.arc(96 + index * 30, W.top + 35, 9, 0, Math.PI * 2);
     ctx.fillStyle = color;
@@ -229,7 +223,7 @@ function paintRemix(ctx: CanvasRenderingContext2D, boxes: ReelBox[], frame: numb
   const tabWidth = drawReelText(ctx, boxes, remix.file, 96, W.top + 134, { size: 24, weight: 600, fontFamily: MONO, color: LIME, maxWidth: 400 });
   ctx.fillStyle = LIME;
   ctx.fillRect(96, W.top + 146, tabWidth.right - tabWidth.left, 3);
-  ctx.fillStyle = "rgba(255,255,255,0.08)";
+  ctx.fillStyle = SHOWCASE.subtleLine;
   ctx.fillRect(W.left, W.top + 164, W.right - W.left, 1);
 
   const sinceEdit = frame - editFrame;
@@ -245,13 +239,13 @@ function paintRemix(ctx: CanvasRenderingContext2D, boxes: ReelBox[], frame: numb
     const hex = /"(#[0-9a-f]{6})"/i.exec(line)?.[1];
     if (hex) {
       const chip = isEdit && edited ? remix.valueAfter.replaceAll('"', "") : hex;
-      roundedPanel(ctx, { left: end + 22, top: baseline - 28, right: end + 52, bottom: baseline + 2 }, 8, chip, "rgba(255,255,255,0.25)");
+      roundedPanel(ctx, { left: end + 22, top: baseline - 28, right: end + 52, bottom: baseline + 2 }, 8, chip, SHOWCASE.chipBorder);
     }
   }
 
   const terminalTop = W.top + 560;
   roundedPanel(ctx, { left: W.left, top: terminalTop, right: W.right, bottom: W.bottom }, [0, 0, 30, 30], SHOWCASE_SURFACES.terminal);
-  ctx.fillStyle = "rgba(255,255,255,0.1)";
+  ctx.fillStyle = SHOWCASE.strongLine;
   ctx.fillRect(W.left, terminalTop, W.right - W.left, 1);
   drawReelText(ctx, boxes, "TERMINAL", 96, terminalTop + 56, { size: 22, weight: 700, color: MUTED, maxWidth: 300 });
   const promptY = terminalTop + 126;
@@ -266,7 +260,7 @@ function paintRemix(ctx: CanvasRenderingContext2D, boxes: ReelBox[], frame: numb
     const barY = terminalTop + 222;
     drawReelText(ctx, boxes, "Rendering PendulumWave", 96, barY - 16, { size: 26, weight: 600, color: SOFT, maxWidth: 420 });
     drawReelText(ctx, boxes, `frame ${Math.round(pct * 900)}/900`, 804, barY - 16, { size: 26, weight: 600, fontFamily: MONO, color: MUTED, align: "right", maxWidth: 300 });
-    roundedPanel(ctx, { left: 96, top: barY, right: 804, bottom: barY + 24 }, 12, "rgba(255,255,255,0.1)");
+    roundedPanel(ctx, { left: 96, top: barY, right: 804, bottom: barY + 24 }, 12, SHOWCASE.strongLine);
     if (pct > 0) {
       const fill = ctx.createLinearGradient(96, 0, 804, 0);
       fill.addColorStop(0, LIME);
@@ -322,7 +316,7 @@ function paintEndCard(ctx: CanvasRenderingContext2D, boxes: ReelBox[], frame: nu
   rise(2, () => drawReelText(ctx, boxes, end.url, CENTER_X, 900, { size: 60, weight: 800, color: LIME, align: "center", maxWidth: 800 }));
   rise(3, () => drawReelText(ctx, boxes, end.remix, CENTER_X, 995, { size: 42, weight: 650, color: WHITE, align: "center", maxWidth: 800 }));
   rise(4, () => drawReelText(ctx, boxes, end.cta, CENTER_X, 1105, { size: 54, weight: 800, color: BLUE, align: "center", maxWidth: 800 }));
-  rise(5, () => drawReelText(ctx, boxes, end.disclosure, CENTER_X, 1490, { size: 28, weight: 600, color: MUTED, align: "center", maxWidth: 800 }));
+  rise(5, () => drawReelText(ctx, boxes, end.disclosure, CENTER_X, 1490, { size: 42, weight: 600, color: MUTED, align: "center", maxWidth: 800 }));
 }
 
 function cutFlashAlpha(frame: number, timing: ShowcaseTiming): number {
@@ -350,7 +344,7 @@ export function paintShowcaseOverlay(ctx: CanvasRenderingContext2D, frame: numbe
   if (flash > 0) {
     ctx.save();
     ctx.globalAlpha = flash;
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = SHOWCASE.flashWhite;
     ctx.fillRect(0, 0, VIDEO.width, VIDEO.height);
     ctx.restore();
   }

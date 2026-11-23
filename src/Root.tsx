@@ -1,6 +1,8 @@
 import { Composition } from "remotion";
 import { STYLES } from "./ball-drop/sim.ts";
+import { COMEBACK_COMPOSITIONS } from "./comebacks/index.ts";
 import { AnimationShell } from "./components/AnimationShell.tsx";
+import { ComebackShell } from "./components/ComebackShell.tsx";
 import { PatateShell } from "./components/PatateShell.tsx";
 import { GpuAudioSceneShell } from "./components/GpuAudioSceneShell.tsx";
 import { RepoShowcaseShell } from "./components/RepoShowcaseShell.tsx";
@@ -100,6 +102,19 @@ export function Root() {
         fps={VIDEO.fps}
         durationInFrames={gpuScene.totalFrames}
         defaultProps={{ slug: gpuScene.slug }}
+      />
+    ))}
+
+    {COMEBACK_COMPOSITIONS.map((comeback) => (
+      <Composition
+        key={comeback.id}
+        id={comeback.id}
+        component={ComebackShell}
+        width={VIDEO.width}
+        height={VIDEO.height}
+        fps={VIDEO.fps}
+        durationInFrames={comeback.totalFrames}
+        defaultProps={{ slug: comeback.slug }}
       />
     ))}
 

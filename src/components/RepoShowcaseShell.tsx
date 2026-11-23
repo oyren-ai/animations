@@ -139,7 +139,7 @@ export function RepoShowcaseShell() {
   }, [handle]);
 
   return (
-    <AbsoluteFill style={{ background: "#05080d" }}>
+    <AbsoluteFill style={{ background: theme.colors.showcase.backdrop }}>
       {ready && (
         <>
           <BackdropLayer />
