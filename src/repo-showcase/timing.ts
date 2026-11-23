@@ -6,7 +6,6 @@ import {
   type ScenePlanEntry,
   type ShowcaseLine,
   type ShowcaseLineId,
-  type ShowcaseSceneId,
 } from "./script.ts";
 import { SHOWCASE_VOICE_DATA } from "./voice.generated.ts";
 
@@ -53,17 +52,11 @@ export interface CaptionCue {
   readonly words: readonly { readonly text: string; readonly startFrame: number; readonly endFrame: number }[];
 }
 
-export interface SceneSegment {
+export type SceneSegment = ScenePlanEntry & {
   readonly beat: ShowcaseLineId;
-  readonly scene: ShowcaseSceneId;
-  readonly variant: string | null;
   readonly fromFrame: number;
   readonly toFrame: number;
-  readonly sceneStartFrame: number;
-  readonly speed: number;
-  readonly scale: number;
-  readonly offsetY: number;
-}
+};
 
 export interface ShowcaseTiming {
   readonly fps: number;
@@ -128,7 +121,7 @@ export function buildShowcaseTiming(
     toFrame: index === last ? totalFrames : cutAfter(index),
   }));
 
-  const cues: CaptionCue[] = [];
+  const rawCues: CaptionCue[] = [];
   for (const [lineIndex, line] of script.entries()) {
     const timed = lines[lineIndex];
     let cursor = 0;
@@ -149,9 +142,13 @@ export function buildShowcaseTiming(
     }
     for (const [index, cue] of lineCues.entries()) {
       const next = lineCues[index + 1];
-      cues.push({ ...cue, toFrame: next ? next.fromFrame : timed.endFrame + rules.cueTailFrames });
+      rawCues.push({ ...cue, toFrame: next ? next.fromFrame : timed.endFrame + rules.cueTailFrames });
     }
   }
+  const cues = rawCues.map((cue, index) => ({
+    ...cue,
+    toFrame: Math.min(cue.toFrame, rawCues[index + 1]?.fromFrame ?? totalFrames, totalFrames),
+  }));
 
   const planFrom = plan.map((entry) => {
     const beat = beats.find((candidate) => candidate.id === entry.line);
@@ -166,15 +163,10 @@ export function buildShowcaseTiming(
     const beat = beats.find((candidate) => candidate.id === entry.line)!;
     const nextInBeat = plan.findIndex((other, otherIndex) => otherIndex > index && other.line === entry.line);
     return {
+      ...entry,
       beat: entry.line,
-      scene: entry.scene,
-      variant: entry.variant,
       fromFrame: planFrom[index],
       toFrame: nextInBeat >= 0 ? planFrom[nextInBeat] : beat.toFrame,
-      sceneStartFrame: entry.sceneStartFrame,
-      speed: entry.speed,
-      scale: entry.scale,
-      offsetY: entry.offsetY,
     };
   });
   const remixBeat = beats.find((beat) => beat.id === "l4");
