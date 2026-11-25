@@ -6,7 +6,7 @@
 
 # animations
 
-Thirty animations built from TypeScript, WebGL2 shaders, a canvas, and a clock: five foundational physics scenes, five complex-Fourier country-border reconstructions, four zero-gravity wall-bounce string-arena compositions, five bouncy arcade ball-drop and funnel-merge compositions, three Suika-style Patate Merge boiling-flask compositions with pitch-coupled French voice announcements, three edge-to-edge full-screen (`1080 × 1920`) GPU shader and 48 kHz stereo audio-reactive compositions, four full-screen photo-finish comeback races verified by mathematical catchup invariants (`docs/COMEBACK-SHORTS.md`), and one English voiceover showcase. Change the equations, shaders, or physics, scrub to any frame, and render the result as a 60 fps video.
+Forty-five animations built from TypeScript, WebGL2 shaders, a canvas, and a clock: five foundational physics scenes, five complex-Fourier country-border reconstructions, four zero-gravity string arenas, five arcade ball-drop and funnel-merge scenes, three Patate Merge compositions, three GPU/audio-reactive scenes, four comeback races, one English voiceover showcase, six MIDI-driven visual mechanisms, two cyclic-chase swarm simulations, three music-driven scenes, and four full-screen physics shorts. Change the equations, shaders, or physics, scrub to any frame, and render the result as a 60 fps video.
 
 Every composition renders at 1080 × 1920 and 60 fps, closing with a code end card pointing to `github.com/oyren-ai/animations` (`MapOfIndia` ends on its own licence line and is silent). Shapes, sovereign map contours, cartoon potato costumes, and geometric vector emblems are drawn procedurally. Sound is synthesized and mixed locally from simulation events and self-generated voice stems. No stock footage, third-party logo files, or music downloads are needed. The one exception to "self-generated" is the `AnimationsRepoShowcase` voiceover, which is AI-generated with Speechify and says so on its end card; see `docs/REPO-SHOWCASE.md`.
 
@@ -102,6 +102,10 @@ Every composition renders at 1080 × 1920 and 60 fps, closing with a code end ca
 | `MusicCarpetLoom` | Traditional *Sarı gəlin* arranged for synthesized *tar*, *kamança*, *qaval*, and *D şur* drone while a visible knotter and toothed beater comb weave a natural-dye carpet row by row from the bottom up. | Swap the note array in `src/music-carpet/sariGelinData.ts` or recolor the natural dye palette in `src/music-carpet/pattern.ts`. |
 | `MusicFireworkKing` | Grieg's *In the Hall of the Mountain King* accelerates from stealthy pizzicato to full brass and bells while every note launches a pitch-positioned rocket that detonates on the audio onset. | Swap the note data in `src/music-fireworks/score.ts` for another public-domain piece or adjust burst spark physics. |
 | `MusicRopeHarp` | Traditional *Greensleeves* played on a twenty-bar tuned chime rack as animated scissors snip hanging weights so each weight strikes its chime bar on the exact beat and rolls into collector buckets. | Swap the melody and harp chords in `src/music-rope-harp/score.ts` or change fall duration and bucket count in `src/music-rope-harp/sim.ts`. |
+| `OverflowArena` | *Will it overflow?* One big ball in a sealed full-screen chamber. A spinning turbine splits a ball on every hit, the balls shrink as they multiply, and at 10,000 the walls crack and the balls spill out. | Change the turbine arms, ball speed, or split rule in `src/hits/overflow/sim.ts`. |
+| `BrickEscape` | *Will it get out in time?* One ball in a sealed full-screen chamber. Every bounce lays a brick and plays the next note of a public-domain tune, and every brick shrinks the exit. | Change the tune, brick thickness, or door width in `src/hits/brick/`. |
+| `FunnelMerge` | *Will it merge into its final form?* Only tier-1 pieces drop from a top tube; two of the same tier merge into the next across seven tiers, with a live chain counter, until the final form appears. | Change tier radii, gravity, or the drop cadence in `src/hits/merge/`. |
+| `ColourWarV4` | *Which colour takes the board?* Four colours paint a full-screen board; every 5 s the smallest colour doubles its balls; the biggest share wins when the clock ends. | Change the cell size, ball speed, or underdog rule in `src/hits/war/`. |
 
 ## Run locally
 
@@ -140,6 +144,15 @@ pnpm still PinballBumperMatrix out/pinball.png --frame=240
 ~~~
 
 An existing compatible browser can be selected with `REMOTION_BROWSER_EXECUTABLE`. Output goes in `out/`; generated WAV files and the deterministic asset manifest go in `public/generated/`. Both directories are ignored by Git.
+
+### Preview a frame without a browser
+
+The four short-video compositions under `src/hits/` can be inspected without Chromium or a render. `scripts/preview-hit.mjs` runs the real simulation and painter on a software canvas, writes a contact sheet, and prints the active-pixel fill that the render QA measures. The canvas package is optional and not a dependency of this repository.
+
+~~~sh
+pnpm add -D @napi-rs/canvas
+node --import tsx scripts/preview-hit.mjs overflow-arena 0,40,420,900,1180 out/overflow.png 0.25
+~~~
 
 ## Run & remix in an Oyren Codespace
 
@@ -229,6 +242,10 @@ The swarm scenes (`SwarmRpsClassic`, `SwarmFiveRivals`) share one engine, `src/s
 | `src/swarm/paint.ts` | Oyren ink dot-grid backdrop, rounded workspace window, sprites, additive ring and spark effects, share bar, tabular counters, and lime-bordered winner pill, centred on x = 540 |
 | `src/swarm/audio.ts` | Rate-limited per-type conversion sounds, tension bed, and finish chime |
 | `scripts/search-swarm-seed.ts` | Offline seed search that scores lead changes, comeback depth and finish time |
+| `src/hits/kit.ts` | Hook, rule and CTA chrome, safe-zone text helpers, seeded random numbers, and the full-bleed backdrop |
+| `src/hits/voices.ts` | Warm band-limited bell, thud, tick, whoosh, boom and pad voices, event thinning, and the `-14 LUFS` master |
+| `src/hits/overflow/`, `brick/`, `merge/`, `war/` | The four proven-format shorts: deterministic `sim.ts`, Canvas 2D `paint.ts`, and stereo `audio.ts` |
+| `docs/TIKTOK-IG-HITS.md` | The design contract those four shorts follow |
 | `src/shared/reelUtils.ts` | Reel safe-zone bounds assertions and procedural geometric emblem renderer |
 | `src/audio.ts` | Event-to-tone mapping, harmonic map chords, arena soundtracks, and PCM synthesis |
 | `src/encoding.ts` | Explicit PNG-to-BT.709 conversion for the pinned renderer |
