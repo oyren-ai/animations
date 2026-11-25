@@ -16,6 +16,10 @@ import {
 } from "../src/drop-arenas/sim.ts";
 import { PATATE_COMPOSITIONS, simulatePatate } from "../src/patate/sim.ts";
 import { synthesizePatateWav } from "../src/patate/audio.ts";
+import { COMEBACK_COMPOSITIONS, simulateComeback, synthesizeComebackWav } from "../src/comebacks/index.ts";
+import { GPU_AUDIO_COMPOSITIONS, synthesizeGpuAudioSceneWav } from "../src/gpu-scenes/index.ts";
+import { synthesizeShowcaseWav } from "../src/repo-showcase/audio.ts";
+import { SHOWCASE_TOTAL_FRAMES } from "../src/repo-showcase/timing.ts";
 import {
   synthesize,
   synthesizeCountryMapWav,
@@ -148,6 +152,57 @@ for (const patate of PATATE_COMPOSITIONS) {
     `${patate.id}: ${trace.events.length} events; bossFrame=${trace.bossMergeFrame}; ${trace.totalFrames} frames (${(trace.totalFrames / VIDEO.fps).toFixed(2)}s)`,
   );
 }
+
+for (const gpuScene of GPU_AUDIO_COMPOSITIONS) {
+  const wav = synthesizeGpuAudioSceneWav(gpuScene.slug);
+  writeFileSync(
+    new URL("../public/generated/" + gpuScene.slug + ".wav", import.meta.url),
+    wav,
+  );
+  results.push({
+    id: gpuScene.id,
+    frames: gpuScene.totalFrames,
+    channels: 2,
+    sampleRate: 48000,
+    audioDigest: createHash("sha256").update(wav).digest("hex"),
+  });
+  console.log(
+    `${gpuScene.id}: 48 kHz stereo audio synthesized; ${gpuScene.totalFrames} frames (${(gpuScene.totalFrames / VIDEO.fps).toFixed(2)}s)`,
+  );
+}
+
+for (const comeback of COMEBACK_COMPOSITIONS) {
+  const trace = simulateComeback(comeback.slug);
+  const wav = synthesizeComebackWav(comeback.slug);
+  writeFileSync(
+    new URL("../public/generated/" + comeback.slug + ".wav", import.meta.url),
+    wav,
+  );
+  results.push({
+    id: comeback.id,
+    seed: trace.seed,
+    frames: comeback.totalFrames,
+    overtakeFrame: trace.overtakeFrame,
+    victoryFrame: trace.victoryFrame,
+    channels: 2,
+    sampleRate: 48000,
+    audioDigest: createHash("sha256").update(wav).digest("hex"),
+  });
+  console.log(
+    `${comeback.id}: overtake=${trace.overtakeFrame}/${trace.raceFrames}; victory=${trace.victoryFrame}/${trace.raceFrames}; ${comeback.totalFrames} frames (${(comeback.totalFrames / VIDEO.fps).toFixed(2)}s)`,
+  );
+}
+
+const showcaseWav = synthesizeShowcaseWav();
+writeFileSync(new URL("../public/generated/animations-repo-showcase.wav", import.meta.url), showcaseWav);
+results.push({
+  id: "AnimationsRepoShowcase",
+  frames: SHOWCASE_TOTAL_FRAMES,
+  channels: 2,
+  sampleRate: 48000,
+  audioDigest: createHash("sha256").update(showcaseWav).digest("hex"),
+});
+console.log(`AnimationsRepoShowcase: English voice + 48 kHz stereo bed; ${SHOWCASE_TOTAL_FRAMES} frames (${(SHOWCASE_TOTAL_FRAMES / VIDEO.fps).toFixed(2)}s)`);
 
 writeFileSync(new URL("../public/generated/manifest.json", import.meta.url), JSON.stringify({ fps: VIDEO.fps, results }, null, 2) + "\n");
 console.log("Generated audio and manifest for " + results.length + " compositions.");

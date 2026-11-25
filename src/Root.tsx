@@ -1,13 +1,19 @@
 import { Composition } from "remotion";
 import { STYLES } from "./ball-drop/sim.ts";
+import { COMEBACK_COMPOSITIONS } from "./comebacks/index.ts";
 import { AnimationShell } from "./components/AnimationShell.tsx";
 import { FourierExplainerShell } from "./components/FourierExplainerShell.tsx";
+import { ComebackShell } from "./components/ComebackShell.tsx";
 import { PatateShell } from "./components/PatateShell.tsx";
+import { GpuAudioSceneShell } from "./components/GpuAudioSceneShell.tsx";
+import { RepoShowcaseShell } from "./components/RepoShowcaseShell.tsx";
 import { getReelArenaTiming, ReelArenaShell } from "./components/ReelArenaShell.tsx";
 import { EXPLAINER_FRAMES, EXPLAINER_SLUG } from "./country-maps/explainer.ts";
 import { COUNTRY_MAPS } from "./country-maps/fourier.ts";
 import { DROP_STYLES } from "./drop-arenas/sim.ts";
+import { GPU_AUDIO_COMPOSITIONS } from "./gpu-scenes/index.ts";
 import { PATATE_COMPOSITIONS, PATATE_TOTAL_FRAMES } from "./patate/themes.ts";
+import { SHOWCASE_TOTAL_FRAMES } from "./repo-showcase/timing.ts";
 import { STRING_ROUNDS } from "./string-arena/sim.ts";
 import { TOTAL_FRAMES, VIDEO } from "./settings.ts";
 
@@ -90,5 +96,41 @@ export function Root() {
         defaultProps={{ slug: patate.slug }}
       />
     ))}
+
+    {GPU_AUDIO_COMPOSITIONS.map((gpuScene) => (
+      <Composition
+        key={gpuScene.id}
+        id={gpuScene.id}
+        component={GpuAudioSceneShell}
+        width={VIDEO.width}
+        height={VIDEO.height}
+        fps={VIDEO.fps}
+        durationInFrames={gpuScene.totalFrames}
+        defaultProps={{ slug: gpuScene.slug }}
+      />
+    ))}
+
+    {COMEBACK_COMPOSITIONS.map((comeback) => (
+      <Composition
+        key={comeback.id}
+        id={comeback.id}
+        component={ComebackShell}
+        width={VIDEO.width}
+        height={VIDEO.height}
+        fps={VIDEO.fps}
+        durationInFrames={comeback.totalFrames}
+        defaultProps={{ slug: comeback.slug }}
+      />
+    ))}
+
+    <Composition
+      id="AnimationsRepoShowcase"
+      component={RepoShowcaseShell}
+      width={VIDEO.width}
+      height={VIDEO.height}
+      fps={VIDEO.fps}
+      durationInFrames={SHOWCASE_TOTAL_FRAMES}
+      defaultProps={{}}
+    />
   </>;
 }
