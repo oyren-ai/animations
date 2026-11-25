@@ -1,3 +1,5 @@
+import { PATATE_FRAME_STRETCH } from "./feel.ts";
+
 export type PatateCompositionSlug =
   | "patate-merge-coding-agents"
   | "patate-merge-world-to-code"
@@ -83,9 +85,12 @@ export interface PatateCompositionSpec {
   ];
 }
 
-export const PATATE_SCENE_FRAMES = 1260; // 21.0s @ 60fps
+// The solver's scene is 1260 solver frames (21 s at 60 per second). PATATE_PACE stretches it onto more video frames,
+// so this one place sets every length: scene 1680 frames (28 s) + 180 closing = 1860 frames = 31 s at 3 sub-steps per frame.
+export const PATATE_SOLVER_SCENE_FRAMES = 1260;
+export const PATATE_SCENE_FRAMES = Math.round(PATATE_SOLVER_SCENE_FRAMES * PATATE_FRAME_STRETCH);
 export const PATATE_CLOSING_FRAMES = 180; // 3.0s @ 60fps
-export const PATATE_TOTAL_FRAMES = PATATE_SCENE_FRAMES + PATATE_CLOSING_FRAMES; // 1440 frames = 24.0s
+export const PATATE_TOTAL_FRAMES = PATATE_SCENE_FRAMES + PATATE_CLOSING_FRAMES;
 
 export const PATATE_RADII = [32, 44, 58, 75, 95, 118, 145, 178] as const;
 export const PATATE_PLAYBACK_RATES = [

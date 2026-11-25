@@ -209,6 +209,7 @@ The full-screen GPU and stereo audio-reactive scenes (`CyberSynthShaderTunnel`, 
 | `src/gpu-scenes/wallCascade.ts` | Full-screen `1080 × 1920` 480 Hz wall + 8-string acoustic chamber solver and stereo-panned chord engine |
 | `src/gpu-scenes/harmonicSorting.ts` | Full-bleed 3-band Radix, Quick, and Heap Sort showdown and Lydian-pentatonic arpeggio sonifier |
 | `docs/VIDEO-AUDIO-STACK.md` | Evaluation of open-source video agent skills, WebGL2 shader pipeline, and audio DSP stack |
+| `src/patate/feel.ts` | The Patate pace knob (3 solver sub-steps per frame: motion 25% slower, videos 31 s) and the volume-preserving squash-and-stretch spring that follows each contact and merge |
 | `src/shared/reelUtils.ts` | Reel safe-zone bounds assertions and procedural geometric emblem renderer |
 | `src/audio.ts` | Event-to-tone mapping, harmonic map chords, arena soundtracks, and PCM synthesis |
 | `src/encoding.ts` | Explicit PNG-to-BT.709 conversion for the pinned renderer |
