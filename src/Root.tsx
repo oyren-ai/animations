@@ -16,6 +16,7 @@ import { PATATE_COMPOSITIONS, PATATE_TOTAL_FRAMES } from "./patate/themes.ts";
 import { SHOWCASE_TOTAL_FRAMES } from "./repo-showcase/timing.ts";
 import { STRING_ROUNDS } from "./string-arena/sim.ts";
 import { TOTAL_FRAMES, VIDEO } from "./settings.ts";
+import { MidiCompositions } from "./midi/compositions.tsx";
 
 export function Root() {
   const stringCombinedTiming = getReelArenaTiming({ kind: "string-combined" });
@@ -132,5 +133,6 @@ export function Root() {
       durationInFrames={SHOWCASE_TOTAL_FRAMES}
       defaultProps={{}}
     />
+    <MidiCompositions />
   </>;
 }

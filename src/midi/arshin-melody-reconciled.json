@@ -1,0 +1,5057 @@
+{
+ "piece": "Arshin Mal Alan (1913), No. 12 \"Askar's song\" (Песнь Аскера / Əskərin nəğməsi), Act II",
+ "composer": "Uzeyir Hajibeyov (1885-1948), public domain",
+ "source": "IMSLP #402316, complete vocal score, Baku 1948 (image-only scan about 90 dpi); VOCAL LINE ONLY, printed pp. 79-84",
+ "provenance": "Two independent readings of the scan by two different models were identical in all 48 bars (pitches, rhythms, ties); both cross-checked doubtful notes against the piano right hand where it doubles the voice.",
+ "meter": "4/8",
+ "unit": "1/32 note",
+ "bar_units": 16,
+ "key_signature": "none (one accidental: F#5 in the coda)",
+ "clef": "treble, written pitches of a tenor part: it SOUNDS an octave lower (midi_if_tenor_octave_down)",
+ "tempo_marking": "Allegro moderato (printed); choose the quarter note between 104 and 120",
+ "structure": "Piano introduction 79.1.1 to 79.2.1 (voice rests, 4 bars). Repeat A: start-repeat before 80.2.2, 1st ending 80.4.1 (back to 80.2.2), 2nd ending 80.4.2. Repeat B: start-repeat at 81.1.1, 1st ending 81.2.2 (back to 81.1.1), 2nd ending 81.3.1. Repeat C (voice rests, piano interlude): start-repeat before 82.3.2, 1st ending 82.4.2 (back), 2nd ending 83.1.1. \"To Coda\" sign after 83.4.2; \"da capo al coda\" under 84.1.1; coda 84.1.2 to 84.3.2 (G5 under a fermata, F#5 and G5 eighths, then A5 held through two bars and an eighth). Verse 2 text is printed below the music on p.84 (same music). playback = the verse-1 pass with repeats A and B expanded (1st ending the first time, 2nd ending the second time), repeat C played once (rests, 2nd ending), then straight to the coda via To Coda (84.1.1 skipped, as in the second verse). playback_short = the same without the second time through A and B.",
+ "playback": [
+  "79.2.2",
+  "79.2.3",
+  "79.3.1",
+  "79.3.2",
+  "79.3.3",
+  "80.1.1",
+  "80.1.2",
+  "80.2.1",
+  "80.2.2",
+  "80.3.1",
+  "80.3.2",
+  "80.4.1",
+  "80.2.2",
+  "80.3.1",
+  "80.3.2",
+  "80.4.2",
+  "81.1.1",
+  "81.1.2",
+  "81.2.1",
+  "81.2.2",
+  "81.1.1",
+  "81.1.2",
+  "81.2.1",
+  "81.3.1",
+  "81.3.2",
+  "81.4.1",
+  "81.4.2",
+  "82.1.1",
+  "82.1.2",
+  "82.2.1",
+  "82.2.2",
+  "82.3.1",
+  "82.3.2",
+  "82.3.3",
+  "82.4.1",
+  "83.1.1",
+  "83.1.2",
+  "83.2.1",
+  "83.2.2",
+  "83.3.1",
+  "83.3.2",
+  "83.4.1",
+  "83.4.2",
+  "84.1.2",
+  "84.2.1",
+  "84.2.2",
+  "84.3.1",
+  "84.3.2"
+ ],
+ "playback_short": [
+  "79.2.2",
+  "79.2.3",
+  "79.3.1",
+  "79.3.2",
+  "79.3.3",
+  "80.1.1",
+  "80.1.2",
+  "80.2.1",
+  "80.2.2",
+  "80.3.1",
+  "80.3.2",
+  "80.4.2",
+  "81.1.1",
+  "81.1.2",
+  "81.2.1",
+  "81.3.1",
+  "81.3.2",
+  "81.4.1",
+  "81.4.2",
+  "82.1.1",
+  "82.1.2",
+  "82.2.1",
+  "82.2.2",
+  "82.3.1",
+  "82.3.2",
+  "82.3.3",
+  "82.4.1",
+  "83.1.1",
+  "83.1.2",
+  "83.2.1",
+  "83.2.2",
+  "83.3.1",
+  "83.3.2",
+  "83.4.1",
+  "83.4.2",
+  "84.1.2",
+  "84.2.1",
+  "84.2.2",
+  "84.3.1",
+  "84.3.2"
+ ],
+ "playback_bars": 48,
+ "playback_short_bars": 40,
+ "flat_full": [
+  {
+   "start": 4,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "79.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 6,
+   "dur": 2,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "79.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 8,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "79.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 12,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "79.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 16,
+   "dur": 4,
+   "pitch": "F5",
+   "midi_written": 77,
+   "midi_if_tenor_octave_down": 65,
+   "bars": [
+    "79.2.3"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 20,
+   "dur": 2,
+   "pitch": "G5",
+   "midi_written": 79,
+   "midi_if_tenor_octave_down": 67,
+   "bars": [
+    "79.2.3"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 22,
+   "dur": 2,
+   "pitch": "F5",
+   "midi_written": 77,
+   "midi_if_tenor_octave_down": 65,
+   "bars": [
+    "79.2.3"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 24,
+   "dur": 8,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "79.2.3"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 68,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "79.3.3"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 70,
+   "dur": 2,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "79.3.3"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 72,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "79.3.3"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 76,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "79.3.3"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 80,
+   "dur": 4,
+   "pitch": "F5",
+   "midi_written": 77,
+   "midi_if_tenor_octave_down": 65,
+   "bars": [
+    "80.1.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 84,
+   "dur": 2,
+   "pitch": "G5",
+   "midi_written": 79,
+   "midi_if_tenor_octave_down": 67,
+   "bars": [
+    "80.1.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 86,
+   "dur": 2,
+   "pitch": "F5",
+   "midi_written": 77,
+   "midi_if_tenor_octave_down": 65,
+   "bars": [
+    "80.1.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 88,
+   "dur": 8,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "80.1.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 96,
+   "dur": 4,
+   "pitch": "F5",
+   "midi_written": 77,
+   "midi_if_tenor_octave_down": 65,
+   "bars": [
+    "80.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 100,
+   "dur": 2,
+   "pitch": "G5",
+   "midi_written": 79,
+   "midi_if_tenor_octave_down": 67,
+   "bars": [
+    "80.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 102,
+   "dur": 2,
+   "pitch": "F5",
+   "midi_written": 77,
+   "midi_if_tenor_octave_down": 65,
+   "bars": [
+    "80.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 104,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "80.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 106,
+   "dur": 2,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "80.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 108,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "80.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 110,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "80.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 112,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "80.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 116,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "80.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 118,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "80.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 120,
+   "dur": 8,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "80.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 132,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "80.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 134,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "80.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 136,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "80.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 140,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "80.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 144,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "80.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 148,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "80.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 150,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "80.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 152,
+   "dur": 4,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "80.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 156,
+   "dur": 4,
+   "pitch": "G4",
+   "midi_written": 67,
+   "midi_if_tenor_octave_down": 55,
+   "bars": [
+    "80.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 164,
+   "dur": 2,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "80.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 166,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "80.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 168,
+   "dur": 4,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "80.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 172,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "80.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 176,
+   "dur": 4,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "80.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 180,
+   "dur": 4,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "80.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 184,
+   "dur": 4,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "80.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 196,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "80.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 198,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "80.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 200,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "80.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 204,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "80.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 208,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "80.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 212,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "80.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 214,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "80.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 216,
+   "dur": 4,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "80.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 220,
+   "dur": 4,
+   "pitch": "G4",
+   "midi_written": 67,
+   "midi_if_tenor_octave_down": 55,
+   "bars": [
+    "80.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 228,
+   "dur": 2,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "80.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 230,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "80.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 232,
+   "dur": 4,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "80.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 236,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "80.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 240,
+   "dur": 4,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "80.4.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 244,
+   "dur": 4,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "80.4.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 248,
+   "dur": 4,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "80.4.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 256,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "81.1.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 264,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "81.1.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 272,
+   "dur": 2,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "81.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 274,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "81.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 276,
+   "dur": 2,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "81.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 278,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "81.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 280,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "81.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 282,
+   "dur": 2,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "81.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 284,
+   "dur": 4,
+   "pitch": "G4",
+   "midi_written": 67,
+   "midi_if_tenor_octave_down": 55,
+   "bars": [
+    "81.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 288,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "81.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 296,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "81.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 304,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "81.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 306,
+   "dur": 2,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "81.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 308,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "81.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 310,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "81.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 312,
+   "dur": 4,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "81.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 316,
+   "dur": 4,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "81.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 320,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "81.1.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 328,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "81.1.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 336,
+   "dur": 2,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "81.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 338,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "81.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 340,
+   "dur": 2,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "81.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 342,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "81.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 344,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "81.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 346,
+   "dur": 2,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "81.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 348,
+   "dur": 4,
+   "pitch": "G4",
+   "midi_written": 67,
+   "midi_if_tenor_octave_down": 55,
+   "bars": [
+    "81.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 352,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "81.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 360,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "81.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 368,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "81.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 370,
+   "dur": 2,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "81.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 372,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "81.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 374,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "81.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 376,
+   "dur": 4,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "81.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 380,
+   "dur": 4,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "81.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 388,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "81.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 390,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "81.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 392,
+   "dur": 4,
+   "pitch": "G5",
+   "midi_written": 79,
+   "midi_if_tenor_octave_down": 67,
+   "bars": [
+    "81.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 396,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "81.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 400,
+   "dur": 2,
+   "pitch": "G5",
+   "midi_written": 79,
+   "midi_if_tenor_octave_down": 67,
+   "bars": [
+    "81.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 402,
+   "dur": 2,
+   "pitch": "F5",
+   "midi_written": 77,
+   "midi_if_tenor_octave_down": 65,
+   "bars": [
+    "81.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 404,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "81.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 406,
+   "dur": 2,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "81.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 408,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "81.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 410,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "81.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 412,
+   "dur": 4,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "81.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 420,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "81.4.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 422,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "81.4.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 424,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "81.4.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 428,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "81.4.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 432,
+   "dur": 4,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "82.1.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 436,
+   "dur": 4,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "82.1.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 440,
+   "dur": 4,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "82.1.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 452,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "82.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 454,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "82.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 456,
+   "dur": 4,
+   "pitch": "A5",
+   "midi_written": 81,
+   "midi_if_tenor_octave_down": 69,
+   "bars": [
+    "82.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 460,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "82.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 464,
+   "dur": 2,
+   "pitch": "A5",
+   "midi_written": 81,
+   "midi_if_tenor_octave_down": 69,
+   "bars": [
+    "82.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 466,
+   "dur": 2,
+   "pitch": "G5",
+   "midi_written": 79,
+   "midi_if_tenor_octave_down": 67,
+   "bars": [
+    "82.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 468,
+   "dur": 2,
+   "pitch": "F5",
+   "midi_written": 77,
+   "midi_if_tenor_octave_down": 65,
+   "bars": [
+    "82.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 470,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "82.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 472,
+   "dur": 2,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "82.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 474,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "82.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 476,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "82.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 478,
+   "dur": 2,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "82.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 484,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "82.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 486,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "82.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 488,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "82.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 492,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "82.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 496,
+   "dur": 4,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "82.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 500,
+   "dur": 4,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "82.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 504,
+   "dur": 4,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "82.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 580,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "83.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 582,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "83.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 584,
+   "dur": 4,
+   "pitch": "G5",
+   "midi_written": 79,
+   "midi_if_tenor_octave_down": 67,
+   "bars": [
+    "83.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 588,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "83.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 592,
+   "dur": 2,
+   "pitch": "G5",
+   "midi_written": 79,
+   "midi_if_tenor_octave_down": 67,
+   "bars": [
+    "83.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 594,
+   "dur": 2,
+   "pitch": "F5",
+   "midi_written": 77,
+   "midi_if_tenor_octave_down": 65,
+   "bars": [
+    "83.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 596,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "83.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 598,
+   "dur": 2,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "83.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 600,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "83.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 602,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "83.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 604,
+   "dur": 4,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "83.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 612,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "83.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 614,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "83.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 616,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "83.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 620,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "83.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 624,
+   "dur": 4,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "83.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 628,
+   "dur": 4,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "83.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 632,
+   "dur": 4,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "83.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 644,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "83.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 646,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "83.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 648,
+   "dur": 4,
+   "pitch": "A5",
+   "midi_written": 81,
+   "midi_if_tenor_octave_down": 69,
+   "bars": [
+    "83.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 652,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "83.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 656,
+   "dur": 2,
+   "pitch": "A5",
+   "midi_written": 81,
+   "midi_if_tenor_octave_down": 69,
+   "bars": [
+    "83.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 658,
+   "dur": 2,
+   "pitch": "G5",
+   "midi_written": 79,
+   "midi_if_tenor_octave_down": 67,
+   "bars": [
+    "83.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 660,
+   "dur": 2,
+   "pitch": "F5",
+   "midi_written": 77,
+   "midi_if_tenor_octave_down": 65,
+   "bars": [
+    "83.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 662,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "83.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 664,
+   "dur": 2,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "83.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 666,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "83.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 668,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "83.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 670,
+   "dur": 2,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "83.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 676,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "83.4.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 678,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "83.4.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 680,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "83.4.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 684,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "83.4.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 688,
+   "dur": 8,
+   "pitch": "G5",
+   "midi_written": 79,
+   "midi_if_tenor_octave_down": 67,
+   "bars": [
+    "84.1.2"
+   ],
+   "fermata": true
+  },
+  {
+   "start": 696,
+   "dur": 4,
+   "pitch": "F#5",
+   "midi_written": 78,
+   "midi_if_tenor_octave_down": 66,
+   "bars": [
+    "84.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 700,
+   "dur": 4,
+   "pitch": "G5",
+   "midi_written": 79,
+   "midi_if_tenor_octave_down": 67,
+   "bars": [
+    "84.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 704,
+   "dur": 36,
+   "pitch": "A5",
+   "midi_written": 81,
+   "midi_if_tenor_octave_down": 69,
+   "bars": [
+    "84.2.1",
+    "84.2.2",
+    "84.3.1"
+   ],
+   "fermata": false
+  }
+ ],
+ "flat_full_total_units": 768,
+ "flat_short": [
+  {
+   "start": 4,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "79.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 6,
+   "dur": 2,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "79.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 8,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "79.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 12,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "79.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 16,
+   "dur": 4,
+   "pitch": "F5",
+   "midi_written": 77,
+   "midi_if_tenor_octave_down": 65,
+   "bars": [
+    "79.2.3"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 20,
+   "dur": 2,
+   "pitch": "G5",
+   "midi_written": 79,
+   "midi_if_tenor_octave_down": 67,
+   "bars": [
+    "79.2.3"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 22,
+   "dur": 2,
+   "pitch": "F5",
+   "midi_written": 77,
+   "midi_if_tenor_octave_down": 65,
+   "bars": [
+    "79.2.3"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 24,
+   "dur": 8,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "79.2.3"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 68,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "79.3.3"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 70,
+   "dur": 2,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "79.3.3"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 72,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "79.3.3"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 76,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "79.3.3"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 80,
+   "dur": 4,
+   "pitch": "F5",
+   "midi_written": 77,
+   "midi_if_tenor_octave_down": 65,
+   "bars": [
+    "80.1.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 84,
+   "dur": 2,
+   "pitch": "G5",
+   "midi_written": 79,
+   "midi_if_tenor_octave_down": 67,
+   "bars": [
+    "80.1.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 86,
+   "dur": 2,
+   "pitch": "F5",
+   "midi_written": 77,
+   "midi_if_tenor_octave_down": 65,
+   "bars": [
+    "80.1.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 88,
+   "dur": 8,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "80.1.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 96,
+   "dur": 4,
+   "pitch": "F5",
+   "midi_written": 77,
+   "midi_if_tenor_octave_down": 65,
+   "bars": [
+    "80.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 100,
+   "dur": 2,
+   "pitch": "G5",
+   "midi_written": 79,
+   "midi_if_tenor_octave_down": 67,
+   "bars": [
+    "80.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 102,
+   "dur": 2,
+   "pitch": "F5",
+   "midi_written": 77,
+   "midi_if_tenor_octave_down": 65,
+   "bars": [
+    "80.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 104,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "80.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 106,
+   "dur": 2,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "80.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 108,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "80.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 110,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "80.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 112,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "80.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 116,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "80.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 118,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "80.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 120,
+   "dur": 8,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "80.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 132,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "80.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 134,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "80.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 136,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "80.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 140,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "80.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 144,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "80.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 148,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "80.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 150,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "80.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 152,
+   "dur": 4,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "80.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 156,
+   "dur": 4,
+   "pitch": "G4",
+   "midi_written": 67,
+   "midi_if_tenor_octave_down": 55,
+   "bars": [
+    "80.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 164,
+   "dur": 2,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "80.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 166,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "80.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 168,
+   "dur": 4,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "80.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 172,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "80.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 176,
+   "dur": 4,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "80.4.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 180,
+   "dur": 4,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "80.4.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 184,
+   "dur": 4,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "80.4.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 192,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "81.1.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 200,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "81.1.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 208,
+   "dur": 2,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "81.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 210,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "81.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 212,
+   "dur": 2,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "81.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 214,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "81.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 216,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "81.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 218,
+   "dur": 2,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "81.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 220,
+   "dur": 4,
+   "pitch": "G4",
+   "midi_written": 67,
+   "midi_if_tenor_octave_down": 55,
+   "bars": [
+    "81.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 224,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "81.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 232,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "81.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 240,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "81.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 242,
+   "dur": 2,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "81.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 244,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "81.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 246,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "81.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 248,
+   "dur": 4,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "81.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 252,
+   "dur": 4,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "81.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 260,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "81.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 262,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "81.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 264,
+   "dur": 4,
+   "pitch": "G5",
+   "midi_written": 79,
+   "midi_if_tenor_octave_down": 67,
+   "bars": [
+    "81.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 268,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "81.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 272,
+   "dur": 2,
+   "pitch": "G5",
+   "midi_written": 79,
+   "midi_if_tenor_octave_down": 67,
+   "bars": [
+    "81.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 274,
+   "dur": 2,
+   "pitch": "F5",
+   "midi_written": 77,
+   "midi_if_tenor_octave_down": 65,
+   "bars": [
+    "81.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 276,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "81.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 278,
+   "dur": 2,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "81.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 280,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "81.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 282,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "81.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 284,
+   "dur": 4,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "81.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 292,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "81.4.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 294,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "81.4.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 296,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "81.4.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 300,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "81.4.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 304,
+   "dur": 4,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "82.1.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 308,
+   "dur": 4,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "82.1.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 312,
+   "dur": 4,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "82.1.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 324,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "82.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 326,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "82.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 328,
+   "dur": 4,
+   "pitch": "A5",
+   "midi_written": 81,
+   "midi_if_tenor_octave_down": 69,
+   "bars": [
+    "82.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 332,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "82.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 336,
+   "dur": 2,
+   "pitch": "A5",
+   "midi_written": 81,
+   "midi_if_tenor_octave_down": 69,
+   "bars": [
+    "82.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 338,
+   "dur": 2,
+   "pitch": "G5",
+   "midi_written": 79,
+   "midi_if_tenor_octave_down": 67,
+   "bars": [
+    "82.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 340,
+   "dur": 2,
+   "pitch": "F5",
+   "midi_written": 77,
+   "midi_if_tenor_octave_down": 65,
+   "bars": [
+    "82.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 342,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "82.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 344,
+   "dur": 2,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "82.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 346,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "82.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 348,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "82.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 350,
+   "dur": 2,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "82.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 356,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "82.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 358,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "82.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 360,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "82.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 364,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "82.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 368,
+   "dur": 4,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "82.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 372,
+   "dur": 4,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "82.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 376,
+   "dur": 4,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "82.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 452,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "83.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 454,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "83.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 456,
+   "dur": 4,
+   "pitch": "G5",
+   "midi_written": 79,
+   "midi_if_tenor_octave_down": 67,
+   "bars": [
+    "83.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 460,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "83.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 464,
+   "dur": 2,
+   "pitch": "G5",
+   "midi_written": 79,
+   "midi_if_tenor_octave_down": 67,
+   "bars": [
+    "83.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 466,
+   "dur": 2,
+   "pitch": "F5",
+   "midi_written": 77,
+   "midi_if_tenor_octave_down": 65,
+   "bars": [
+    "83.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 468,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "83.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 470,
+   "dur": 2,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "83.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 472,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "83.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 474,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "83.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 476,
+   "dur": 4,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "83.2.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 484,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "83.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 486,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "83.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 488,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "83.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 492,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "83.2.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 496,
+   "dur": 4,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "83.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 500,
+   "dur": 4,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "83.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 504,
+   "dur": 4,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "83.3.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 516,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "83.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 518,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "83.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 520,
+   "dur": 4,
+   "pitch": "A5",
+   "midi_written": 81,
+   "midi_if_tenor_octave_down": 69,
+   "bars": [
+    "83.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 524,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "83.3.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 528,
+   "dur": 2,
+   "pitch": "A5",
+   "midi_written": 81,
+   "midi_if_tenor_octave_down": 69,
+   "bars": [
+    "83.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 530,
+   "dur": 2,
+   "pitch": "G5",
+   "midi_written": 79,
+   "midi_if_tenor_octave_down": 67,
+   "bars": [
+    "83.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 532,
+   "dur": 2,
+   "pitch": "F5",
+   "midi_written": 77,
+   "midi_if_tenor_octave_down": 65,
+   "bars": [
+    "83.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 534,
+   "dur": 2,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "83.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 536,
+   "dur": 2,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "83.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 538,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "83.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 540,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "83.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 542,
+   "dur": 2,
+   "pitch": "A4",
+   "midi_written": 69,
+   "midi_if_tenor_octave_down": 57,
+   "bars": [
+    "83.4.1"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 548,
+   "dur": 2,
+   "pitch": "B4",
+   "midi_written": 71,
+   "midi_if_tenor_octave_down": 59,
+   "bars": [
+    "83.4.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 550,
+   "dur": 2,
+   "pitch": "C5",
+   "midi_written": 72,
+   "midi_if_tenor_octave_down": 60,
+   "bars": [
+    "83.4.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 552,
+   "dur": 4,
+   "pitch": "D5",
+   "midi_written": 74,
+   "midi_if_tenor_octave_down": 62,
+   "bars": [
+    "83.4.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 556,
+   "dur": 4,
+   "pitch": "E5",
+   "midi_written": 76,
+   "midi_if_tenor_octave_down": 64,
+   "bars": [
+    "83.4.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 560,
+   "dur": 8,
+   "pitch": "G5",
+   "midi_written": 79,
+   "midi_if_tenor_octave_down": 67,
+   "bars": [
+    "84.1.2"
+   ],
+   "fermata": true
+  },
+  {
+   "start": 568,
+   "dur": 4,
+   "pitch": "F#5",
+   "midi_written": 78,
+   "midi_if_tenor_octave_down": 66,
+   "bars": [
+    "84.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 572,
+   "dur": 4,
+   "pitch": "G5",
+   "midi_written": 79,
+   "midi_if_tenor_octave_down": 67,
+   "bars": [
+    "84.1.2"
+   ],
+   "fermata": false
+  },
+  {
+   "start": 576,
+   "dur": 36,
+   "pitch": "A5",
+   "midi_written": 81,
+   "midi_if_tenor_octave_down": 69,
+   "bars": [
+    "84.2.1",
+    "84.2.2",
+    "84.3.1"
+   ],
+   "fermata": false
+  }
+ ],
+ "flat_short_total_units": 640,
+ "uncertain": [
+  {
+   "id": "80.1.2",
+   "reading_used": "F5/4 G5/2 F5/2 E5/2 D5/2 C5/2 E5/2",
+   "flagged_by": [
+    "B"
+   ],
+   "notes": [
+    {
+     "reader": "B",
+     "what": "LOW DOUBT, general scan limit: separately flagged notes (here notes 2-3, G5 and F5) have flags too small to count reliably at this resolution. Read as two sixteenths: no augmentation dot, the bar then sums to 16, and the piano right hand, which doubles the voice note for note, has a plain two-beam pair. The same applies to every separately flagged sixteenth in the song (the 'rest + 2 sixteenths + 2 eighths' bars and the 'sə-ni' notes of 81.4.1, 82.2.1, 83.2.1, 83.4.1); all agree with the piano beaming and the bar sums.",
+     "alt": "dotted sixteenth + thirty-second (3+1) for G5-F5 - judged unlikely"
+    }
+   ]
+  },
+  {
+   "id": "80.3.1",
+   "reading_used": "D5/4 C5/2 B4/2 A4/4 G4/4",
+   "flagged_by": [
+    "B"
+   ],
+   "notes": [
+    {
+     "reader": "B",
+     "what": "LOW DOUBT, resolved: faint heads for notes 3-5 (B4, A4, G4); first automatic measurement was noisy, a second darkness-weighted measurement gives B4 +0.03, A4 +0.10, G4 -0.09 and the piano doubles D C B A G an octave higher",
+     "alt": "none seriously"
+    }
+   ]
+  },
+  {
+   "id": "80.3.2",
+   "reading_used": "r/4 A4/2 B4/2 C5/4 D5/4",
+   "flagged_by": [
+    "B",
+    "C"
+   ],
+   "notes": [
+    {
+     "reader": "B",
+     "what": "LOW DOUBT, resolved: third note has a faintly inked head; first automatic centroid fell between B4 and C5; pixel view shows the head filling the C5 space, the second measurement gives C5 +0.06, and the piano right hand doubles A4 B4 C5 D5",
+     "alt": "B4 - judged unlikely"
+    },
+    {
+     "reader": "C",
+     "what": "third note 'ғым' (C5): at normal zoom its flag looks double (16th), which would make the bar 14 units; pixel-level view shows a single flag and the piano RH doubles the voice as r8, 16th, 16th, 8th, 8th, so read as an eighth (low doubt)",
+     "alt": "C5 as a 16th (bar would sum to 14)"
+    }
+   ]
+  },
+  {
+   "id": "81.2.2",
+   "reading_used": "C5/2 D5/2 C5/2 B4/2 A4/4 A4/4",
+   "flagged_by": [
+    "B"
+   ],
+   "notes": [
+    {
+     "reader": "B",
+     "what": "LOW DOUBT, resolved: last note has a white print defect inside the head; read A4 at 9x zoom (second measurement A4 +0.21), same as the 2nd-ending bar 81.3.1; the piano does not double this last eighth",
+     "alt": "B4 - judged unlikely"
+    }
+   ]
+  },
+  {
+   "id": "81.3.2",
+   "reading_used": "r/4 E5/2 E5/2 G5/4 E5/4",
+   "flagged_by": [
+    "C"
+   ],
+   "notes": [
+    {
+     "reader": "C",
+     "what": "'сев' read G5: head sits just above the top line with no ledger line (piano RH doubles G5); the parallel bars 82.1.2 and 83.3.2 clearly have A5 on a ledger line (low doubt)",
+     "alt": "A5"
+    }
+   ]
+  },
+  {
+   "id": "81.4.1",
+   "reading_used": "G5/2 F5/2 E5/2 D5/2 C5/2 B4/2 A4/4",
+   "flagged_by": [
+    "C"
+   ],
+   "notes": [
+    {
+     "reader": "C",
+     "what": "first 16th read G5 (no ledger line; piano RH doubles G5); 82.2.1 and 83.4.1 start on A5 with a visible ledger line (low doubt)",
+     "alt": "A5 for the first 16th (rest of the bar unchanged)"
+    }
+   ]
+  },
+  {
+   "id": "83.1.2",
+   "reading_used": "r/4 E5/2 E5/2 G5/4 E5/4",
+   "flagged_by": [
+    "C"
+   ],
+   "notes": [
+    {
+     "reader": "C",
+     "what": "'сев' read G5 (no ledger line visible), as in 81.3.2 (low doubt)",
+     "alt": "A5"
+    }
+   ]
+  },
+  {
+   "id": "83.2.1",
+   "reading_used": "G5/2 F5/2 E5/2 D5/2 C5/2 B4/2 A4/4",
+   "flagged_by": [
+    "B",
+    "C"
+   ],
+   "notes": [
+    {
+     "reader": "B",
+     "what": "LOW DOUBT, resolved: last note (stem-up eighth) has a white print defect inside the head; read A4 at 9.5x zoom (second measurement A4 +0.04) and the piano doubles A4",
+     "alt": "B4 - judged unlikely"
+    },
+    {
+     "reader": "C",
+     "what": "first 16th read G5 (no ledger line visible), as in 81.4.1 (low doubt)",
+     "alt": "A5"
+    }
+   ]
+  },
+  {
+   "id": "83.4.1",
+   "reading_used": "A5/2 G5/2 F5/2 E5/2 D5/2 C5/2 B4/2 A4/2",
+   "flagged_by": [
+    "B"
+   ],
+   "notes": [
+    {
+     "reader": "B",
+     "what": "LOW DOUBT, resolved: fourth note has a small squarish faint head; first automatic centroid fell exactly between D5 and E5; pixel view shows it filling the top space, the second measurement gives E5 -0.25, the piano doubles A5 G5 F5 E5 D5 C5 B4 A4 and the identical bar 82.2.1 reads E5 cleanly",
+     "alt": "D5 - judged unlikely"
+    }
+   ]
+  },
+  {
+   "id": "83.4.2",
+   "reading_used": "r/4 B4/2 C5/2 D5/4 E5/4",
+   "flagged_by": [
+    "B"
+   ],
+   "notes": [
+    {
+     "reader": "B",
+     "what": "LOW DOUBT, resolved: heads of notes 2 and 4 (C5, E5) are faintly inked; read at 9x zoom, second measurement C5 +0.05 and E5 +0.05, piano doubles B4 C5 D5 E5",
+     "alt": "none seriously"
+    }
+   ]
+  },
+  {
+   "id": "84.1.2",
+   "reading_used": "G5/8(fermata) F#5/4 G5/4",
+   "flagged_by": [
+    "B"
+   ],
+   "notes": [
+    {
+     "reader": "B",
+     "what": "LOW DOUBT: the coda bar has no piano doubling to cross-check. Read: G5 quarter with fermata (pixel view shows a bare stem, no flag, no dot), then a sharp before F (two verticals and two crossbars, centred on the top line) = F#5 and G5 joined by ONE beam (two eighths), slurred. A tiny extra mark above the fermata looks like scan noise.",
+     "alt": "none that fills the 4/8 bar; a double beam would give 12 units and is not what the pixels show"
+    }
+   ]
+  },
+  {
+   "id": "84.2.1",
+   "reading_used": "A5/16~",
+   "flagged_by": [
+    "C"
+   ],
+   "notes": [
+    {
+     "reader": "C",
+     "what": "the arcs from the A5 half note through 84.2.2 into the A5 eighth of 84.3.1 are read as ties (no new syllable); the first arc is partly overprinted by the 'da capo al' text (low doubt)",
+     "alt": "slurs, with the A5 re-struck in each bar"
+    }
+   ]
+  }
+ ],
+ "bars": [
+  {
+   "id": "79.1.1",
+   "lyric": "",
+   "events": [
+    {
+     "type": "rest",
+     "dur": 16
+    }
+   ],
+   "partial": false,
+   "note": "piano introduction; time signature 4/8 and 'Allegro moderato' printed here; full-bar rest"
+  },
+  {
+   "id": "79.1.2",
+   "lyric": "",
+   "events": [
+    {
+     "type": "rest",
+     "dur": 16
+    }
+   ],
+   "partial": false,
+   "note": "piano introduction; full-bar rest"
+  },
+  {
+   "id": "79.1.3",
+   "lyric": "",
+   "events": [
+    {
+     "type": "rest",
+     "dur": 16
+    }
+   ],
+   "partial": false,
+   "note": "piano introduction; full-bar rest"
+  },
+  {
+   "id": "79.2.1",
+   "lyric": "",
+   "events": [
+    {
+     "type": "rest",
+     "dur": 16
+    }
+   ],
+   "partial": false,
+   "note": "piano introduction; full-bar rest"
+  },
+  {
+   "id": "79.2.2",
+   "lyric": "Ax-ta-rıb tap-",
+   "events": [
+    {
+     "type": "rest",
+     "dur": 4
+    },
+    {
+     "type": "note",
+     "pitch": "C5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "D5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 4,
+     "tie": false
+    }
+   ],
+   "partial": false,
+   "note": "p; one syllable per note"
+  },
+  {
+   "id": "79.2.3",
+   "lyric": "dım sə-ni,",
+   "events": [
+    {
+     "type": "note",
+     "pitch": "F5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "G5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "F5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 8,
+     "tie": false
+    }
+   ],
+   "partial": false,
+   "note": "syllable 'sə' slurred over G5-F5 (beamed pair)"
+  },
+  {
+   "id": "79.3.1",
+   "lyric": "",
+   "events": [
+    {
+     "type": "rest",
+     "dur": 16
+    }
+   ],
+   "partial": false,
+   "note": "piano interlude; full-bar rest"
+  },
+  {
+   "id": "79.3.2",
+   "lyric": "",
+   "events": [
+    {
+     "type": "rest",
+     "dur": 16
+    }
+   ],
+   "partial": false,
+   "note": "piano interlude; full-bar rest"
+  },
+  {
+   "id": "79.3.3",
+   "lyric": "Ax-ta-rıb tap-",
+   "events": [
+    {
+     "type": "rest",
+     "dur": 4
+    },
+    {
+     "type": "note",
+     "pitch": "C5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "D5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 4,
+     "tie": false
+    }
+   ],
+   "partial": false,
+   "note": "p; one syllable per note"
+  },
+  {
+   "id": "80.1.1",
+   "lyric": "dım sə-ni,",
+   "events": [
+    {
+     "type": "note",
+     "pitch": "F5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "G5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "F5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 8,
+     "tie": false
+    }
+   ],
+   "partial": false,
+   "note": "syllable 'sə' slurred over G5-F5"
+  },
+  {
+   "id": "80.1.2",
+   "lyric": "Sən-də-mi sev-din",
+   "events": [
+    {
+     "type": "note",
+     "pitch": "F5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "G5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "F5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "D5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "C5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 2,
+     "tie": false
+    }
+   ],
+   "partial": false,
+   "note": "'də' G5 and 'mi' F5 are separately flagged sixteenths (dotted slur = Russian underlay); 'sev' slurred E5-D5; 'din' slurred C5-E5"
+  },
+  {
+   "id": "80.2.1",
+   "lyric": "yar mə-ni,",
+   "events": [
+    {
+     "type": "note",
+     "pitch": "D5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "C5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "D5",
+     "dur": 8,
+     "tie": false
+    }
+   ],
+   "partial": false,
+   "note": "syllable 'mə' slurred over E5-C5"
+  },
+  {
+   "id": "80.2.2",
+   "lyric": "Kör nə hel-dır",
+   "events": [
+    {
+     "type": "rest",
+     "dur": 4
+    },
+    {
+     "type": "note",
+     "pitch": "B4",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "C5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "D5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "D5",
+     "dur": 4,
+     "tie": false
+    }
+   ],
+   "partial": false,
+   "note": "START-REPEAT sign at the beginning of this bar"
+  },
+  {
+   "id": "80.3.1",
+   "lyric": "kör-mür kö-züm",
+   "events": [
+    {
+     "type": "note",
+     "pitch": "D5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "C5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "B4",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "A4",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "G4",
+     "dur": 4,
+     "tie": false
+    }
+   ],
+   "partial": false,
+   "note": "syllable 'mür' slurred over C5-B4; A4 and G4 are stem-up flagged eighths; the barline at the end of this bar looks broken/dotted in the canto staff only (plain single barline in the piano): read as an ordinary barline, not a repeat sign"
+  },
+  {
+   "id": "80.3.2",
+   "lyric": "Şad-lı-ğım-dan",
+   "events": [
+    {
+     "type": "rest",
+     "dur": 4
+    },
+    {
+     "type": "note",
+     "pitch": "A4",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "B4",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "C5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "D5",
+     "dur": 4,
+     "tie": false
+    }
+   ],
+   "partial": false,
+   "note": "one syllable per note"
+  },
+  {
+   "id": "80.4.1",
+   "lyric": "dün-ya-nı",
+   "events": [
+    {
+     "type": "note",
+     "pitch": "C5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "B4",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "A4",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "rest",
+     "dur": 4
+    }
+   ],
+   "partial": false,
+   "note": "1st ending (bracket '1.'); END-REPEAT sign at the end of this bar"
+  },
+  {
+   "id": "80.4.2",
+   "lyric": "dün-ya-nı",
+   "events": [
+    {
+     "type": "note",
+     "pitch": "C5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "B4",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "A4",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "rest",
+     "dur": 4
+    }
+   ],
+   "partial": false,
+   "note": "2nd ending (bracket '2.')"
+  },
+  {
+   "id": "81.1.1",
+   "lyric": "Kəl, kəl",
+   "events": [
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "rest",
+     "dur": 4
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "rest",
+     "dur": 4
+    }
+   ],
+   "partial": false,
+   "note": "START-REPEAT sign at the beginning of this bar"
+  },
+  {
+   "id": "81.1.2",
+   "lyric": "ma-ra-lım kəl,",
+   "events": [
+    {
+     "type": "note",
+     "pitch": "D5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "D5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "C5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "B4",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "A4",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "G4",
+     "dur": 4,
+     "tie": false
+    }
+   ],
+   "partial": false,
+   "note": "'ma' slurred D5-E5; 'ra' slurred D5-C5; 'lım' slurred B4-A4; 'kəl' G4"
+  },
+  {
+   "id": "81.2.1",
+   "lyric": "Kəl, kəl",
+   "events": [
+    {
+     "type": "note",
+     "pitch": "D5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "rest",
+     "dur": 4
+    },
+    {
+     "type": "note",
+     "pitch": "D5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "rest",
+     "dur": 4
+    }
+   ],
+   "partial": false,
+   "note": ""
+  },
+  {
+   "id": "81.2.2",
+   "lyric": "çey-ra-nım kəl.",
+   "events": [
+    {
+     "type": "note",
+     "pitch": "C5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "D5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "C5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "B4",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "A4",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "A4",
+     "dur": 4,
+     "tie": false
+    }
+   ],
+   "partial": false,
+   "note": "1st ending (bracket '1.'); END-REPEAT sign at the end of this bar; 'çey' slurred C5-D5; 'ra' slurred C5-B4"
+  },
+  {
+   "id": "81.3.1",
+   "lyric": "çey-ra-nım kəl.",
+   "events": [
+    {
+     "type": "note",
+     "pitch": "C5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "D5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "C5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "B4",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "A4",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "A4",
+     "dur": 4,
+     "tie": false
+    }
+   ],
+   "partial": false,
+   "note": "2nd ending (bracket '2.'); 'çey' slurred C5-D5; 'ra' slurred C5-B4"
+  },
+  {
+   "id": "81.3.2",
+   "lyric": "Sə-ni sev-dim,",
+   "events": [
+    {
+     "type": "rest",
+     "dur": 4
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "G5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 4,
+     "tie": false
+    }
+   ],
+   "partial": false,
+   "note": "mf; third note is G5 here (no ledger line); compare A5 in 82.1.2"
+  },
+  {
+   "id": "81.4.1",
+   "lyric": "yar sə-ni sev-dim,",
+   "events": [
+    {
+     "type": "note",
+     "pitch": "G5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "F5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "D5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "C5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "B4",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "A4",
+     "dur": 4,
+     "tie": false
+    }
+   ],
+   "partial": false,
+   "note": "'yar' slurred G5-F5; 'sə' E5 and 'ni' D5 separately flagged sixteenths; 'sev' slurred C5-B4; 'dim' A4 eighth"
+  },
+  {
+   "id": "81.4.2",
+   "lyric": "Kö-züm kör-məz",
+   "events": [
+    {
+     "type": "rest",
+     "dur": 4
+    },
+    {
+     "type": "note",
+     "pitch": "B4",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "C5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "D5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 4,
+     "tie": false
+    }
+   ],
+   "partial": false,
+   "note": "one syllable per note"
+  },
+  {
+   "id": "82.1.1",
+   "lyric": "öz-kə-ni,",
+   "events": [
+    {
+     "type": "note",
+     "pitch": "C5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "B4",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "A4",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "rest",
+     "dur": 4
+    }
+   ],
+   "partial": false,
+   "note": ""
+  },
+  {
+   "id": "82.1.2",
+   "lyric": "Sə-ni sev-dim,",
+   "events": [
+    {
+     "type": "rest",
+     "dur": 4
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "A5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 4,
+     "tie": false
+    }
+   ],
+   "partial": false,
+   "note": "third note is A5 here (ledger line through the head); compare G5 in 81.3.2"
+  },
+  {
+   "id": "82.2.1",
+   "lyric": "yar sə-ni sev-dim,",
+   "events": [
+    {
+     "type": "note",
+     "pitch": "A5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "G5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "F5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "D5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "C5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "B4",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "A4",
+     "dur": 2,
+     "tie": false
+    }
+   ],
+   "partial": false,
+   "note": "eight sixteenths; 'yar' slurred A5-G5; 'sə' F5 and 'ni' E5 separately flagged; 'sev' slurred D5-C5; 'dim' slurred B4-A4"
+  },
+  {
+   "id": "82.2.2",
+   "lyric": "Kö-züm kör-məz",
+   "events": [
+    {
+     "type": "rest",
+     "dur": 4
+    },
+    {
+     "type": "note",
+     "pitch": "B4",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "C5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "D5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 4,
+     "tie": false
+    }
+   ],
+   "partial": false,
+   "note": "one syllable per note"
+  },
+  {
+   "id": "82.3.1",
+   "lyric": "öz-kə-ni.",
+   "events": [
+    {
+     "type": "note",
+     "pitch": "C5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "B4",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "A4",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "rest",
+     "dur": 4
+    }
+   ],
+   "partial": false,
+   "note": ""
+  },
+  {
+   "id": "82.3.2",
+   "lyric": "",
+   "events": [
+    {
+     "type": "rest",
+     "dur": 16
+    }
+   ],
+   "partial": false,
+   "note": "START-REPEAT sign at the beginning of this bar; piano interlude (ff); full-bar rest"
+  },
+  {
+   "id": "82.3.3",
+   "lyric": "",
+   "events": [
+    {
+     "type": "rest",
+     "dur": 16
+    }
+   ],
+   "partial": false,
+   "note": "piano interlude; full-bar rest"
+  },
+  {
+   "id": "82.4.1",
+   "lyric": "",
+   "events": [
+    {
+     "type": "rest",
+     "dur": 16
+    }
+   ],
+   "partial": false,
+   "note": "piano interlude; full-bar rest"
+  },
+  {
+   "id": "82.4.2",
+   "lyric": "",
+   "events": [
+    {
+     "type": "rest",
+     "dur": 16
+    }
+   ],
+   "partial": false,
+   "note": "1st ending (bracket '1.'); END-REPEAT sign at the end of this bar; full-bar rest"
+  },
+  {
+   "id": "83.1.1",
+   "lyric": "",
+   "events": [
+    {
+     "type": "rest",
+     "dur": 16
+    }
+   ],
+   "partial": false,
+   "note": "2nd ending (bracket '2.'); full-bar rest"
+  },
+  {
+   "id": "83.1.2",
+   "lyric": "Sə-ni sev-dim,",
+   "events": [
+    {
+     "type": "rest",
+     "dur": 4
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "G5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 4,
+     "tie": false
+    }
+   ],
+   "partial": false,
+   "note": "mf; third note G5 (no ledger line)"
+  },
+  {
+   "id": "83.2.1",
+   "lyric": "yar sə-ni sev-dim",
+   "events": [
+    {
+     "type": "note",
+     "pitch": "G5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "F5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "D5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "C5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "B4",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "A4",
+     "dur": 4,
+     "tie": false
+    }
+   ],
+   "partial": false,
+   "note": "'yar' slurred G5-F5; 'sə' E5 and 'ni' D5 separately flagged sixteenths; 'sev' slurred C5-B4; 'dim' A4 eighth"
+  },
+  {
+   "id": "83.2.2",
+   "lyric": "Kö-züm kör-məz",
+   "events": [
+    {
+     "type": "rest",
+     "dur": 4
+    },
+    {
+     "type": "note",
+     "pitch": "B4",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "C5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "D5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 4,
+     "tie": false
+    }
+   ],
+   "partial": false,
+   "note": "one syllable per note"
+  },
+  {
+   "id": "83.3.1",
+   "lyric": "öz-kə-ni.",
+   "events": [
+    {
+     "type": "note",
+     "pitch": "C5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "B4",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "A4",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "rest",
+     "dur": 4
+    }
+   ],
+   "partial": false,
+   "note": ""
+  },
+  {
+   "id": "83.3.2",
+   "lyric": "Sə-ni sev-dim,",
+   "events": [
+    {
+     "type": "rest",
+     "dur": 4
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "A5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 4,
+     "tie": false
+    }
+   ],
+   "partial": false,
+   "note": "mf; third note A5 (ledger line through the head)"
+  },
+  {
+   "id": "83.4.1",
+   "lyric": "yar sə-ni sev-dim,",
+   "events": [
+    {
+     "type": "note",
+     "pitch": "A5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "G5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "F5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "D5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "C5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "B4",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "A4",
+     "dur": 2,
+     "tie": false
+    }
+   ],
+   "partial": false,
+   "note": "eight sixteenths; 'yar' slurred A5-G5; 'sə' F5 and 'ni' E5 separately flagged; 'sev' slurred D5-C5; 'dim' slurred B4-A4"
+  },
+  {
+   "id": "83.4.2",
+   "lyric": "Kö-züm kör-məz",
+   "events": [
+    {
+     "type": "rest",
+     "dur": 4
+    },
+    {
+     "type": "note",
+     "pitch": "B4",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "C5",
+     "dur": 2,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "D5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "E5",
+     "dur": 4,
+     "tie": false
+    }
+   ],
+   "partial": false,
+   "note": "CODA SIGN printed above the barline at the END of this bar (above the canto staff and again above the piano): jump from here to the coda on the da capo pass"
+  },
+  {
+   "id": "84.1.1",
+   "lyric": "öz-kə-ni.",
+   "events": [
+    {
+     "type": "note",
+     "pitch": "C5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "B4",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "A4",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "rest",
+     "dur": 4
+    }
+   ],
+   "partial": false,
+   "note": "'da capo al (coda sign)' printed under this bar; thin double barline at its end"
+  },
+  {
+   "id": "84.1.2",
+   "lyric": "öz-kə-",
+   "events": [
+    {
+     "type": "note",
+     "pitch": "G5",
+     "dur": 8,
+     "tie": false,
+     "fermata": true
+    },
+    {
+     "type": "note",
+     "pitch": "F#5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "note",
+     "pitch": "G5",
+     "dur": 4,
+     "tie": false
+    }
+   ],
+   "partial": false,
+   "note": "CODA begins here (coda sign above the piano staff); 'öz' = G5 quarter with fermata; sharp printed before F; 'kə' slurred F#5-G5 (one beam = two eighths); no piano doubling in this bar (piano: chord, rest with fermata, quarter rest)"
+  },
+  {
+   "id": "84.2.1",
+   "lyric": "ni.",
+   "events": [
+    {
+     "type": "note",
+     "pitch": "A5",
+     "dur": 16,
+     "tie": true
+    }
+   ],
+   "partial": false,
+   "note": "coda; half note A5 (ledger line), tied to the next bar"
+  },
+  {
+   "id": "84.2.2",
+   "lyric": "",
+   "events": [
+    {
+     "type": "note",
+     "pitch": "A5",
+     "dur": 16,
+     "tie": true
+    }
+   ],
+   "partial": false,
+   "note": "coda; half note A5, tied from the previous bar and on over the system break"
+  },
+  {
+   "id": "84.3.1",
+   "lyric": "",
+   "events": [
+    {
+     "type": "note",
+     "pitch": "A5",
+     "dur": 4,
+     "tie": false
+    },
+    {
+     "type": "rest",
+     "dur": 4
+    },
+    {
+     "type": "rest",
+     "dur": 8
+    }
+   ],
+   "partial": false,
+   "note": "coda; A5 eighth tied from the previous bar, then eighth rest and quarter rest"
+  },
+  {
+   "id": "84.3.2",
+   "lyric": "",
+   "events": [
+    {
+     "type": "rest",
+     "dur": 16
+    }
+   ],
+   "partial": false,
+   "note": "coda; full-bar rest; final barline (thin+thick)"
+  }
+ ]
+}
