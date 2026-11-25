@@ -6,14 +6,16 @@
   "license": "MIT",
   "description": "Deterministic physics and code-driven animations by Oyren",
   "packageManager": "pnpm@10.33.0",
-  "engines": { "node": ">=24 <27" },
+  "engines": {
+    "node": ">=24 <27"
+  },
   "scripts": {
     "assets": "node --import tsx scripts/generate-assets.ts",
     "studio": "pnpm assets && remotion studio src/index.ts --port=3000",
     "render": "pnpm assets && node scripts/render.mjs",
     "still": "pnpm assets && remotion still src/index.ts",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test --test-concurrency=1 src/ball-drop/sim.test.ts src/ball-drop/bounds.test.ts src/components/end-card.test.ts src/pendulum-wave/wave.test.ts src/country-maps/fourier.test.ts src/string-arena/sim.test.ts src/drop-arenas/sim.test.ts src/patate/sim.test.ts src/audio.test.ts src/encoding.test.ts src/audio-reactive/synth.test.ts src/gpu-scenes/scenes.test.ts src/comebacks/comeback.test.ts src/repo-showcase/script.test.ts src/repo-showcase/voice.test.ts src/repo-showcase/wav.test.ts src/repo-showcase/timing.test.ts src/repo-showcase/overlay.test.ts src/repo-showcase/audio.test.ts src/repo-showcase/renderGate.test.ts scripts/lib/run-command.test.ts"
+    "test": "node --import tsx --test --test-concurrency=1 src/ball-drop/sim.test.ts src/ball-drop/bounds.test.ts src/components/end-card.test.ts src/pendulum-wave/wave.test.ts src/country-maps/fourier.test.ts src/string-arena/sim.test.ts src/drop-arenas/sim.test.ts src/patate/sim.test.ts src/audio.test.ts src/encoding.test.ts src/audio-reactive/synth.test.ts src/gpu-scenes/scenes.test.ts src/comebacks/comeback.test.ts src/repo-showcase/script.test.ts src/repo-showcase/voice.test.ts src/repo-showcase/wav.test.ts src/repo-showcase/timing.test.ts src/repo-showcase/overlay.test.ts src/repo-showcase/audio.test.ts src/repo-showcase/renderGate.test.ts scripts/lib/run-command.test.ts src/country-maps/explainer.test.ts"
   },
   "dependencies": {
     "@fontsource-variable/inter": "5.2.8",
@@ -27,6 +29,7 @@
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
     "tsx": "4.20.6",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "katex": "0.19.1"
   }
 }
