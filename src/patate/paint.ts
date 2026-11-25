@@ -1,5 +1,13 @@
 import { VIDEO } from "../settings.ts";
 import { theme } from "../theme.ts";
+import {
+  bodyDeformation,
+  impactsByBody,
+  NO_DEFORMATION,
+  PATATE_FRAME_STRETCH,
+  PATATE_TIME_SCALE,
+  type Deformation,
+} from "./feel.ts";
 import { FLASK_JOIN_Y, type PatateTrace } from "./sim.ts";
 import {
   PATATE_FLASK,
@@ -931,10 +939,15 @@ export function drawPotatoCharacter(
   scaleY: number,
   tierSpec: PatateTierSpec,
   alpha = 1,
+  deformation: Deformation = NO_DEFORMATION,
 ) {
   ctx.save();
   ctx.globalAlpha *= alpha;
   ctx.translate(x, y);
+  // Squash-and-stretch goes first, in world space, so it follows the contact direction and not the potato's spin.
+  if (deformation !== NO_DEFORMATION) {
+    ctx.transform(deformation.a, deformation.b, deformation.c, deformation.d, 0, 0);
+  }
   ctx.rotate(theta);
   ctx.scale(scaleX, scaleY);
 
@@ -972,7 +985,7 @@ function drawFlaskAndChute(ctx: CanvasRenderingContext2D, frame: number) {
   const endAngle = Math.PI * 1.5 - gapAngle;
 
   // Smoothly hue-rotating rainbow circular wall (45 deg/sec)
-  const rot = ((frame / VIDEO.fps) * Math.PI) / 4;
+  const rot = (((frame * PATATE_TIME_SCALE) / VIDEO.fps) * Math.PI) / 4; // the ring turns at the slowed pace too
   ctx.save();
   ctx.lineCap = "round";
 
@@ -1063,12 +1076,15 @@ function drawOpeningHook(
   hook: string,
   frame: number,
 ) {
-  const maxHookFrame = 144; // 2.40s
+  // The title card follows the pace: 2.40 s at the original speed, 3.20 s at 3 sub-steps per frame.
+  const maxHookFrame = Math.round(144 * PATATE_FRAME_STRETCH);
+  const fadeStart = Math.round(108 * PATATE_FRAME_STRETCH);
+  const popFrames = Math.round(14 * PATATE_FRAME_STRETCH);
   if (frame > maxHookFrame) return;
 
   const alpha =
-    frame <= 108 ? 1 : Math.max(0, 1 - (frame - 108) / (maxHookFrame - 108));
-  const pop = frame < 14 ? 0.94 + 0.06 * (frame / 14) : 1;
+    frame <= fadeStart ? 1 : Math.max(0, 1 - (frame - fadeStart) / (maxHookFrame - fadeStart));
+  const pop = frame < popFrames ? 0.94 + 0.06 * (frame / popFrames) : 1;
 
   ctx.save();
   ctx.globalAlpha = alpha;
@@ -1237,6 +1253,7 @@ export function paintPatateFrame(
 
   // Draw active potatoes sorted smaller-first so giant boss potatoes command foreground presence
   const sortedBodies = [...f.bodies].sort((a, b) => a.tier - b.tier || a.id - b.id);
+  const impactIndex = impactsByBody(trace.impacts);
   for (const b of sortedBodies) {
     drawPotatoCharacter(
       ctx,
@@ -1248,6 +1265,7 @@ export function paintPatateFrame(
       b.scaleY,
       trace.spec.tiers[b.tier - 1],
       1,
+      bodyDeformation(impactIndex.get(b.id), frame),
     );
   }
 

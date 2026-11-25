@@ -1,3 +1,9 @@
+import { HIT_COMPOSITIONS, synthesizeHitWav } from "../src/hits/index.ts";
+import { HIT_SEED } from "../src/hits/types.ts";
+import { synthesizePieceWav } from "../src/music/synth.ts";
+import { buildCarpetLoomScore } from "../src/music-carpet/score.ts";
+import { buildFireworkMountainKingScore } from "../src/music-fireworks/score.ts";
+import { buildRopeHarpScore } from "../src/music-rope-harp/score.ts";
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -20,6 +26,8 @@ import { COMEBACK_COMPOSITIONS, simulateComeback, synthesizeComebackWav } from "
 import { GPU_AUDIO_COMPOSITIONS, synthesizeGpuAudioSceneWav } from "../src/gpu-scenes/index.ts";
 import { synthesizeShowcaseWav } from "../src/repo-showcase/audio.ts";
 import { SHOWCASE_TOTAL_FRAMES } from "../src/repo-showcase/timing.ts";
+import { synthesizeSwarmWav } from "../src/swarm/audio.ts";
+import { SWARM_DEFINITIONS, simulateSwarmDefinition } from "../src/swarm/themes.ts";
 import {
   synthesize,
   synthesizeCountryMapWav,
@@ -29,6 +37,7 @@ import {
   waveTones,
 } from "../src/audio.ts";
 import { TOTAL_FRAMES, VIDEO } from "../src/settings.ts";
+import { generateMidiAssets } from "./generate-midi-assets.ts";
 
 const directory = fileURLToPath(new URL("../public/generated/", import.meta.url));
 mkdirSync(directory, { recursive: true });
@@ -203,6 +212,62 @@ results.push({
   audioDigest: createHash("sha256").update(showcaseWav).digest("hex"),
 });
 console.log(`AnimationsRepoShowcase: English voice + 48 kHz stereo bed; ${SHOWCASE_TOTAL_FRAMES} frames (${(SHOWCASE_TOTAL_FRAMES / VIDEO.fps).toFixed(2)}s)`);
+
+// MIDI scenes: public/midi/*.mid -> public/generated/midi-<name>.wav (built-in pieces are written first).
+for (const midi of generateMidiAssets()) {
+  results.push({ id: "midi/" + midi.file, notes: midi.notes, durationSec: Number(midi.durationSec.toFixed(4)), midiDigest: midi.midiDigest, audioDigest: midi.audioDigest });
+}
+
+for (const swarm of SWARM_DEFINITIONS) {
+  const trace = simulateSwarmDefinition(swarm.slug);
+  const wav = synthesizeSwarmWav(trace, swarm);
+  writeFileSync(new URL("../public/generated/" + swarm.slug + ".wav", import.meta.url), wav);
+  results.push({
+    id: swarm.id,
+    seed: swarm.config.seed,
+    frames: trace.totalFrames,
+    audioDigest: createHash("sha256").update(wav).digest("hex"),
+  });
+  console.log(
+    `${swarm.id}: ${trace.events.length} events; winFrame=${trace.winFrame}; ${trace.totalFrames} frames (${(trace.totalFrames / VIDEO.fps).toFixed(2)}s)`,
+  );
+}
+
+for (const musicScore of [
+  buildCarpetLoomScore(),
+  buildFireworkMountainKingScore(),
+  buildRopeHarpScore(),
+]) {
+  const wav = synthesizePieceWav(musicScore);
+  writeFileSync(
+    new URL(`../public/generated/${musicScore.slug}.wav`, import.meta.url),
+    wav,
+  );
+  results.push({
+    id: musicScore.id,
+    frames: musicScore.totalFrames,
+    audioDigest: createHash("sha256").update(wav).digest("hex"),
+  });
+  console.log(
+    `${musicScore.id}: ${musicScore.notes.length} notes; ${musicScore.totalFrames} frames (${musicScore.durationSec.toFixed(2)}s)`,
+  );
+}
+
+for (const hit of HIT_COMPOSITIONS) {
+  const wav = synthesizeHitWav(hit.spec.slug);
+  writeFileSync(new URL("../public/generated/" + hit.spec.slug + ".wav", import.meta.url), wav);
+  results.push({
+    id: hit.spec.id,
+    seed: HIT_SEED,
+    frames: hit.spec.totalFrames,
+    channels: 2,
+    sampleRate: 48000,
+    audioDigest: createHash("sha256").update(wav).digest("hex"),
+  });
+  console.log(
+    `${hit.spec.id}: 48 kHz stereo audio synthesized; ${hit.spec.totalFrames} frames (${(hit.spec.totalFrames / VIDEO.fps).toFixed(2)}s)`,
+  );
+}
 
 writeFileSync(new URL("../public/generated/manifest.json", import.meta.url), JSON.stringify({ fps: VIDEO.fps, results }, null, 2) + "\n");
 console.log("Generated audio and manifest for " + results.length + " compositions.");

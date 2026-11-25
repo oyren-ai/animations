@@ -1,10 +1,19 @@
 import {
+  PATATE_FRAME_STRETCH,
+  PATATE_PACE,
+  PATATE_SQUASH,
+  PATATE_TIME_SCALE,
+  type PatateImpact,
+  type PatateImpactKind,
+} from "./feel.ts";
+import {
   getPatateComposition,
   PATATE_CLOSING_FRAMES,
   PATATE_COMPOSITIONS,
   PATATE_FLASK,
   PATATE_RADII,
   PATATE_SCENE_FRAMES,
+  PATATE_SOLVER_SCENE_FRAMES,
   PATATE_TOTAL_FRAMES,
   type PatateCompositionSlug,
   type PatateCompositionSpec,
@@ -57,7 +66,7 @@ export interface PatateCallout {
   readonly y: number;
   readonly accent: string;
   readonly tier: number;
-  readonly progress: number; // 0..1 over 45 frames (0.75s)
+  readonly progress: number; // 0..1 over the banner's lifetime (72 or 46 solver frames, stretched by the pace)
 }
 
 export interface PatateFrame {
@@ -108,6 +117,8 @@ export interface PatateTrace {
   readonly totalFrames: number;
   readonly frames: readonly PatateFrame[];
   readonly events: readonly PatateEvent[];
+  /** Every contact, merge pop and merge shiver, in frame order; the painter turns these into squash-and-stretch. */
+  readonly impacts: readonly PatateImpact[];
   readonly unlockFrames: readonly (number | null)[];
   readonly bossMergeFrame: number | null;
   readonly maxScore: number;
@@ -129,8 +140,6 @@ interface LiveBody {
   enteredFlask: boolean;
   aimVx: number;
   aimApplied: boolean;
-  impactSquash: number;
-  impactSquashVel: number;
 }
 
 interface ActiveShockwave {
@@ -170,6 +179,9 @@ const FPS = 60;
 const DT = 1 / (FPS * SUBSTEPS);
 const GRAVITY = 1160;
 const RESTITUTION = 0.28;
+// The solver steps SUBSTEPS times per solver frame, as it always did. A video frame takes PATATE_PACE.substepsPerFrame
+// of those steps, so every rule below keeps counting in solver frames and the merge chain is exactly main's chain.
+const SUBSTEPS_PER_VIDEO_FRAME = PATATE_PACE.substepsPerFrame;
 const FRICTION = 0.32;
 const GRACE_FRAMES = 6;
 
@@ -191,19 +203,23 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-function mergeSpringScale(ageFrames: number): { sx: number; sy: number } {
-  if (ageFrames < 0 || ageFrames > 32) return { sx: 1, sy: 1 };
+// A merged potato grows in from 68% and settles. The squash-and-stretch wobble on top of it is volume-preserving
+// and comes from the merge's "pop" impact, which the painter turns into a deformation (see feel.ts).
+function mergeSpringScale(ageFrames: number): number {
+  if (ageFrames < 0 || ageFrames > 32) return 1;
   const t = ageFrames / 32;
-  // 0.68 -> 1.15 -> 0.96 -> 1.00 spring curve
-  const env = Math.exp(-5.2 * t);
-  const osc = -0.32 * env * Math.cos(t * Math.PI * 3.1);
-  const s = 1 + osc;
-  const squash = 0.08 * env * Math.sin(t * Math.PI * 4.2);
-  return {
-    sx: s + squash,
-    sy: s - squash * 0.85,
-  };
+  return 1 - 0.32 * Math.exp(-5.2 * t) * Math.cos(t * Math.PI * 3.1);
 }
+
+// Lighter potatoes take more of a collision's squash, heavier ones less.
+function squashShare(otherMass: number, totalMass: number): number {
+  return Math.min(1.7, Math.max(0.3, (2 * otherMass) / totalMass));
+}
+
+const MAX_IMPACTS_PER_BODY_FRAME = 3;
+
+// Effect lifetimes are written in solver frames and shown for as many video frames as the pace stretches them to.
+const videoFrames = (solverFrames: number) => Math.round(solverFrames * PATATE_FRAME_STRETCH);
 
 const traceCache = new Map<string, PatateTrace>();
 
@@ -224,6 +240,37 @@ export function simulatePatate(
   const shockwaves: ActiveShockwave[] = [];
   const sparkles: ActiveSparkle[] = [];
   const callouts: ActiveCallout[] = [];
+  const impacts: PatateImpact[] = [];
+  const impactsThisFrame = new Map<number, { frame: number; count: number }>();
+
+  // Solver sub-steps taken so far. The video frame an event belongs to is the one whose snapshot is taken at the
+  // end of the sub-step it happens in, so events, impacts and effects carry video frames while every rule keeps
+  // counting in solver frames.
+  let globalSubstep = 0;
+  const videoNow = () => Math.floor(globalSubstep / SUBSTEPS_PER_VIDEO_FRAME);
+
+  // Records one contact or shock on one potato. Slow touches leave no mark, and a jammed potato
+  // is capped per frame so the trace stays small.
+  const recordImpact = (
+    body: { id: number },
+    kind: PatateImpactKind,
+    nx: number,
+    ny: number,
+    speed: number,
+  ) => {
+    if (!(speed > PATATE_SQUASH.minImpactSpeed)) return;
+    const length = Math.hypot(nx, ny);
+    if (length < 1e-6) return;
+    const frame = videoNow();
+    const seen = impactsThisFrame.get(body.id);
+    if (seen && seen.frame === frame) {
+      if (seen.count >= MAX_IMPACTS_PER_BODY_FRAME) return;
+      seen.count++;
+    } else {
+      impactsThisFrame.set(body.id, { frame, count: 1 });
+    }
+    impacts.push({ frame, bodyId: body.id, kind, nx: nx / length, ny: ny / length, speed });
+  };
 
   const unlockFrames: (number | null)[] = [0, null, null, null, null, null, null, null];
   let score = 0;
@@ -347,7 +394,127 @@ export function simulatePatate(
   ];
   let prevDropFrame = 0;
 
-  for (let frame = 0; frame <= PATATE_SCENE_FRAMES; frame++) {
+  // Builds the snapshot of the next video frame. `v` is its index and `solverNow` is the solver-frame time it shows.
+  // (A snapshot used to be taken once per solver frame; now it is taken every SUBSTEPS_PER_VIDEO_FRAME sub-steps.)
+  const emitSnapshot = (): void => {
+    const v = frames.length;
+    const solverNow = (v + 1) * PATATE_TIME_SCALE - 1;
+
+    // Smoothly tick displayed score toward target score
+    if (displayScore < score) {
+      const diff = score - displayScore;
+      displayScore += Math.max(1, Math.ceil(diff * 0.24));
+      if (displayScore > score) displayScore = score;
+    }
+
+    // Compute animated visual queue positions in chute (in solver time, so it slows down with the world)
+    const nextDropF = dropCursor < dropFrames.length ? dropFrames[dropCursor] : solverNow + 30;
+    const span = Math.max(1, nextDropF - prevDropFrame);
+    const slideT = Math.max(0, Math.min(1, (solverNow - prevDropFrame) / span));
+    const easeSlide = slideT * slideT * (3 - 2 * slideT);
+
+    const queuedSnapshots: PatateQueuedDrop[] =
+      bossMergeFrame !== null
+        ? []
+        : [
+            {
+              id: previewQueue[0].id,
+              tier: previewQueue[0].tier,
+              x: PATATE_FLASK.cx + previewQueue[0].chuteOffset * 0.65,
+              y: 138 + easeSlide * (232 - 138),
+              r: PATATE_RADII[previewQueue[0].tier - 1] * 0.88,
+              theta: previewQueue[0].theta,
+              alpha: 0.96,
+            },
+            {
+              id: previewQueue[1].id,
+              tier: previewQueue[1].tier,
+              x: PATATE_FLASK.cx + previewQueue[1].chuteOffset * 0.45,
+              y: 96 + easeSlide * (138 - 96),
+              r: PATATE_RADII[previewQueue[1].tier - 1] * 0.78,
+              theta: previewQueue[1].theta,
+              alpha: Math.min(0.9, 0.25 + easeSlide * 0.75),
+            },
+          ];
+
+    const activeWaves: PatateShockwave[] = [];
+    for (const sw of shockwaves) {
+      const age = v - sw.startFrame;
+      if (age >= 0 && age <= sw.durationFrames) {
+        activeWaves.push({
+          x: sw.x,
+          y: sw.y,
+          baseR: sw.baseR,
+          maxR: sw.maxR,
+          progress: age / sw.durationFrames,
+          accent: sw.accent,
+          tier: sw.tier,
+        });
+      }
+    }
+
+    const activeSparkles: PatateSparkle[] = [];
+    for (const sp of sparkles) {
+      const age = v - sp.startFrame;
+      if (age >= 0 && age <= sp.durationFrames) {
+        const p = age / sp.durationFrames;
+        const sec = (age * PATATE_TIME_SCALE) / FPS; // sparkles fly in solver time, slowed with the world
+        activeSparkles.push({
+          x: sp.x0 + sp.vx * sec,
+          y: sp.y0 + sp.vy * sec + 260 * sec * sec,
+          size: sp.size * (1 - p * 0.55),
+          alpha: (1 - p) * (1 - p),
+          color: sp.color,
+        });
+      }
+    }
+
+    // Keep up to 2 newest callouts visible so rapid chain merges never turn into text soup
+    const rawCallouts = callouts.filter(
+      (c) => v >= c.startFrame && v <= c.startFrame + c.durationFrames,
+    );
+    const trimmedCallouts = rawCallouts.slice(-2);
+    const activeCallouts: PatateCallout[] = trimmedCallouts.map((c, idx) => ({
+      text: c.text,
+      x: c.x,
+      y:
+        trimmedCallouts.length === 2 && idx === 0
+          ? Math.max(495, c.y - 54)
+          : c.y,
+      accent: c.accent,
+      tier: c.tier,
+      progress: (v - c.startFrame) / c.durationFrames,
+    }));
+
+    frames.push({
+      frame: v,
+      bodies: bodies.map((b) => {
+        const grow =
+          b.mergedAtFrame !== null ? mergeSpringScale((v - b.mergedAtFrame) * PATATE_TIME_SCALE) : 1;
+        return {
+          id: b.id,
+          tier: b.tier,
+          x: b.x,
+          y: b.y,
+          r: b.r,
+          theta: b.theta,
+          scaleX: grow,
+          scaleY: grow,
+          enteredFlask: b.enteredFlask,
+        };
+      }),
+      queued: queuedSnapshots,
+      shockwaves: activeWaves,
+      sparkles: activeSparkles,
+      callouts: activeCallouts,
+      score: v === PATATE_SCENE_FRAMES ? score : displayScore,
+      unlockedUpToFrame: unlockFrames.map((uf) =>
+        uf !== null && uf <= v ? uf : null,
+      ),
+    });
+  };
+
+  for (let frame = 0; frame <= PATATE_SOLVER_SCENE_FRAMES; frame++) {
     // Check scheduled drop
     if (
       dropCursor < dropFrames.length &&
@@ -385,14 +552,12 @@ export function simulatePatate(
           enteredFlask: false,
           aimVx: plan.aimVx,
           aimApplied: false,
-          impactSquash: 0,
-          impactSquashVel: 0,
         });
 
         score += 12 * spawnTier;
         events.push({
           type: "drop",
-          frame,
+          frame: videoNow(),
           tier: spawnTier,
           x: spawnX,
           y: spawnY,
@@ -449,11 +614,6 @@ export function simulatePatate(
         }
         // Keep angular speed comedic but readable
         b.omega = Math.max(-6.5, Math.min(6.5, b.omega));
-
-        // Damped impact squash spring
-        const springAcc = -260 * b.impactSquash - 18 * b.impactSquashVel;
-        b.impactSquashVel += springAcc * DT;
-        b.impactSquash += b.impactSquashVel * DT;
       }
 
       // Iterative collision & wall resolution
@@ -465,10 +625,16 @@ export function simulatePatate(
             const rightWall = PATATE_FLASK.cx + PATATE_FLASK.chuteHalfWidth - b.r;
             if (b.x < leftWall) {
               b.x = leftWall;
-              if (b.vx < 0) b.vx = -b.vx * 0.22;
+              if (b.vx < 0) {
+                recordImpact(b, "hit", 1, 0, -b.vx);
+                b.vx = -b.vx * 0.22;
+              }
             } else if (b.x > rightWall) {
               b.x = rightWall;
-              if (b.vx > 0) b.vx = -b.vx * 0.22;
+              if (b.vx > 0) {
+                recordImpact(b, "hit", 1, 0, b.vx);
+                b.vx = -b.vx * 0.22;
+              }
             }
             if (b.y < PATATE_FLASK.chuteTopY + b.r) {
               b.y = PATATE_FLASK.chuteTopY + b.r;
@@ -491,6 +657,7 @@ export function simulatePatate(
                   b.y = FLASK_JOIN_Y + ny * b.r;
                   const vn = b.vx * nx + b.vy * ny;
                   if (vn < 0) {
+                    recordImpact(b, "hit", nx, ny, -vn);
                     b.vx -= (1 + 0.25) * vn * nx;
                     b.vy -= (1 + 0.25) * vn * ny;
                   }
@@ -533,13 +700,13 @@ export function simulatePatate(
                 b.vy += fImp * ty;
                 b.omega += (fImp / Math.max(24, b.r)) * 1.6;
 
+                if (iter === 0) recordImpact(b, "hit", nx, ny, vn);
                 if (iter === 0 && sub === 0 && vn > 195) {
-                  b.impactSquash = Math.min(0.14, b.impactSquash + vn / 2600);
                   if (frame - lastBounceFrame >= 7) {
                     lastBounceFrame = frame;
                     events.push({
                       type: "bounce",
-                      frame,
+                      frame: videoNow(),
                       tier: b.tier,
                       speed: vn,
                       x: b.x,
@@ -600,15 +767,17 @@ export function simulatePatate(
                 a.omega -= (jt * invMa) / Math.max(24, a.r) * 1.4;
                 b.omega -= (jt * invMb) / Math.max(24, b.r) * 1.4;
 
+                if (iter === 0) {
+                  const totalMass = a.mass + b.mass;
+                  recordImpact(a, "hit", nx, ny, -vn * squashShare(b.mass, totalMass));
+                  recordImpact(b, "hit", nx, ny, -vn * squashShare(a.mass, totalMass));
+                }
                 if (iter === 0 && sub === 0 && -vn > 210) {
-                  const sq = Math.min(0.13, -vn / 2800);
-                  a.impactSquash = Math.min(0.15, a.impactSquash + sq);
-                  b.impactSquash = Math.min(0.15, b.impactSquash + sq);
                   if (frame - lastBounceFrame >= 8) {
                     lastBounceFrame = frame;
                     events.push({
                       type: "bounce",
-                      frame,
+                      frame: videoNow(),
                       tier: Math.max(a.tier, b.tier),
                       speed: -vn,
                       x: (a.x + b.x) * 0.5,
@@ -692,6 +861,11 @@ export function simulatePatate(
         bodies.splice(idxB, 1);
         bodies.splice(idxA, 1);
 
+        // The two potatoes vanish this frame, so contact marks they got this frame would point at nothing.
+        for (let i = impacts.length - 1; i >= 0 && impacts[i].frame === videoNow(); i--) {
+          if (impacts[i].bodyId === a.id || impacts[i].bodyId === b.id) impacts.splice(i, 1);
+        }
+
         const mergedBody: LiveBody = {
           id: nextId++,
           tier: newTier,
@@ -704,14 +878,14 @@ export function simulatePatate(
           theta: (a.theta + b.theta) * 0.5 * 0.35,
           omega: mOmega,
           spawnFrame: frame,
-          mergedAtFrame: frame,
+          mergedAtFrame: videoNow(),
           enteredFlask: true,
           aimVx: 0,
           aimApplied: true,
-          impactSquash: 0,
-          impactSquashVel: 0,
         };
         bodies.push(mergedBody);
+        // The new potato lands with a vertical squash that springs back (the painter turns this into a wobble).
+        recordImpact(mergedBody, "pop", 0, 1, PATATE_SQUASH.popSpeed);
 
         // Mild outward radial pop to nearby potatoes to spark satisfying Suika chain reactions!
         const blastRadius = newR * 2.5 + 80;
@@ -725,15 +899,17 @@ export function simulatePatate(
             const falloff = 1 - od / blastRadius;
             other.vx += (odx / od) * popStrength * falloff;
             other.vy += ((ody / od) * popStrength - 35) * falloff;
+            // Neighbours shiver along the line to the merge.
+            recordImpact(other, "pop", odx / od, ody / od, popStrength * falloff * PATATE_SQUASH.popJiggleGain);
           }
         }
 
         const isFirstUnlock = unlockFrames[newTier - 1] === null;
         if (isFirstUnlock) {
-          unlockFrames[newTier - 1] = frame;
+          unlockFrames[newTier - 1] = videoNow();
         }
         if (newTier === 8 && bossMergeFrame === null) {
-          bossMergeFrame = frame;
+          bossMergeFrame = videoNow();
         }
 
         score += tierSpec.mergePoints;
@@ -741,7 +917,7 @@ export function simulatePatate(
         if (tierSpec.stem) {
           events.push({
             type: "merge",
-            frame,
+            frame: videoNow(),
             tier: newTier,
             stem: tierSpec.stem,
             playbackRate: tierSpec.playbackRate,
@@ -755,8 +931,8 @@ export function simulatePatate(
 
         // Concentric shockwave(s)
         shockwaves.push({
-          startFrame: frame,
-          durationFrames: newTier === 8 ? 44 : 28,
+          startFrame: videoNow(),
+          durationFrames: videoFrames(newTier === 8 ? 44 : 28),
           x: mx,
           y: my,
           baseR: newR * 0.72,
@@ -766,8 +942,8 @@ export function simulatePatate(
         });
         if (newTier >= 6) {
           shockwaves.push({
-            startFrame: frame + 4,
-            durationFrames: newTier === 8 ? 48 : 30,
+            startFrame: videoNow() + videoFrames(4),
+            durationFrames: videoFrames(newTier === 8 ? 48 : 30),
             x: mx,
             y: my,
             baseR: newR * 0.55,
@@ -783,8 +959,8 @@ export function simulatePatate(
           const ang = (k / sparkleCount) * Math.PI * 2 + rng() * 0.32;
           const spd = (150 + newTier * 26) * (0.75 + rng() * 0.55);
           sparkles.push({
-            startFrame: frame,
-            durationFrames: 24 + Math.floor(rng() * 14),
+            startFrame: videoNow(),
+            durationFrames: videoFrames(24 + Math.floor(rng() * 14)),
             x0: mx + Math.cos(ang) * newR * 0.55,
             y0: my + Math.sin(ang) * newR * 0.55,
             vx: Math.cos(ang) * spd,
@@ -796,8 +972,8 @@ export function simulatePatate(
 
         // Floating French title callout badge (keep only recent non-overlapping callouts readable)
         callouts.push({
-          startFrame: frame,
-          durationFrames: newTier === 8 ? 72 : 46,
+          startFrame: videoNow(),
+          durationFrames: videoFrames(newTier === 8 ? 72 : 46),
           text: tierSpec.banner,
           x: Math.max(250, Math.min(830, mx)),
           y: Math.max(515, Math.min(1230, my - newR * 0.65)),
@@ -805,125 +981,13 @@ export function simulatePatate(
           tier: newTier,
         });
       }
-    }
 
-    // Smoothly tick displayed score toward target score
-    if (displayScore < score) {
-      const diff = score - displayScore;
-      displayScore += Math.max(1, Math.ceil(diff * 0.24));
-      if (displayScore > score) displayScore = score;
-    }
-
-    // Compute animated visual queue positions in chute
-    const nextDropF =
-      dropCursor < dropFrames.length ? dropFrames[dropCursor] : frame + 30;
-    const span = Math.max(1, nextDropF - prevDropFrame);
-    const slideT = Math.max(0, Math.min(1, (frame - prevDropFrame) / span));
-    const easeSlide = slideT * slideT * (3 - 2 * slideT);
-
-    const queuedSnapshots: PatateQueuedDrop[] =
-      bossMergeFrame !== null
-        ? []
-        : [
-            {
-              id: previewQueue[0].id,
-              tier: previewQueue[0].tier,
-              x: PATATE_FLASK.cx + previewQueue[0].chuteOffset * 0.65,
-              y: 138 + easeSlide * (232 - 138),
-              r: PATATE_RADII[previewQueue[0].tier - 1] * 0.88,
-              theta: previewQueue[0].theta,
-              alpha: 0.96,
-            },
-            {
-              id: previewQueue[1].id,
-              tier: previewQueue[1].tier,
-              x: PATATE_FLASK.cx + previewQueue[1].chuteOffset * 0.45,
-              y: 96 + easeSlide * (138 - 96),
-              r: PATATE_RADII[previewQueue[1].tier - 1] * 0.78,
-              theta: previewQueue[1].theta,
-              alpha: Math.min(0.9, 0.25 + easeSlide * 0.75),
-            },
-          ];
-
-    const activeWaves: PatateShockwave[] = [];
-    for (const sw of shockwaves) {
-      const age = frame - sw.startFrame;
-      if (age >= 0 && age <= sw.durationFrames) {
-        activeWaves.push({
-          x: sw.x,
-          y: sw.y,
-          baseR: sw.baseR,
-          maxR: sw.maxR,
-          progress: age / sw.durationFrames,
-          accent: sw.accent,
-          tier: sw.tier,
-        });
+      // One video frame is SUBSTEPS_PER_VIDEO_FRAME solver sub-steps; take its snapshot when they are done.
+      globalSubstep++;
+      if (globalSubstep % SUBSTEPS_PER_VIDEO_FRAME === 0 && frames.length <= PATATE_SCENE_FRAMES) {
+        emitSnapshot();
       }
     }
-
-    const activeSparkles: PatateSparkle[] = [];
-    for (const sp of sparkles) {
-      const age = frame - sp.startFrame;
-      if (age >= 0 && age <= sp.durationFrames) {
-        const p = age / sp.durationFrames;
-        const sec = age / FPS;
-        activeSparkles.push({
-          x: sp.x0 + sp.vx * sec,
-          y: sp.y0 + sp.vy * sec + 260 * sec * sec,
-          size: sp.size * (1 - p * 0.55),
-          alpha: (1 - p) * (1 - p),
-          color: sp.color,
-        });
-      }
-    }
-
-    // Keep up to 2 newest callouts visible so rapid chain merges never turn into text soup
-    const rawCallouts = callouts.filter(
-      (c) => frame >= c.startFrame && frame <= c.startFrame + c.durationFrames,
-    );
-    const trimmedCallouts = rawCallouts.slice(-2);
-    const activeCallouts: PatateCallout[] = trimmedCallouts.map((c, idx) => ({
-      text: c.text,
-      x: c.x,
-      y:
-        trimmedCallouts.length === 2 && idx === 0
-          ? Math.max(495, c.y - 54)
-          : c.y,
-      accent: c.accent,
-      tier: c.tier,
-      progress: (frame - c.startFrame) / c.durationFrames,
-    }));
-
-    frames.push({
-      frame,
-      bodies: bodies.map((b) => {
-        const mergeScale =
-          b.mergedAtFrame !== null
-            ? mergeSpringScale(frame - b.mergedAtFrame)
-            : { sx: 1, sy: 1 };
-        const sx = mergeScale.sx * (1 + b.impactSquash);
-        const sy = mergeScale.sy * (1 - b.impactSquash * 0.85);
-        return {
-          id: b.id,
-          tier: b.tier,
-          x: b.x,
-          y: b.y,
-          r: b.r,
-          theta: b.theta,
-          scaleX: sx,
-          scaleY: sy,
-          enteredFlask: b.enteredFlask,
-        };
-      }),
-      queued: queuedSnapshots,
-      shockwaves: activeWaves,
-      sparkles: activeSparkles,
-      callouts: activeCallouts,
-      score: frame === PATATE_SCENE_FRAMES ? score : displayScore,
-      unlockedUpToFrame: unlockFrames.map((uf) =>
-        uf !== null && uf <= frame ? uf : null,
-      ),
-    });
   }
 
   const trace: PatateTrace = {
@@ -934,6 +998,7 @@ export function simulatePatate(
     totalFrames: PATATE_TOTAL_FRAMES,
     frames,
     events,
+    impacts,
     unlockFrames,
     bossMergeFrame,
     maxScore: score,
