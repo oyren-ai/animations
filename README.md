@@ -44,6 +44,10 @@ Every composition renders at 1080 × 1920 and 60 fps, closing with a code end ca
 | --- | --- |
 | <img src="docs/previews/PatateMergeWorldToCode.png" width="270" alt="World-cuisine potatoes merging into AI coding agents inside a rainbow-rimmed flask"> | <img src="docs/previews/PatateMergeLanguages.png" width="270" alt="Programming-language potatoes merging up to Lean 4 inside a rainbow-rimmed flask"> |
 
+| Swarm: rock paper scissors | Swarm: five rivals |
+| --- | --- |
+| <img src="docs/previews/SwarmRpsClassic.png" width="270" alt="Rock, paper and scissors armies clashing inside an Oyren workspace arena above a live share bar"> | <img src="docs/previews/SwarmFiveRivals.png" width="270" alt="Five geometric armies in a five-way chase inside an Oyren workspace arena above a live share bar"> |
+
 | Cyber synth shader tunnel (WebGL2) | Polyphonic wall cascade |
 | --- | --- |
 | <img src="docs/previews/CyberSynthShaderTunnel.png" width="270" alt="Full-bleed 1080x1920 WebGL2 raymarched octagonal synthwave tunnel pulsing to a 124 BPM stereo score"> | <img src="docs/previews/PolyphonicWallCascade.png" width="270" alt="Full-screen 1080x1920 acoustic chamber with glowing outer rails, eight harmonic strings, and luminous orbs"> |
@@ -93,6 +97,8 @@ Every composition renders at 1080 × 1920 and 60 fps, closing with a code end ca
 | `SplitterWallEscape` | Ten-layer neon brick fortress (`450 bricks/s` sweeping dual lasers vs `1` Splitter orb `x3 balls per wall`) ending in a `19,683`-ball avalanche. | Change `FORTRESS_WALL_BRICKS` or split factor in `src/comebacks/splitterFortress.ts`. |
 | `AfterburnerLapComeback` | Vertical 100-lap speedway (`900 km/h` steady cruiser vs `+18%` speed per gate bounce) with relativistic wake blur and Shepard riser. | Adjust `RIGHT_BOUNCE_MULTIPLIER` or overdrive ceiling in `src/comebacks/afterburnerLaps.ts`. |
 | `AnimationsRepoShowcase` | A 24-second short that introduces this repo with an English AI voiceover (Speechify). Cuts, word-highlight captions and a remix demo follow the measured voice clips; the footage is this repo's own pendulum, ball-drop, string-arena and Fourier-map scenes. | Edit the lines in `src/repo-showcase/script.ts`, regenerate the voice with `scripts/generate-showcase-voice.ts`, and re-render. |
+| `SwarmRpsClassic` | 180 slate-blue rock gems, ice-white code-sheet papers, and bold lime-bladed scissors start packed on three sides of a centred Oyren workspace arena (symmetric triangle, centroids ≥ 621 px apart), charge into contact within the first second, and chase, flee and convert rivals while a live share bar and team-coloured tabular counters follow the swarm. Seed `76` came from `scripts/search-swarm-seed.ts` over seeds 1 to 1000 (36 met the arc criteria; all three armies stay alive until 27.9 s and the last lead change comes at 29.1 s): 7 lead changes, scissors fell to 2 of 180 sprites at 20.9 s and still wins at 33.0 s of a 36.0 s clip, then a 3 s `SCISSORS WINS` hold. | Edit `CLASSIC_RULES` in `src/swarm/themes.ts` (for example let rock beat both rivals), or change `count`, `radius` and the physics, then rerun `scripts/search-swarm-seed.ts`. |
+| `SwarmFiveRivals` | 160 bold solid-filled geometric emblems (lime orb, sky-blue delta, ice-white chip, violet star and coral hex) start packed at five vertices around the arena (symmetric pentagon, centroids ≥ 606 px apart) and play a five-way cycle where each shape beats two rivals and loses to two, with five distinct conversion timbres. Seed `479` came from the same search (92 of 1000 qualified; three shapes stay alive until 25.3 s): 10 lead changes, the hexagon fell to 1 single sprite of 160 at 21.7 s and still wins at 34.2 s of a 37.2 s clip, then a 3 s `HEXAGON WINS` hold. | Replace `cyclicRules(5, 2)` in `src/swarm/themes.ts` with another tournament matrix, or add a sixth skin entry and rules row. |
 
 ## Run locally
 
@@ -119,6 +125,8 @@ Choose a composition and output filename:
 pnpm render SplitLaneFunnelMerge out/funnel.mp4
 pnpm render PendulumWave out/wave.mp4
 pnpm render MapOfAzerbaijan out/map-of-azerbaijan.mp4
+pnpm render SwarmRpsClassic out/rps-classic.mp4
+pnpm render SwarmFiveRivals out/rps-five-rivals.mp4
 ~~~
 
 The render command uses H.264, limited-range BT.709, yuv420p, and one render worker. PNG source frames preserve the intended palette through color conversion. Extra Remotion CLI flags follow the filename:
@@ -178,6 +186,8 @@ The Patate Merge scenes integrate 240 Hz rigid-body circle dynamics with rotatio
 
 The full-screen GPU and stereo audio-reactive scenes (`CyberSynthShaderTunnel`, `PolyphonicWallCascade`, and `HarmonicSortingMatrix`) synthesize 48 kHz 2-channel PCM16 WAV soundtracks calibrated via ITU-R BS.1770-4 gated loudness (`-14 LUFS`, `<= -1.8 dBTP` 4× oversampled true peak) and extract deterministic 32-band Goertzel spectra directly from the stereo buffer so WebGL2 GLSL fragment shaders and full-bleed `0..1080 × 0..1920` canvases stay frame-exact under arbitrary scrubbing.
 
+The swarm scenes (`SwarmRpsClassic`, `SwarmFiveRivals`) share one engine, `src/swarm/sim.ts`: a rules matrix says which type converts which on contact, and a skin in `src/swarm/themes.ts` adds names, colours, icons and sounds, so a new game is a new matrix plus a new skin. Each army spawns packed in its own disjoint, vertically symmetric formation around the perimeter (triangle for three armies, pentagon for five, centroids at least 600 px apart) and launches an opening charge so first conversions strike within the first second. One fixed `1/60 s` step runs per video frame from a `mulberry32` stream, and the whole run is computed once per process; each frame only reads a snapshot. Every sprite looks for the nearest prey and the nearest predator inside a sight radius, steers toward the first and away from the second with a little noise, keeps a soft distance from its own kind, and bounces off the arena walls; a spatial grid keeps a few hundred sprites cheap. Contact (centres closer than two radii) turns the loser into the winner's type, at most once per sprite per step and always judged on the types at the start of the step, and emits an event that drives the pop, the additive ring and spark flash, and the sound. After 26 s a slow aggression ramp speeds the chasers and widens their sight so a stalled endgame still ends. The loop uses only exactly rounded arithmetic (`+ - * /` and `sqrt`): `Math.sin` and `Math.cos` differ in the last bit between Node and Chrome, which would make the audio rendered in Node drift away from the video drawn in the browser. The painter renders an Oyren ink backdrop with a seamless wrapping dot grid and a rounded workspace window (`oyren / arena`) following the framing standard (everything centred on x = 540, a 980 px wide arena with 50 px margins, text inside the central 840 px, the block centred around y = 940, nothing important in the bottom 200 px). The seeds were chosen offline with `scripts/search-swarm-seed.ts`, which scores seeds 1 to 1000 on lead changes, a comeback of the eventual winner after the first quarter of the clip, and a last survivor that emerges late; the tests repeat those checks for the chosen seeds.
+
 ## Where to change things
 
 | File | Responsibility |
@@ -210,6 +220,12 @@ The full-screen GPU and stereo audio-reactive scenes (`CyberSynthShaderTunnel`, 
 | `src/gpu-scenes/harmonicSorting.ts` | Full-bleed 3-band Radix, Quick, and Heap Sort showdown and Lydian-pentatonic arpeggio sonifier |
 | `docs/VIDEO-AUDIO-STACK.md` | Evaluation of open-source video agent skills, WebGL2 shader pipeline, and audio DSP stack |
 | `src/patate/feel.ts` | The Patate pace knob (3 solver sub-steps per frame: motion 25% slower, videos 31 s) and the volume-preserving squash-and-stretch spring that follows each contact and merge |
+| `src/swarm/sim.ts` | Deterministic cyclic-chase engine: rules matrix, spatial grid, steering, contact conversions, run metrics, and the arc scoring used by the seed search |
+| `src/swarm/themes.ts` | Swarm skins (names, colours, icons, sounds), the two compositions, their seeds, physics and arc criteria |
+| `src/swarm/sprites.ts` | Original Oyren vector sprites: faceted rock gem, code-sheet paper, lime-bladed scissors, and five rival emblems |
+| `src/swarm/paint.ts` | Oyren ink dot-grid backdrop, rounded workspace window, sprites, additive ring and spark effects, share bar, tabular counters, and lime-bordered winner pill, centred on x = 540 |
+| `src/swarm/audio.ts` | Rate-limited per-type conversion sounds, tension bed, and finish chime |
+| `scripts/search-swarm-seed.ts` | Offline seed search that scores lead changes, comeback depth and finish time |
 | `src/shared/reelUtils.ts` | Reel safe-zone bounds assertions and procedural geometric emblem renderer |
 | `src/audio.ts` | Event-to-tone mapping, harmonic map chords, arena soundtracks, and PCM synthesis |
 | `src/encoding.ts` | Explicit PNG-to-BT.709 conversion for the pinned renderer |
@@ -228,6 +244,8 @@ pnpm assets
 ~~~
 
 Tests cover seeded replay, mass and disc-area conservation, moving contacts, curved boundaries, safe text bounds, exact oscillator derivatives, monotonic Fourier contour convergence and Mercator bounds, the `MapOfIndia` explainer maths (independent `c_k`, the `N = 1` ellipse, chain tip, whole-revolution stage timing, valid KaTeX), deterministic audio duration and peak levels, and the rendered end-card link. Run these checks locally on Node.js 24 before sharing a remix.
+
+Tests cover seeded replay, mass and disc-area conservation, moving contacts, curved boundaries, safe text bounds, exact oscillator derivatives, monotonic Fourier contour convergence and Mercator bounds, deterministic audio duration and peak levels, bit-identical swarm replays with conserved sprite counts, single-contact steps and a three second winner hold, swarm sound limiting and timbre separation, and the rendered end-card link. Run these checks locally on Node.js 24 before sharing a remix.
 
 Render and inspect frames after changing the layout or motion. A passing typecheck does not inspect pixels.
 

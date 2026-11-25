@@ -20,6 +20,8 @@ import { COMEBACK_COMPOSITIONS, simulateComeback, synthesizeComebackWav } from "
 import { GPU_AUDIO_COMPOSITIONS, synthesizeGpuAudioSceneWav } from "../src/gpu-scenes/index.ts";
 import { synthesizeShowcaseWav } from "../src/repo-showcase/audio.ts";
 import { SHOWCASE_TOTAL_FRAMES } from "../src/repo-showcase/timing.ts";
+import { synthesizeSwarmWav } from "../src/swarm/audio.ts";
+import { SWARM_DEFINITIONS, simulateSwarmDefinition } from "../src/swarm/themes.ts";
 import {
   synthesize,
   synthesizeCountryMapWav,
@@ -208,6 +210,21 @@ console.log(`AnimationsRepoShowcase: English voice + 48 kHz stereo bed; ${SHOWCA
 // MIDI scenes: public/midi/*.mid -> public/generated/midi-<name>.wav (built-in pieces are written first).
 for (const midi of generateMidiAssets()) {
   results.push({ id: "midi/" + midi.file, notes: midi.notes, durationSec: Number(midi.durationSec.toFixed(4)), midiDigest: midi.midiDigest, audioDigest: midi.audioDigest });
+}
+
+for (const swarm of SWARM_DEFINITIONS) {
+  const trace = simulateSwarmDefinition(swarm.slug);
+  const wav = synthesizeSwarmWav(trace, swarm);
+  writeFileSync(new URL("../public/generated/" + swarm.slug + ".wav", import.meta.url), wav);
+  results.push({
+    id: swarm.id,
+    seed: swarm.config.seed,
+    frames: trace.totalFrames,
+    audioDigest: createHash("sha256").update(wav).digest("hex"),
+  });
+  console.log(
+    `${swarm.id}: ${trace.events.length} events; winFrame=${trace.winFrame}; ${trace.totalFrames} frames (${(trace.totalFrames / VIDEO.fps).toFixed(2)}s)`,
+  );
 }
 
 writeFileSync(new URL("../public/generated/manifest.json", import.meta.url), JSON.stringify({ fps: VIDEO.fps, results }, null, 2) + "\n");

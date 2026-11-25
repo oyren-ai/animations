@@ -9,12 +9,14 @@ import { GpuAudioSceneShell } from "./components/GpuAudioSceneShell.tsx";
 import { RepoShowcaseShell } from "./components/RepoShowcaseShell.tsx";
 import { getReelArenaTiming, ReelArenaShell } from "./components/ReelArenaShell.tsx";
 import { EXPLAINER_FRAMES, EXPLAINER_SLUG } from "./country-maps/explainer.ts";
+import { SwarmShell } from "./components/SwarmShell.tsx";
 import { COUNTRY_MAPS } from "./country-maps/fourier.ts";
 import { DROP_STYLES } from "./drop-arenas/sim.ts";
 import { GPU_AUDIO_COMPOSITIONS } from "./gpu-scenes/index.ts";
 import { PATATE_COMPOSITIONS, PATATE_TOTAL_FRAMES } from "./patate/themes.ts";
 import { SHOWCASE_TOTAL_FRAMES } from "./repo-showcase/timing.ts";
 import { STRING_ROUNDS } from "./string-arena/sim.ts";
+import { getSwarmTiming, SWARM_DEFINITIONS } from "./swarm/themes.ts";
 import { TOTAL_FRAMES, VIDEO } from "./settings.ts";
 import { MidiCompositions } from "./midi/compositions.tsx";
 
@@ -134,5 +136,17 @@ export function Root() {
       defaultProps={{}}
     />
     <MidiCompositions />
+    {SWARM_DEFINITIONS.map((swarm) => (
+      <Composition
+        key={swarm.id}
+        id={swarm.id}
+        component={SwarmShell}
+        width={VIDEO.width}
+        height={VIDEO.height}
+        fps={VIDEO.fps}
+        durationInFrames={getSwarmTiming(swarm.slug).totalFrames}
+        defaultProps={{ slug: swarm.slug }}
+      />
+    ))}
   </>;
 }
