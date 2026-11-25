@@ -99,6 +99,9 @@ Every composition renders at 1080 × 1920 and 60 fps, closing with a code end ca
 | `AnimationsRepoShowcase` | A 24-second short that introduces this repo with an English AI voiceover (Speechify). Cuts, word-highlight captions and a remix demo follow the measured voice clips; the footage is this repo's own pendulum, ball-drop, string-arena and Fourier-map scenes. | Edit the lines in `src/repo-showcase/script.ts`, regenerate the voice with `scripts/generate-showcase-voice.ts`, and re-render. |
 | `SwarmRpsClassic` | 180 slate-blue rock gems, ice-white code-sheet papers, and bold lime-bladed scissors start packed on three sides of a centred Oyren workspace arena (symmetric triangle, centroids ≥ 621 px apart), charge into contact within the first second, and chase, flee and convert rivals while a live share bar and team-coloured tabular counters follow the swarm. Seed `76` came from `scripts/search-swarm-seed.ts` over seeds 1 to 1000 (36 met the arc criteria; all three armies stay alive until 27.9 s and the last lead change comes at 29.1 s): 7 lead changes, scissors fell to 2 of 180 sprites at 20.9 s and still wins at 33.0 s of a 36.0 s clip, then a 3 s `SCISSORS WINS` hold. | Edit `CLASSIC_RULES` in `src/swarm/themes.ts` (for example let rock beat both rivals), or change `count`, `radius` and the physics, then rerun `scripts/search-swarm-seed.ts`. |
 | `SwarmFiveRivals` | 160 bold solid-filled geometric emblems (lime orb, sky-blue delta, ice-white chip, violet star and coral hex) start packed at five vertices around the arena (symmetric pentagon, centroids ≥ 606 px apart) and play a five-way cycle where each shape beats two rivals and loses to two, with five distinct conversion timbres. Seed `479` came from the same search (92 of 1000 qualified; three shapes stay alive until 25.3 s): 10 lead changes, the hexagon fell to 1 single sprite of 160 at 21.7 s and still wins at 34.2 s of a 37.2 s clip, then a 3 s `HEXAGON WINS` hold. | Replace `cyclicRules(5, 2)` in `src/swarm/themes.ts` with another tournament matrix, or add a sixth skin entry and rules row. |
+| `MusicCarpetLoom` | Traditional *Sarı gəlin* arranged for synthesized *tar*, *kamança*, *qaval*, and *D şur* drone while a visible knotter and toothed beater comb weave a natural-dye carpet row by row from the bottom up. | Swap the note array in `src/music-carpet/sariGelinData.ts` or recolor the natural dye palette in `src/music-carpet/pattern.ts`. |
+| `MusicFireworkKing` | Grieg's *In the Hall of the Mountain King* accelerates from stealthy pizzicato to full brass and bells while every note launches a pitch-positioned rocket that detonates on the audio onset. | Swap the note data in `src/music-fireworks/score.ts` for another public-domain piece or adjust burst spark physics. |
+| `MusicRopeHarp` | Traditional *Greensleeves* played on a twenty-bar tuned chime rack as animated scissors snip hanging weights so each weight strikes its chime bar on the exact beat and rolls into collector buckets. | Swap the melody and harp chords in `src/music-rope-harp/score.ts` or change fall duration and bucket count in `src/music-rope-harp/sim.ts`. |
 
 ## Run locally
 
@@ -234,6 +237,10 @@ The swarm scenes (`SwarmRpsClassic`, `SwarmFiveRivals`) share one engine, `src/s
 | `src/repo-showcase/timing.ts` | Cuts, captions and remix steps derived from the measured voice clips |
 | `src/repo-showcase/overlay.ts` | Hook headline, word-highlight captions, remix window and end card, safe-zone checked |
 | `scripts/generate-showcase-voice.ts` | Generates the English voice clips and word timings with Speechify (needs `SPEECHIFY_API_KEY`) |
+| `src/music/` | Stereo Karplus-Strong, bowed-string, FM bell, and drum synthesizer plus pitch/sync/loudness verification |
+| `src/music-carpet/` | *Sarı gəlin* transcription, natural-dye medallion & *buta* knot grid, and vertical loom renderer |
+| `src/music-fireworks/` | Accelerando *Mountain King* score, mortar-to-sky firework physics, and chrysanthemum spark renderer |
+| `src/music-rope-harp/` | *Greensleeves* chime-bar arrangement, scissor-snip gravity timing, and collector-bucket harp renderer |
 
 ## Verify a remix
 
