@@ -486,6 +486,419 @@ function drawRivalShape(ctx: CanvasRenderingContext2D, icon: SwarmIcon, u: numbe
   ctx.fill();
 }
 
+/** Bold layered ember flame for Fire (coral-amber outer, golden inner, hot cream core). */
+function drawFire(ctx: CanvasRenderingContext2D, u: number, color: string, variant: number) {
+  contactShadow(ctx, u, 0.72);
+  ctx.lineJoin = "round";
+  const flip = variant % 2 === 0 ? 1 : -1;
+  ctx.scale(flip, 1);
+  const casingW = Math.max(3.2, u * 0.25);
+
+  const outerFlame = () => {
+    ctx.beginPath();
+    ctx.moveTo(0.06 * u, -1.08 * u);
+    ctx.bezierCurveTo(0.42 * u, -0.62 * u, 0.86 * u, -0.26 * u, 0.82 * u, 0.24 * u);
+    ctx.bezierCurveTo(0.8 * u, 0.68 * u, 0.44 * u, 0.88 * u, 0, 0.88 * u);
+    ctx.bezierCurveTo(-0.5 * u, 0.88 * u, -0.84 * u, 0.62 * u, -0.82 * u, 0.16 * u);
+    ctx.bezierCurveTo(-0.8 * u, -0.18 * u, -0.56 * u, -0.44 * u, -0.42 * u, -0.64 * u);
+    ctx.bezierCurveTo(-0.4 * u, -0.36 * u, -0.24 * u, -0.32 * u, -0.22 * u, -0.52 * u);
+    ctx.bezierCurveTo(-0.18 * u, -0.76 * u, -0.04 * u, -0.94 * u, 0.06 * u, -1.08 * u);
+    ctx.closePath();
+  };
+
+  outerFlame();
+  ctx.lineWidth = casingW;
+  ctx.strokeStyle = OUTLINE;
+  ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.fill();
+
+  // Mid amber flame tongue.
+  ctx.beginPath();
+  ctx.moveTo(0.04 * u, -0.56 * u);
+  ctx.bezierCurveTo(0.32 * u, -0.2 * u, 0.56 * u, 0.08 * u, 0.52 * u, 0.42 * u);
+  ctx.bezierCurveTo(0.48 * u, 0.7 * u, 0.24 * u, 0.8 * u, 0, 0.8 * u);
+  ctx.bezierCurveTo(-0.3 * u, 0.8 * u, -0.52 * u, 0.64 * u, -0.5 * u, 0.34 * u);
+  ctx.bezierCurveTo(-0.48 * u, 0.04 * u, -0.22 * u, -0.22 * u, 0.04 * u, -0.56 * u);
+  ctx.closePath();
+  ctx.fillStyle = "#ffae34";
+  ctx.fill();
+
+  // Bright golden-cream hot inner core.
+  ctx.beginPath();
+  ctx.moveTo(0.02 * u, -0.02 * u);
+  ctx.bezierCurveTo(0.22 * u, 0.2 * u, 0.3 * u, 0.44 * u, 0.24 * u, 0.62 * u);
+  ctx.bezierCurveTo(0.18 * u, 0.74 * u, -0.16 * u, 0.74 * u, -0.22 * u, 0.6 * u);
+  ctx.bezierCurveTo(-0.28 * u, 0.42 * u, -0.18 * u, 0.18 * u, 0.02 * u, -0.02 * u);
+  ctx.closePath();
+  ctx.fillStyle = "#fff1ad";
+  ctx.fill();
+}
+
+/** Plump faceted sky-cyan droplet for Water with crisp depth crescent and ice specular. */
+function drawWater(ctx: CanvasRenderingContext2D, u: number, color: string) {
+  contactShadow(ctx, u, 0.68);
+  ctx.lineJoin = "round";
+  const casingW = Math.max(3.2, u * 0.25);
+
+  const dropPath = () => {
+    ctx.beginPath();
+    ctx.moveTo(0, -1.06 * u);
+    ctx.bezierCurveTo(0.36 * u, -0.5 * u, 0.8 * u, -0.02 * u, 0.78 * u, 0.32 * u);
+    ctx.bezierCurveTo(0.76 * u, 0.72 * u, 0.42 * u, 0.88 * u, 0, 0.88 * u);
+    ctx.bezierCurveTo(-0.42 * u, 0.88 * u, -0.76 * u, 0.72 * u, -0.78 * u, 0.32 * u);
+    ctx.bezierCurveTo(-0.8 * u, -0.02 * u, -0.36 * u, -0.5 * u, 0, -1.06 * u);
+    ctx.closePath();
+  };
+
+  dropPath();
+  ctx.lineWidth = casingW;
+  ctx.strokeStyle = OUTLINE;
+  ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.fill();
+
+  // Shaded lower-right depth crescent.
+  ctx.save();
+  dropPath();
+  ctx.clip();
+  ctx.beginPath();
+  ctx.arc(0.32 * u, 0.48 * u, 0.72 * u, 0, TAU);
+  ctx.fillStyle = "#0e7db8";
+  ctx.fill();
+
+  // Bright upper-left lit core.
+  ctx.beginPath();
+  ctx.ellipse(-0.18 * u, 0.14 * u, 0.42 * u, 0.56 * u, -0.25, 0, TAU);
+  ctx.fillStyle = lighten(color, 0.44);
+  ctx.fill();
+
+  // Crisp ice-white specular pill.
+  ctx.beginPath();
+  ctx.ellipse(-0.32 * u, 0.06 * u, 0.14 * u, 0.28 * u, -0.35, 0, TAU);
+  ctx.fillStyle = "#eefaff";
+  ctx.fill();
+  ctx.restore();
+}
+
+/** Bold Oyren-lime veined leaf with folded bevel and deep forest-ink stem & ribs. */
+function drawLeaf(ctx: CanvasRenderingContext2D, u: number, color: string, variant: number) {
+  contactShadow(ctx, u, 0.74);
+  ctx.rotate(((Math.abs(variant) % 5) - 2) * 0.08);
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  const casingW = Math.max(3.2, u * 0.24);
+
+  // Dark-outlined stem stub at lower left.
+  ctx.beginPath();
+  ctx.moveTo(-0.84 * u, 0.78 * u);
+  ctx.lineTo(-0.42 * u, 0.42 * u);
+  ctx.strokeStyle = OUTLINE;
+  ctx.lineWidth = Math.max(4.4, u * 0.32);
+  ctx.stroke();
+  ctx.strokeStyle = "#5c8c00";
+  ctx.lineWidth = Math.max(2.2, u * 0.14);
+  ctx.stroke();
+
+  const leafBlade = () => {
+    ctx.beginPath();
+    ctx.moveTo(-0.54 * u, 0.54 * u);
+    ctx.bezierCurveTo(-0.88 * u, -0.06 * u, -0.28 * u, -0.84 * u, 0.84 * u, -0.82 * u);
+    ctx.bezierCurveTo(0.8 * u, 0.26 * u, 0.06 * u, 0.9 * u, -0.54 * u, 0.54 * u);
+    ctx.closePath();
+  };
+
+  leafBlade();
+  ctx.lineWidth = casingW;
+  ctx.strokeStyle = OUTLINE;
+  ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.fill();
+
+  // Upper-left bright folded half.
+  ctx.save();
+  leafBlade();
+  ctx.clip();
+  ctx.beginPath();
+  ctx.moveTo(-0.6 * u, 0.6 * u);
+  ctx.lineTo(0.9 * u, -0.9 * u);
+  ctx.lineTo(-1.0 * u, -1.0 * u);
+  ctx.closePath();
+  ctx.fillStyle = lighten(color, 0.36);
+  ctx.fill();
+  ctx.restore();
+
+  // Crisp forest-ink midrib and angled side veins.
+  ctx.strokeStyle = "#1f4704";
+  ctx.lineWidth = Math.max(2, u * 0.11);
+  ctx.beginPath();
+  ctx.moveTo(-0.52 * u, 0.52 * u);
+  ctx.quadraticCurveTo(0.06 * u, -0.06 * u, 0.62 * u, -0.62 * u);
+  ctx.moveTo(-0.18 * u, 0.18 * u);
+  ctx.lineTo(-0.28 * u, -0.26 * u);
+  ctx.moveTo(-0.16 * u, 0.16 * u);
+  ctx.lineTo(0.28 * u, 0.26 * u);
+  ctx.moveTo(0.16 * u, -0.16 * u);
+  ctx.lineTo(0.08 * u, -0.52 * u);
+  ctx.moveTo(0.16 * u, -0.16 * u);
+  ctx.lineTo(0.5 * u, -0.08 * u);
+  ctx.stroke();
+  ctx.lineCap = "butt";
+}
+
+/**
+ * Bold solid-filled Staunton chess piece silhouettes: thick outer dark casing
+ * stroked BEFORE fills, lit upper-left bevels, and crisp architectural accents.
+ */
+function drawChessPiece(ctx: CanvasRenderingContext2D, icon: SwarmIcon, u: number, color: string) {
+  contactShadow(ctx, u, 0.78);
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  const casingW = Math.max(3.2, u * 0.25);
+
+  const strokeAndFill = (trace: () => void) => {
+    trace();
+    ctx.lineWidth = casingW;
+    ctx.strokeStyle = OUTLINE;
+    ctx.stroke();
+    ctx.fillStyle = color;
+    ctx.fill();
+  };
+
+  if (icon === "king") {
+    const silhouette = () => {
+      ctx.beginPath();
+      // Cross finial at top
+      ctx.moveTo(-0.11 * u, -1.06 * u);
+      ctx.lineTo(0.11 * u, -1.06 * u);
+      ctx.lineTo(0.11 * u, -0.88 * u);
+      ctx.lineTo(0.32 * u, -0.88 * u);
+      ctx.lineTo(0.32 * u, -0.68 * u);
+      ctx.lineTo(0.11 * u, -0.68 * u);
+      ctx.lineTo(0.11 * u, -0.52 * u);
+      // Crown dome + flared body + plinth base
+      ctx.bezierCurveTo(0.56 * u, -0.52 * u, 0.68 * u, -0.24 * u, 0.5 * u, 0.1 * u);
+      ctx.lineTo(0.42 * u, 0.24 * u);
+      ctx.lineTo(0.56 * u, 0.56 * u);
+      ctx.lineTo(0.72 * u, 0.64 * u);
+      ctx.lineTo(0.72 * u, 0.86 * u);
+      ctx.lineTo(-0.72 * u, 0.86 * u);
+      ctx.lineTo(-0.72 * u, 0.64 * u);
+      ctx.lineTo(-0.56 * u, 0.56 * u);
+      ctx.lineTo(-0.42 * u, 0.24 * u);
+      ctx.lineTo(-0.5 * u, 0.1 * u);
+      ctx.bezierCurveTo(-0.68 * u, -0.24 * u, -0.56 * u, -0.52 * u, -0.11 * u, -0.52 * u);
+      ctx.lineTo(-0.11 * u, -0.68 * u);
+      ctx.lineTo(-0.32 * u, -0.68 * u);
+      ctx.lineTo(-0.32 * u, -0.88 * u);
+      ctx.lineTo(-0.11 * u, -0.88 * u);
+      ctx.closePath();
+    };
+    strokeAndFill(silhouette);
+    ctx.save();
+    silhouette();
+    ctx.clip();
+    ctx.fillStyle = lighten(color, 0.42);
+    ctx.fillRect(-0.8 * u, -1.1 * u, 0.8 * u, 2.0 * u);
+    ctx.fillStyle = "#1c3305";
+    ctx.fillRect(-0.56 * u, 0.12 * u, 1.12 * u, 0.13 * u);
+    ctx.fillRect(-0.66 * u, 0.55 * u, 1.32 * u, 0.1 * u);
+    ctx.restore();
+    return;
+  }
+
+  if (icon === "queen") {
+    const silhouette = () => {
+      ctx.beginPath();
+      ctx.moveTo(-0.72 * u, 0.86 * u);
+      ctx.lineTo(-0.72 * u, 0.64 * u);
+      ctx.lineTo(-0.54 * u, 0.54 * u);
+      ctx.lineTo(-0.42 * u, 0.16 * u);
+      // 5-point royal coronet
+      ctx.lineTo(-0.76 * u, -0.56 * u);
+      ctx.lineTo(-0.36 * u, -0.14 * u);
+      ctx.lineTo(-0.34 * u, -0.78 * u);
+      ctx.lineTo(-0.08 * u, -0.22 * u);
+      ctx.lineTo(0, -0.92 * u);
+      ctx.lineTo(0.08 * u, -0.22 * u);
+      ctx.lineTo(0.34 * u, -0.78 * u);
+      ctx.lineTo(0.36 * u, -0.14 * u);
+      ctx.lineTo(0.76 * u, -0.56 * u);
+      ctx.lineTo(0.42 * u, 0.16 * u);
+      ctx.lineTo(0.54 * u, 0.54 * u);
+      ctx.lineTo(0.72 * u, 0.64 * u);
+      ctx.lineTo(0.72 * u, 0.86 * u);
+      ctx.closePath();
+    };
+    strokeAndFill(silhouette);
+    ctx.save();
+    silhouette();
+    ctx.clip();
+    ctx.fillStyle = lighten(color, 0.36);
+    ctx.fillRect(-0.85 * u, -1.0 * u, 0.85 * u, 1.9 * u);
+    ctx.fillStyle = "#521b0f";
+    ctx.fillRect(-0.52 * u, 0.14 * u, 1.04 * u, 0.13 * u);
+    ctx.fillRect(-0.66 * u, 0.55 * u, 1.32 * u, 0.1 * u);
+    ctx.restore();
+    // Bright coronet tip pearls.
+    for (const [px, py, pr] of [
+      [0, -0.92, 0.13],
+      [-0.36, -0.78, 0.11],
+      [0.36, -0.78, 0.11],
+      [-0.75, -0.56, 0.1],
+      [0.75, -0.56, 0.1],
+    ] as const) {
+      ctx.beginPath();
+      ctx.arc(px * u, py * u, pr * u, 0, TAU);
+      ctx.fillStyle = OUTLINE;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(px * u, py * u, pr * 0.72 * u, 0, TAU);
+      ctx.fillStyle = lighten(color, 0.58);
+      ctx.fill();
+    }
+    return;
+  }
+
+  if (icon === "rook") {
+    const silhouette = () => {
+      ctx.beginPath();
+      ctx.moveTo(-0.72 * u, 0.86 * u);
+      ctx.lineTo(-0.72 * u, 0.6 * u);
+      ctx.lineTo(-0.54 * u, 0.48 * u);
+      ctx.lineTo(-0.46 * u, -0.22 * u);
+      ctx.lineTo(-0.66 * u, -0.34 * u);
+      // Three battlement merlons
+      ctx.lineTo(-0.66 * u, -0.88 * u);
+      ctx.lineTo(-0.34 * u, -0.88 * u);
+      ctx.lineTo(-0.34 * u, -0.6 * u);
+      ctx.lineTo(-0.16 * u, -0.6 * u);
+      ctx.lineTo(-0.16 * u, -0.88 * u);
+      ctx.lineTo(0.16 * u, -0.88 * u);
+      ctx.lineTo(0.16 * u, -0.6 * u);
+      ctx.lineTo(0.34 * u, -0.6 * u);
+      ctx.lineTo(0.34 * u, -0.88 * u);
+      ctx.lineTo(0.66 * u, -0.88 * u);
+      ctx.lineTo(0.66 * u, -0.34 * u);
+      ctx.lineTo(0.46 * u, -0.22 * u);
+      ctx.lineTo(0.54 * u, 0.48 * u);
+      ctx.lineTo(0.72 * u, 0.6 * u);
+      ctx.lineTo(0.72 * u, 0.86 * u);
+      ctx.closePath();
+    };
+    strokeAndFill(silhouette);
+    ctx.save();
+    silhouette();
+    ctx.clip();
+    ctx.fillStyle = lighten(color, 0.36);
+    ctx.fillRect(-0.8 * u, -0.95 * u, 0.8 * u, 1.9 * u);
+    ctx.fillStyle = "#103b5c";
+    ctx.fillRect(-0.66 * u, -0.32 * u, 1.32 * u, 0.12 * u);
+    ctx.fillRect(-0.66 * u, 0.52 * u, 1.32 * u, 0.1 * u);
+    ctx.restore();
+    return;
+  }
+
+  if (icon === "bishop") {
+    const silhouette = () => {
+      ctx.beginPath();
+      ctx.moveTo(0, -0.82 * u);
+      ctx.bezierCurveTo(0.46 * u, -0.58 * u, 0.6 * u, -0.14 * u, 0.42 * u, 0.2 * u);
+      ctx.lineTo(0.54 * u, 0.54 * u);
+      ctx.lineTo(0.7 * u, 0.64 * u);
+      ctx.lineTo(0.7 * u, 0.86 * u);
+      ctx.lineTo(-0.7 * u, 0.86 * u);
+      ctx.lineTo(-0.7 * u, 0.64 * u);
+      ctx.lineTo(-0.54 * u, 0.54 * u);
+      ctx.lineTo(-0.42 * u, 0.2 * u);
+      ctx.bezierCurveTo(-0.6 * u, -0.14 * u, -0.46 * u, -0.58 * u, 0, -0.82 * u);
+      ctx.closePath();
+    };
+    strokeAndFill(silhouette);
+    ctx.save();
+    silhouette();
+    ctx.clip();
+    ctx.fillStyle = lighten(color, 0.38);
+    ctx.fillRect(-0.8 * u, -0.9 * u, 0.8 * u, 1.85 * u);
+    ctx.fillStyle = "#26114d";
+    ctx.fillRect(-0.56 * u, 0.16 * u, 1.12 * u, 0.12 * u);
+    ctx.fillRect(-0.66 * u, 0.55 * u, 1.32 * u, 0.1 * u);
+    ctx.restore();
+
+    // Iconic diagonal mitre cleft.
+    ctx.strokeStyle = "#1d0c3d";
+    ctx.lineWidth = Math.max(2.8, u * 0.17);
+    ctx.beginPath();
+    ctx.moveTo(0.06 * u, -0.44 * u);
+    ctx.lineTo(0.4 * u, -0.14 * u);
+    ctx.stroke();
+
+    // Top finial orb.
+    ctx.beginPath();
+    ctx.arc(0, -0.92 * u, 0.17 * u, 0, TAU);
+    ctx.fillStyle = OUTLINE;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(0, -0.92 * u, 0.11 * u, 0, TAU);
+    ctx.fillStyle = lighten(color, 0.55);
+    ctx.fill();
+    return;
+  }
+
+  // Sculpted Staunton Knight horse-head profile facing +x.
+  const silhouette = () => {
+    ctx.beginPath();
+    ctx.moveTo(-0.72 * u, 0.86 * u);
+    ctx.lineTo(-0.72 * u, 0.62 * u);
+    ctx.lineTo(-0.54 * u, 0.5 * u);
+    // Arched mane & neck on left
+    ctx.bezierCurveTo(-0.68 * u, 0.04 * u, -0.62 * u, -0.52 * u, -0.22 * u, -0.78 * u);
+    // Pointed ear
+    ctx.lineTo(-0.18 * u, -1.02 * u);
+    ctx.lineTo(0.06 * u, -0.78 * u);
+    // Brow down to bold muzzle
+    ctx.bezierCurveTo(0.36 * u, -0.7 * u, 0.66 * u, -0.44 * u, 0.78 * u, -0.16 * u);
+    ctx.lineTo(0.64 * u, 0.08 * u);
+    ctx.lineTo(0.34 * u, 0.02 * u);
+    // Undercut jaw to chest
+    ctx.bezierCurveTo(0.24 * u, 0.18 * u, 0.42 * u, 0.34 * u, 0.56 * u, 0.54 * u);
+    ctx.lineTo(0.72 * u, 0.62 * u);
+    ctx.lineTo(0.72 * u, 0.86 * u);
+    ctx.closePath();
+  };
+  strokeAndFill(silhouette);
+  ctx.save();
+  silhouette();
+  ctx.clip();
+  // Cool slate shadow along mane ridge & lower base for sculptural volume.
+  ctx.beginPath();
+  ctx.moveTo(-0.75 * u, 0.9 * u);
+  ctx.lineTo(-0.75 * u, -0.9 * u);
+  ctx.lineTo(-0.22 * u, -0.9 * u);
+  ctx.quadraticCurveTo(-0.36 * u, 0.02 * u, -0.14 * u, 0.62 * u);
+  ctx.lineTo(0.78 * u, 0.62 * u);
+  ctx.lineTo(0.78 * u, 0.9 * u);
+  ctx.closePath();
+  ctx.fillStyle = "#bdd5e8";
+  ctx.fill();
+  ctx.fillStyle = "#2b4d68";
+  ctx.fillRect(-0.68 * u, 0.56 * u, 1.36 * u, 0.1 * u);
+  ctx.restore();
+
+  // Crisp ink eye & bridle slash.
+  ctx.fillStyle = "#0e2233";
+  ctx.beginPath();
+  ctx.arc(0.2 * u, -0.42 * u, 0.095 * u, 0, TAU);
+  ctx.fill();
+  ctx.strokeStyle = "#356589";
+  ctx.lineWidth = Math.max(1.8, u * 0.09);
+  ctx.beginPath();
+  ctx.moveTo(0.56 * u, -0.14 * u);
+  ctx.lineTo(0.66 * u, -0.08 * u);
+  ctx.stroke();
+  ctx.lineCap = "butt";
+}
+
 /**
  * Draw one sprite centred at (x, y). `size` is the diameter in px; `angle`
  * sets the heading for scissors; `variant` picks a rock or paper look;
@@ -513,6 +926,14 @@ export function drawSprite(
     contactShadow(ctx, u * 0.82, 0.9);
     ctx.rotate(angle);
     drawScissors(ctx, u, color, open);
+  } else if (icon === "fire") {
+    drawFire(ctx, u, color, variant);
+  } else if (icon === "water") {
+    drawWater(ctx, u, color);
+  } else if (icon === "leaf") {
+    drawLeaf(ctx, u, color, variant);
+  } else if (icon === "king" || icon === "queen" || icon === "rook" || icon === "bishop" || icon === "knight") {
+    drawChessPiece(ctx, icon, u, color);
   } else {
     drawRivalShape(ctx, icon, u, color);
   }

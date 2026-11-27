@@ -1080,7 +1080,363 @@ export function bakuNights(): MidiPiece {
   };
 }
 
-/** Built-in pieces for public/midi/ and WAV generation (v2 trio + two original v3 pieces). */
+// ===================================================================================================
+// F. Christian Petzold (attr. J. S. Bach) — Minuet in G Major, BWV Anh. 114 (1725, 3/4, G major)
+//    Complete 32-bar Urtext transcription from the Notebook for Anna Magdalena Bach, arranged for
+//    four-mallet concert rosewood marimba (melody, inner Baroque harmony, Urtext bass, and soft
+//    woody resonator bass reinforcement on strong downbeats). Public domain melody & bass; MIT arr.
+// ===================================================================================================
+
+/** Opening 8 melody pitches of Minuet in G Major (Bars 1..2): D5 G4 A4 B4 C5 | D5 G4 G4. */
+export const MINUET_G_OPENING_MOTIF = [74, 67, 69, 71, 72, 74, 67, 67] as const;
+
+type BarEvent = readonly [offsetBeats: number, durBeats: number, pitch: number, velDelta?: number];
+
+export function minuetInGMarimba(): MidiPiece {
+  const melody: MidiWriteNote[] = [];
+  const harmony: MidiWriteNote[] = [];
+  const bass: MidiWriteNote[] = [];
+  const subBass: MidiWriteNote[] = [];
+
+  // 3/4 time: 1 bar = 3.0 beats. Exact 32-bar Urtext RH melody (bars 1..32).
+  const rhBars: readonly (readonly BarEvent[])[] = [
+    // Section A (Bars 1..16)
+    [[0, 0.92, 74, 6], [1, 0.46, 67], [1.5, 0.46, 69], [2, 0.46, 71], [2.5, 0.46, 72]], // 1: D5 G4 A4 B4 C5
+    [[0, 0.92, 74, 6], [1, 0.85, 67, -4], [2, 0.85, 67, -4]],                             // 2: D5 G4 G4
+    [[0, 0.92, 76, 6], [1, 0.46, 72], [1.5, 0.46, 74], [2, 0.46, 76], [2.5, 0.46, 78]], // 3: E5 C5 D5 E5 F#5
+    [[0, 0.92, 79, 8], [1, 0.85, 67, -4], [2, 0.85, 67, -4]],                             // 4: G5 G4 G4
+    [[0, 0.92, 72, 5], [1, 0.46, 74], [1.5, 0.46, 72], [2, 0.46, 71], [2.5, 0.46, 69]], // 5: C5 D5 C5 B4 A4
+    [[0, 0.92, 71, 4], [1, 0.46, 72], [1.5, 0.46, 71], [2, 0.46, 69], [2.5, 0.46, 67]], // 6: B4 C5 B4 A4 G4
+    [[0, 0.92, 66, 4], [1, 0.46, 67], [1.5, 0.46, 69], [2, 0.46, 71], [2.5, 0.46, 67]], // 7: F#4 G4 A4 B4 G4
+    [[0, 2.75, 69, 6]],                                                                   // 8: A4 (dotted half)
+    [[0, 0.92, 74, 7], [1, 0.46, 67], [1.5, 0.46, 69], [2, 0.46, 71], [2.5, 0.46, 72]], // 9: D5 G4 A4 B4 C5
+    [[0, 0.92, 74, 7], [1, 0.85, 67, -3], [2, 0.85, 67, -3]],                             // 10: D5 G4 G4
+    [[0, 0.92, 76, 8], [1, 0.46, 72], [1.5, 0.46, 74], [2, 0.46, 76], [2.5, 0.46, 78]], // 11: E5 C5 D5 E5 F#5
+    [[0, 0.92, 79, 9], [1, 0.85, 67, -3], [2, 0.85, 67, -3]],                             // 12: G5 G4 G4
+    [[0, 0.92, 72, 6], [1, 0.46, 74], [1.5, 0.46, 72], [2, 0.46, 71], [2.5, 0.46, 69]], // 13: C5 D5 C5 B4 A4
+    [[0, 0.92, 71, 5], [1, 0.46, 72], [1.5, 0.46, 71], [2, 0.46, 69], [2.5, 0.46, 67]], // 14: B4 C5 B4 A4 G4
+    [[0, 0.92, 69, 5], [1, 0.46, 71], [1.5, 0.46, 69], [2, 0.46, 67], [2.5, 0.46, 66]], // 15: A4 B4 A4 G4 F#4
+    [[0, 2.75, 67, 7]],                                                                   // 16: G4 (dotted half)
+
+    // Section B (Bars 17..32)
+    [[0, 0.92, 83, 9], [1, 0.46, 79], [1.5, 0.46, 81], [2, 0.46, 83], [2.5, 0.46, 79]], // 17: B5 G5 A5 B5 G5
+    [[0, 0.92, 81, 8], [1, 0.46, 74], [1.5, 0.46, 76], [2, 0.46, 78], [2.5, 0.46, 74]], // 18: A5 D5 E5 F#5 D5
+    [[0, 0.92, 79, 8], [1, 0.46, 76], [1.5, 0.46, 78], [2, 0.46, 79], [2.5, 0.46, 74]], // 19: G5 E5 F#5 G5 D5
+    [[0, 0.92, 73, 7], [1, 0.46, 71], [1.5, 0.46, 73], [2, 0.92, 69, 3]],               // 20: C#5 B4 C#5 A4
+    [[0, 0.46, 69, 4], [0.5, 0.46, 71], [1, 0.46, 73], [1.5, 0.46, 74], [2, 0.46, 76], [2.5, 0.46, 78]], // 21: A4..F#5
+    [[0, 0.92, 79, 8], [1, 0.92, 78, 5], [2, 0.92, 76, 4]],                             // 22: G5 F#5 E5
+    [[0, 0.92, 78, 8], [1, 0.92, 69, 3], [2, 0.92, 73, 5]],                             // 23: F#5 A4 C#5
+    [[0, 2.75, 74, 8]],                                                                   // 24: D5 (dotted half)
+    [[0, 0.92, 74, 7], [1, 0.46, 67], [1.5, 0.46, 66], [2, 0.92, 67, 2]],               // 25: D5 G4 F#4 G4
+    [[0, 0.92, 76, 7], [1, 0.46, 67], [1.5, 0.46, 66], [2, 0.92, 67, 2]],               // 26: E5 G4 F#4 G4
+    [[0, 0.92, 74, 7], [1, 0.92, 72, 4], [2, 0.92, 71, 3]],                             // 27: D5 C5 B4
+    [[0, 0.46, 69, 5], [0.5, 0.46, 67], [1, 0.46, 66], [1.5, 0.46, 67], [2, 0.92, 69, 4]], // 28: A4 G4 F#4 G4 A4
+    [[0, 0.46, 62, 4], [0.5, 0.46, 64], [1, 0.46, 66], [1.5, 0.46, 67], [2, 0.46, 69], [2.5, 0.46, 71]], // 29: D4..B4
+    [[0, 0.92, 72, 7], [1, 0.92, 71, 5], [2, 0.92, 69, 4]],                             // 30: C5 B4 A4
+    [[0, 0.46, 71, 6], [0.5, 0.46, 74, 7], [1, 0.92, 67, 4], [2, 0.92, 66, 5]],         // 31: B4 D5 G4 F#4
+    [[0, 2.85, 67, 10]],                                                                  // 32: G4 (final tonic)
+  ];
+
+  // Exact 32-bar Urtext LH bass line (bars 1..32).
+  const lhBars: readonly (readonly BarEvent[])[] = [
+    [[0, 1.85, 55, 4], [2, 0.9, 57]],                                                     // 1: G3 A3
+    [[0, 2.75, 59, 4]],                                                                   // 2: B3
+    [[0, 2.75, 60, 4]],                                                                   // 3: C4
+    [[0, 2.75, 59, 4]],                                                                   // 4: B3
+    [[0, 2.75, 57, 4]],                                                                   // 5: A3
+    [[0, 2.75, 55, 4]],                                                                   // 6: G3
+    [[0, 0.92, 62, 4], [1, 0.92, 59], [2, 0.92, 55]],                                     // 7: D4 B3 G3
+    [[0, 0.92, 62, 4], [1, 0.46, 50], [1.5, 0.46, 60], [2, 0.46, 59], [2.5, 0.46, 57]],  // 8: D4 D3 C4 B3 A3
+    [[0, 1.85, 59, 5], [2, 0.9, 57]],                                                     // 9: B3 A3
+    [[0, 0.92, 55, 5], [1, 0.92, 59], [2, 0.92, 55]],                                     // 10: G3 B3 G3
+    [[0, 2.75, 60, 5]],                                                                   // 11: C4
+    [[0, 0.92, 59, 5], [1, 0.46, 60], [1.5, 0.46, 59], [2, 0.46, 57], [2.5, 0.46, 55]],  // 12: B3 C4 B3 A3 G3
+    [[0, 2.75, 57, 5]],                                                                   // 13: A3
+    [[0, 2.75, 55, 5]],                                                                   // 14: G3
+    [[0, 0.92, 60, 5], [1, 0.92, 62], [2, 0.92, 50]],                                     // 15: C4 D4 D3
+    [[0, 1.85, 55, 6], [2, 0.9, 43]],                                                     // 16: G3 G2
+    // Section B
+    [[0, 2.75, 55, 6]],                                                                   // 17: G3
+    [[0, 2.75, 54, 6]],                                                                   // 18: F#3
+    [[0, 0.92, 52, 6], [1, 0.92, 55], [2, 0.92, 52]],                                     // 19: E3 G3 E3
+    [[0, 0.92, 57, 6], [1, 0.92, 45], [2, 0.92, 57]],                                     // 20: A3 A2 A3
+    [[0, 2.75, 57, 6]],                                                                   // 21: A3
+    [[0, 0.92, 59, 6], [1, 0.92, 62], [2, 0.92, 61]],                                     // 22: B3 D4 C#4
+    [[0, 0.92, 62, 6], [1, 0.92, 54], [2, 0.92, 57]],                                     // 23: D4 F#3 A3
+    [[0, 0.92, 62, 6], [1, 0.92, 50], [2, 0.92, 60]],                                     // 24: D4 D3 C4
+    [[0, 0.92, 59, 5], [1, 0.92, 62], [2, 0.92, 59]],                                     // 25: B3 D4 B3
+    [[0, 0.92, 60, 5], [1, 0.92, 64], [2, 0.92, 60]],                                     // 26: C4 E4 C4
+    [[0, 0.92, 59, 5], [1, 0.92, 57], [2, 0.92, 55]],                                     // 27: B3 A3 G3
+    [[0, 2.75, 62, 6]],                                                                   // 28: D4
+    [[0, 1.85, 50, 5], [2, 0.9, 54]],                                                     // 29: D3 F#3
+    [[0, 0.92, 52, 6], [1, 0.92, 55], [2, 0.92, 54]],                                     // 30: E3 G3 F#3
+    [[0, 0.92, 55, 6], [1, 0.92, 47], [2, 0.92, 50]],                                     // 31: G3 B2 D3
+    [[0, 0.92, 43, 8], [1, 0.92, 50, 6], [2, 0.95, 55, 7]],                               // 32: G2 D3 G3
+  ];
+
+  // Four-mallet inner accompaniment triads (subtle Baroque waltz-minuet pulse on beats 1..3).
+  const innerChords: readonly (readonly [number, number])[] = [
+    [59, 62], [62, 67], [64, 67], [62, 67], [60, 64], [59, 62], [57, 62], [54, 57], // 1..8
+    [62, 67], [62, 67], [64, 67], [62, 67], [60, 64], [59, 62], [60, 62], [59, 62], // 9..16
+    [62, 67], [62, 66], [59, 64], [61, 64], [61, 64], [62, 67], [61, 66], [57, 62], // 17..24
+    [62, 67], [64, 67], [62, 67], [57, 62], [57, 62], [60, 64], [59, 62], [59, 62], // 25..32
+  ];
+
+  for (let bar = 0; bar < 32; bar++) {
+    const b0 = bar * 3;
+    const isB = bar >= 16;
+    const baseVel = isB ? 90 : bar >= 8 ? 86 : 82;
+
+    for (const [off, dur, p, dv = 0] of rhBars[bar]) {
+      melody.push(note(b0 + off, dur, p, baseVel + dv));
+    }
+    for (const [off, dur, p, dv = 0] of lhBars[bar]) {
+      bass.push(note(b0 + off, dur, p, baseVel - 10 + dv));
+    }
+
+    // Inner four-mallet pulse (beats 1 & 2 soft harmonic chimes, beat 0 accent on dotted-half bars).
+    const [h0, h1] = innerChords[bar];
+    const isCadenceBar = bar === 7 || bar === 15 || bar === 23 || bar === 31;
+    if (bar === 31) {
+      harmony.push(note(b0, 2.8, 59, 78));
+      harmony.push(note(b0, 2.8, 62, 82));
+    } else if (isCadenceBar) {
+      harmony.push(note(b0, 0.9, h0, 66));
+      harmony.push(note(b0 + 1, 0.85, h1, 60));
+      harmony.push(note(b0 + 2, 0.85, h0, 56));
+    } else {
+      harmony.push(note(b0 + 1, 0.65, h0, isB ? 66 : 58));
+      harmony.push(note(b0 + 2, 0.65, h1, isB ? 64 : 56));
+      if (isB && bar % 2 === 0) {
+        harmony.push(note(b0, 0.72, h1, 68));
+      }
+    }
+
+    // Subtle acoustic bass resonator warmth on bar downbeats (especially in Section B).
+    const rootBass = lhBars[bar][0][2];
+    const lowRoot = rootBass >= 55 ? rootBass - 12 : rootBass;
+    subBass.push(note(b0, 1.4, lowRoot, isB ? 56 : 48));
+  }
+
+  // Final warm G-major resolving bar (beat 96..98.5) so the cadence rings cleanly before loop reset.
+  bass.push(note(96, 2.2, 43, 84));     // G2
+  harmony.push(note(96.04, 2.15, 59, 76)); // B3
+  harmony.push(note(96.08, 2.1, 62, 78));  // D4
+  melody.push(note(96.12, 2.1, 67, 92));   // G4
+  melody.push(note(96.16, 2.0, 74, 86));   // D5 (matches Bar 1 beat 0 opening pitch for seamless loop!)
+  subBass.push(note(96, 2.3, 43, 62));
+
+  const tracks: MidiWriteTrack[] = [
+    { name: "Marimba Melody", channel: 0, program: 12, notes: cleanTrackNotes(melody) },
+    { name: "Marimba Harmony", channel: 1, program: 12, notes: cleanTrackNotes(harmony) },
+    { name: "Marimba Bass", channel: 2, program: 12, notes: cleanTrackNotes(bass) },
+    { name: "Resonator Warmth", channel: 3, program: 32, notes: cleanTrackNotes(subBass) },
+  ];
+
+  return {
+    file: "minuet-in-g-marimba.mid",
+    title: "Minuet in G Major",
+    composer: "Christian Petzold",
+    credit: "Christian Petzold, BWV Anh. 114 (1725, public domain); four-mallet concert marimba arrangement MIT",
+    options: {
+      format: 1,
+      ticksPerQuarter: 480,
+      tempos: [
+        { beat: 0, bpm: 120 },
+        { beat: 48, bpm: 122 },
+        { beat: 90, bpm: 114 },
+        { beat: 94, bpm: 100 },
+      ],
+      tracks,
+      title: "Minuet in G Major",
+      timeSignature: [3, 4],
+    },
+  };
+}
+
+// ===================================================================================================
+// G. Ludwig van Beethoven — Ode to Joy (Symphony No. 9 in D minor, Op. 125, IV, 1824, D major, 4/4)
+//    Own four-voice bronze carillon arrangement: Verse 1 (full 16-bar A A' B A'' theme over bourdon
+//    bass bells) -> Verse 2 (triumphant octave-peal B + A'' repeat in four-part harmony) -> grand
+//    two-bar D-major tower peal cadence. Public domain melody; MIT carillon arrangement.
+// ===================================================================================================
+
+/** Iconic 15-note opening phrase of Beethoven's Ode to Joy in D major (Bars 1..4). */
+export const ODE_TO_JOY_OPENING_MOTIF = [
+  66, 66, 67, 69, 69, 67, 66, 64, 62, 62, 64, 66, 66, 64, 64,
+] as const;
+
+export function odeToJoyCarillon(): MidiPiece {
+  const treble: MidiWriteNote[] = [];
+  const midBells: MidiWriteNote[] = [];
+  const bourdon: MidiWriteNote[] = [];
+  const haloStrings: MidiWriteNote[] = [];
+
+  // Exact 16-bar Ode to Joy melody in D major (4/4: 1 bar = 4 beats).
+  // Section A (bars 0..3), A' (bars 4..7), B (bars 8..11), A'' (bars 12..15).
+  const themeBars: readonly (readonly BarEvent[])[] = [
+    // A (1..4)
+    [[0, 0.95, 66, 4], [1, 0.95, 66], [2, 0.95, 67, 2], [3, 0.95, 69, 5]],
+    [[0, 0.95, 69, 5], [1, 0.95, 67, 2], [2, 0.95, 66], [3, 0.95, 64, -2]],
+    [[0, 0.95, 62, 3], [1, 0.95, 62], [2, 0.95, 64, 2], [3, 0.95, 66, 4]],
+    [[0, 1.45, 66, 5], [1.5, 0.48, 64, -2], [2, 1.9, 64, 2]],
+    // A' (5..8)
+    [[0, 0.95, 66, 5], [1, 0.95, 66], [2, 0.95, 67, 3], [3, 0.95, 69, 6]],
+    [[0, 0.95, 69, 6], [1, 0.95, 67, 3], [2, 0.95, 66], [3, 0.95, 64, -1]],
+    [[0, 0.95, 62, 4], [1, 0.95, 62], [2, 0.95, 64, 3], [3, 0.95, 66, 5]],
+    [[0, 1.45, 64, 5], [1.5, 0.48, 62, -1], [2, 1.9, 62, 5]],
+    // B (9..12)
+    [[0, 0.95, 64, 4], [1, 0.95, 64], [2, 0.95, 66, 3], [3, 0.95, 62, 2]],
+    [[0, 0.95, 64, 4], [1, 0.48, 66, 3], [1.5, 0.48, 67, 4], [2, 0.95, 66, 4], [3, 0.95, 62, 2]],
+    [[0, 0.95, 64, 5], [1, 0.48, 66, 3], [1.5, 0.48, 67, 5], [2, 0.95, 66, 5], [3, 0.95, 64, 2]],
+    [[0, 0.95, 62, 4], [1, 0.95, 64, 3], [2, 1.9, 57, 6]],
+    // A'' (13..16)
+    [[0, 0.95, 66, 6], [1, 0.95, 66], [2, 0.95, 67, 4], [3, 0.95, 69, 7]],
+    [[0, 0.95, 69, 7], [1, 0.95, 67, 4], [2, 0.95, 66, 2], [3, 0.95, 64]],
+    [[0, 0.95, 62, 5], [1, 0.95, 62], [2, 0.95, 64, 4], [3, 0.95, 66, 6]],
+    [[0, 1.45, 64, 6], [1.5, 0.48, 62, 2], [2, 1.9, 62, 8]],
+  ];
+
+  // Bourdon bass & inner harmony plan per bar of the 16-bar theme (all strict D-major diatonic pitches).
+  // Bass bells live in [A2(45), B2(47), C#3(49), D3(50), E3(52), F#3(54), G3(55)]; mid/alto in B3..A4.
+  const barHarmony: readonly { bass0: number; bass2: number; alto0: number; alto2: number; tenor0: number }[] = [
+    // A (1..4)
+    { bass0: 50, bass2: 50, alto0: 62, alto2: 62, tenor0: 57 }, // D | D
+    { bass0: 45, bass2: 45, alto0: 61, alto2: 61, tenor0: 57 }, // A | A
+    { bass0: 50, bass2: 54, alto0: 57, alto2: 62, tenor0: 57 }, // D | D/F#
+    { bass0: 50, bass2: 45, alto0: 62, alto2: 61, tenor0: 57 }, // D | A
+    // A' (5..8)
+    { bass0: 50, bass2: 55, alto0: 62, alto2: 62, tenor0: 57 }, // D | G
+    { bass0: 54, bass2: 52, alto0: 62, alto2: 61, tenor0: 57 }, // D/F# | Em/A
+    { bass0: 47, bass2: 50, alto0: 59, alto2: 62, tenor0: 54 }, // Bm | D
+    { bass0: 45, bass2: 50, alto0: 61, alto2: 57, tenor0: 57 }, // A | D
+    // B (9..12)
+    { bass0: 45, bass2: 50, alto0: 61, alto2: 62, tenor0: 57 }, // A | D
+    { bass0: 45, bass2: 50, alto0: 61, alto2: 62, tenor0: 57 }, // A | D
+    { bass0: 45, bass2: 47, alto0: 61, alto2: 59, tenor0: 57 }, // A | Bm
+    { bass0: 55, bass2: 45, alto0: 59, alto2: 61, tenor0: 55 }, // G | A
+    // A'' (13..16)
+    { bass0: 50, bass2: 55, alto0: 62, alto2: 62, tenor0: 57 }, // D | G
+    { bass0: 54, bass2: 45, alto0: 62, alto2: 61, tenor0: 57 }, // D/F# | A
+    { bass0: 47, bass2: 55, alto0: 59, alto2: 62, tenor0: 54 }, // Bm | G
+    { bass0: 45, bass2: 50, alto0: 61, alto2: 57, tenor0: 57 }, // A | D
+  ];
+
+  // --- Verse 1 (Bars 0..15, beats 0..64): Pure bronze melody growing into 3-voice tower harmony ---
+  for (let bar = 0; bar < 16; bar++) {
+    const b0 = bar * 4;
+    const h = barHarmony[bar];
+    const velBase = bar < 4 ? 82 : bar < 8 ? 86 : bar < 12 ? 88 : 92;
+
+    for (const [off, dur, p, dv = 0] of themeBars[bar]) {
+      midBells.push(note(b0 + off, dur, p, velBase + dv));
+    }
+
+    // Bourdon bass bells enter cleanly on downbeats from bar 0, doubling half-bar pulse from bar 4
+    bourdon.push(note(b0, 1.9, h.bass0, bar < 4 ? 72 : 78));
+    if (bar >= 4) {
+      bourdon.push(note(b0 + 2, 1.85, h.bass2, 74));
+    }
+
+    // Warm inner alto & tenor chime voices enter from bar 8 (Section B) onward
+    if (bar >= 8) {
+      midBells.push(note(b0, 1.8, h.alto0, 68));
+      midBells.push(note(b0 + 2, 1.8, h.alto2, 66));
+      if (bar >= 12) {
+        treble.push(note(b0, 1.8, themeBars[bar][0][2] + 12, 74));
+        bourdon.push(note(b0 + 1, 0.9, h.tenor0, 64));
+      }
+    }
+    if (bar >= 12) {
+      haloStrings.push(note(b0, 3.85, h.bass0 + 12, 48));
+    }
+  }
+
+  // --- Verse 2 (Bars 16..23, beats 64..96): Triumphant 4-voice carillon peal of B + A''! ---
+  for (let i = 0; i < 8; i++) {
+    const srcBar = 8 + i; // B (8..11) + A'' (12..15)
+    const b0 = 64 + i * 4;
+    const h = barHarmony[srcBar];
+    const isFinalA = i >= 4;
+    const velBase = isFinalA ? 96 : 92;
+
+    for (const [off, dur, p, dv = 0] of themeBars[srcBar]) {
+      // Mid bronze bell + gleaming upper treble octave bell!
+      midBells.push(note(b0 + off, dur, p, velBase - 4 + dv));
+      const upper = p === 57 ? 69 : p + 12; // keeps every treble pitch inside B4..A5!
+      treble.push(note(b0 + off, dur, upper, velBase + dv));
+    }
+
+    // Driving bourdon bass + festive inner bell counter-peal
+    bourdon.push(note(b0, 1.85, h.bass0, 86));
+    bourdon.push(note(b0 + 1, 0.9, h.tenor0, 72));
+    bourdon.push(note(b0 + 2, 1.85, h.bass2, 84));
+    bourdon.push(note(b0 + 3, 0.9, h.tenor0, 70));
+
+    midBells.push(note(b0, 1.8, h.alto0, 74));
+    midBells.push(note(b0 + 2, 1.8, h.alto2, 74));
+
+    // Cathedral strings halo sustains underneath the bronze peal
+    haloStrings.push(note(b0, 3.85, h.bass0 + 12, isFinalA ? 56 : 52));
+    haloStrings.push(note(b0, 3.85, h.alto0, isFinalA ? 52 : 48));
+  }
+
+  // --- Grand 2-bar D-Major Tower Peal Coda (beats 96..104) ---
+  // Joyous descending Westminster-like carillon flourish: A5 F#5 E5 D5 | A4 F#4 D4 + final resonant D chord!
+  const peal = [
+    [96.0, 0.48, 81, 94],  // A5
+    [96.5, 0.48, 78, 92],  // F#5
+    [97.0, 0.48, 76, 90],  // E5
+    [97.5, 0.48, 74, 92],  // D5
+    [98.0, 0.48, 78, 94],  // F#5
+    [98.5, 0.48, 74, 92],  // D5
+    [99.0, 0.48, 73, 88],  // C#5
+    [99.5, 0.48, 74, 96],  // D5
+  ] as const;
+  for (const [b, d, p, v] of peal) treble.push(note(b, d, p, v));
+  bourdon.push(note(96.0, 1.9, 50, 88)); // D3
+  bourdon.push(note(98.0, 1.9, 45, 86)); // A2
+
+  // Final monumental D-major carillon chord at beat 100 (resolving to F#4/D5 for loop continuity!)
+  bourdon.push(note(100.0, 3.2, 50, 96));   // D3
+  bourdon.push(note(100.05, 3.15, 54, 84)); // F#3
+  midBells.push(note(100.08, 3.1, 62, 88)); // D4
+  midBells.push(note(100.12, 3.05, 66, 94));// F#4 (matches Bar 1 opening pitch!)
+  midBells.push(note(100.16, 3.0, 69, 86)); // A4
+  treble.push(note(100.2, 2.95, 74, 96));   // D5
+  treble.push(note(100.24, 2.9, 78, 92));   // F#5
+  haloStrings.push(note(100.0, 3.2, 62, 54));
+  haloStrings.push(note(100.0, 3.2, 66, 52));
+
+  const tracks: MidiWriteTrack[] = [
+    { name: "Carillon Treble Bells", channel: 0, program: 14, notes: cleanTrackNotes(treble) },
+    { name: "Carillon Mid Bells", channel: 1, program: 14, notes: cleanTrackNotes(midBells) },
+    { name: "Bourdon Bass Bells", channel: 2, program: 14, notes: cleanTrackNotes(bourdon) },
+    { name: "Cathedral Strings", channel: 3, program: 48, notes: cleanTrackNotes(haloStrings) },
+  ];
+
+  return {
+    file: "ode-to-joy-carillon.mid",
+    title: "Ode to Joy",
+    composer: "Ludwig van Beethoven",
+    credit: "Beethoven, Symphony No. 9 IV (1824, public domain); four-voice belfry carillon arrangement MIT",
+    options: {
+      format: 1,
+      ticksPerQuarter: 480,
+      tempos: [
+        { beat: 0, bpm: 118 },
+        { beat: 64, bpm: 122 },
+        { beat: 96, bpm: 112 },
+        { beat: 100, bpm: 96 },
+      ],
+      tracks,
+      title: "Ode to Joy",
+      timeSignature: [4, 4],
+    },
+  };
+}
+
+/** Built-in pieces for public/midi/ and WAV generation. */
 export function builtInPieces(): MidiPiece[] {
   return [
     flightOfTheBumblebee(),
@@ -1089,6 +1445,8 @@ export function builtInPieces(): MidiPiece[] {
     mughamNocturne(),
     bakuNights(),
     arshinMalAlan(),
+    minuetInGMarimba(),
+    odeToJoyCarillon(),
   ];
 }
 

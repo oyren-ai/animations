@@ -18,7 +18,15 @@ export type SwarmIcon =
   | "triangle"
   | "square"
   | "star"
-  | "hexagon";
+  | "hexagon"
+  | "fire"
+  | "water"
+  | "leaf"
+  | "king"
+  | "queen"
+  | "rook"
+  | "bishop"
+  | "knight";
 
 /** Conversion timbre played when this type wins a contact (see `audio.ts`). */
 export type SwarmSound = "tok" | "fwip" | "snip" | "bloop" | "ting" | "blip" | "twinkle" | "knock";
@@ -39,13 +47,19 @@ export interface SwarmSkin {
   types: readonly SwarmTypeSkin[];
 }
 
-export type SwarmSlug = "swarm-rps-classic" | "swarm-five-rivals";
+export type SwarmSlug =
+  | "swarm-rps-classic"
+  | "swarm-five-rivals"
+  | "swarm-elements"
+  | "swarm-chess";
 
 export interface SwarmDefinition {
   slug: SwarmSlug;
   /** Remotion composition id. */
   id: string;
   label: string;
+  /** Optional slim workspace title-bar label (`oyren / arena · ...`). */
+  windowLabel?: string;
   /** Root of the tension bed in Hz. */
   rootHz: number;
   skin: SwarmSkin;
@@ -73,6 +87,28 @@ const FIVE_RIVALS_SKIN: SwarmSkin = {
     { name: "square", caption: "SQUARE", color: "#eef6fc", icon: "square", sound: "blip" },
     { name: "star", caption: "STAR", color: "#a86eff", icon: "star", sound: "twinkle" },
     { name: "hexagon", caption: "HEXAGON", color: "#ff7a59", icon: "hexagon", sound: "knock" },
+  ],
+};
+
+const ELEMENTS_SKIN: SwarmSkin = {
+  title: "WHO WINS?",
+  rules: "fire burns leaf · leaf drinks water · water douses fire",
+  types: [
+    { name: "fire", caption: "FIRE", color: "#ff6b35", icon: "fire", sound: "twinkle" },
+    { name: "water", caption: "WATER", color: "#38bdf8", icon: "water", sound: "bloop" },
+    { name: "leaf", caption: "LEAF", color: "#c8ff00", icon: "leaf", sound: "fwip" },
+  ],
+};
+
+const CHESS_SKIN: SwarmSkin = {
+  title: "WHO WINS?",
+  rules: "every piece takes two rivals and falls to two others",
+  types: [
+    { name: "king", caption: "KING", color: "#c8ff00", icon: "king", sound: "tok" },
+    { name: "queen", caption: "QUEEN", color: "#ff7a59", icon: "queen", sound: "twinkle" },
+    { name: "rook", caption: "ROOK", color: "#4db8ff", icon: "rook", sound: "knock" },
+    { name: "bishop", caption: "BISHOP", color: "#a86eff", icon: "bishop", sound: "ting" },
+    { name: "knight", caption: "KNIGHT", color: "#eef6fc", icon: "knight", sound: "bloop" },
   ],
 };
 
@@ -128,6 +164,64 @@ export const SWARM_DEFINITIONS: readonly SwarmDefinition[] = [
       radius: 24.0,
       arena: SWARM_ARENA,
       physics: { ...DEFAULT_SWARM_PHYSICS, speed: 74, chaseBoost: 0.18, sight: 145 },
+      maxPlayFrames: 52 * 60,
+      holdFrames: SWARM_HOLD_FRAMES,
+    },
+    arc: {
+      minWinSeconds: 32,
+      maxWinSeconds: 38,
+      targetWinSeconds: 35,
+      minLeadChanges: 4,
+      maxLeadChanges: 16,
+      maxComebackShare: 0.1,
+    },
+  },
+  {
+    slug: "swarm-elements",
+    id: "SwarmElements",
+    label: "Fire Water Leaf",
+    windowLabel: "oyren / arena · elements",
+    rootHz: 130.81,
+    skin: ELEMENTS_SKIN,
+    config: {
+      id: "swarm-elements",
+      // Picked with scripts/search-swarm-seed.ts over 1001..2200 (47 of 1200 qualify): 8 lead changes, fire drops to 1/180 at 25.0 s and wins at 34.7 s.
+      seed: 1881,
+      count: 180,
+      types: 3,
+      rules: CLASSIC_RULES,
+      radius: 25.5,
+      arena: SWARM_ARENA,
+      physics: { ...DEFAULT_SWARM_PHYSICS, speed: 66, chaseBoost: 0.17 },
+      maxPlayFrames: 52 * 60,
+      holdFrames: SWARM_HOLD_FRAMES,
+    },
+    arc: {
+      minWinSeconds: 32,
+      maxWinSeconds: 38,
+      targetWinSeconds: 35,
+      minLeadChanges: 4,
+      maxLeadChanges: 12,
+      maxComebackShare: 0.15,
+    },
+  },
+  {
+    slug: "swarm-chess",
+    id: "SwarmChess",
+    label: "Chess Rivals",
+    windowLabel: "oyren / arena · chess",
+    rootHz: 123.47,
+    skin: CHESS_SKIN,
+    config: {
+      id: "swarm-chess",
+      // Picked with scripts/search-swarm-seed.ts over 1001..1500: 7 lead changes, king drops to 1/160 at 16.0 s, first contact at 1.48 s, and wins at 36.4 s.
+      seed: 1206,
+      count: 160,
+      types: 5,
+      rules: cyclicRules(5, 2),
+      radius: 24.0,
+      arena: SWARM_ARENA,
+      physics: { ...DEFAULT_SWARM_PHYSICS, speed: 75, chaseBoost: 0.18, sight: 146 },
       maxPlayFrames: 52 * 60,
       holdFrames: SWARM_HOLD_FRAMES,
     },

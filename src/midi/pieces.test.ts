@@ -10,8 +10,12 @@ import {
   CANON_OPENING_QUARTERS,
   CANON_PROGRESSION,
   FUR_ELISE_OPENING_MOTIF,
+  MINUET_G_OPENING_MOTIF,
+  minuetInGMarimba,
   MUGHAM_SHUR_CLASSES,
   mughamNocturne,
+  ODE_TO_JOY_OPENING_MOTIF,
+  odeToJoyCarillon,
   pieceBytes,
 } from "./pieces.ts";
 
@@ -126,6 +130,33 @@ test("Baku Nights: original C Rast-inspired nocturne at 78 BPM with piano, strin
   assert.equal(bass[bass.length - 1].pitch, 36);
   assert.equal(lead[0].pitch, 67);
   assert.equal(lead[lead.length - 1].pitch, 67);
+});
+
+test("Minuet in G Major: Petzold BWV Anh. 114 motif, 3/4 meter, marimba programs, and G-major/D-major pitch set", () => {
+  const parsed = parsedOf(minuetInGMarimba());
+  assert.deepEqual(parsed.timeSignature, { numerator: 3, denominator: 4 });
+  const melody = parsed.notes.filter((n) => n.track === 1);
+  assert.deepEqual(melody.slice(0, 8).map((n) => n.pitch), [...MINUET_G_OPENING_MOTIF]);
+  assert.deepEqual(parsed.tracks.slice(1).map((t) => t.programs[0]), [12, 12, 12, 32]);
+  // All notes fall in G major plus the authentic D-major secondary dominant C# in Section B (bars 20..23).
+  const allowed = new Set([7, 9, 11, 0, 2, 4, 6, 1]);
+  for (const n of parsed.notes) {
+    assert.ok(allowed.has(n.pitch % 12), `unexpected pitch class ${n.pitch}`);
+    assert.ok(n.pitch >= 43 && n.pitch <= 83, `pitch ${n.pitch} outside G2..B5 marimba range`);
+  }
+});
+
+test("Ode to Joy: Beethoven Symphony No. 9 IV motif, D-major scale, bell carillon programs, and A2..A5 range", () => {
+  const parsed = parsedOf(odeToJoyCarillon());
+  assert.deepEqual(parsed.timeSignature, { numerator: 4, denominator: 4 });
+  const midBells = parsed.notes.filter((n) => n.track === 2);
+  assert.deepEqual(midBells.slice(0, 15).map((n) => n.pitch), [...ODE_TO_JOY_OPENING_MOTIF]);
+  assert.deepEqual(parsed.tracks.slice(1).map((t) => t.programs[0]), [14, 14, 14, 48]);
+  const dMajor = new Set([2, 4, 6, 7, 9, 11, 1]);
+  for (const n of parsed.notes) {
+    assert.ok(dMajor.has(n.pitch % 12), `pitch ${n.pitch} is outside D major`);
+    assert.ok(n.pitch >= 45 && n.pitch <= 81, `pitch ${n.pitch} outside A2..A5 carillon range`);
+  }
 });
 
 test("every built-in piece is deterministic, 45-60 s as a video, sorted, with no gaps > 2 s and no overlaps", () => {
