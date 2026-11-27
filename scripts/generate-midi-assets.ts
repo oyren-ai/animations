@@ -18,6 +18,8 @@ const REPO_MIDI_EXPORT_NAME: Record<string, string> = {
   "arshin-mal-alan-askars-song.mid": "arshin-mal-alan-askars-song.mid",
   "minuet-in-g-marimba.mid": "minuet-in-g-marimba.mid",
   "ode-to-joy-carillon.mid": "ode-to-joy-carillon.mid",
+  "toccata-in-d-minor-organ.mid": "toccata-in-d-minor-organ.mid",
+  "sugar-plum-kalimba.mid": "sugar-plum-kalimba.mid",
 };
 
 export interface MidiAssetResult { file: string; wav: string; notes: number; durationSec: number; midiDigest: string; audioDigest: string }

@@ -26,7 +26,15 @@ export type SwarmIcon =
   | "queen"
   | "rook"
   | "bishop"
-  | "knight";
+  | "knight"
+  | "sword"
+  | "axe"
+  | "spear"
+  | "sun"
+  | "moon"
+  | "planet"
+  | "rocket"
+  | "ufo";
 
 /** Conversion timbre played when this type wins a contact (see `audio.ts`). */
 export type SwarmSound = "tok" | "fwip" | "snip" | "bloop" | "ting" | "blip" | "twinkle" | "knock";
@@ -51,7 +59,9 @@ export type SwarmSlug =
   | "swarm-rps-classic"
   | "swarm-five-rivals"
   | "swarm-elements"
-  | "swarm-chess";
+  | "swarm-chess"
+  | "swarm-weapons"
+  | "swarm-cosmos";
 
 export interface SwarmDefinition {
   slug: SwarmSlug;
@@ -112,11 +122,40 @@ const CHESS_SKIN: SwarmSkin = {
   ],
 };
 
+const WEAPONS_SKIN: SwarmSkin = {
+  title: "WHO WINS?",
+  rules: "sword beats axe · axe breaks spear · spear beats sword",
+  types: [
+    { name: "sword", caption: "SWORD", color: "#c8ff00", icon: "sword", sound: "snip" },
+    { name: "axe", caption: "AXE", color: "#ff6b35", icon: "axe", sound: "knock" },
+    { name: "spear", caption: "SPEAR", color: "#38bdf8", icon: "spear", sound: "ting" },
+  ],
+};
+
+const COSMOS_SKIN: SwarmSkin = {
+  title: "WHO WINS?",
+  rules: "every rival takes two others and falls to two",
+  types: [
+    { name: "sun", caption: "SUN", color: "#fbbf24", icon: "sun", sound: "twinkle" },
+    { name: "moon", caption: "MOON", color: "#eef6fc", icon: "moon", sound: "ting" },
+    { name: "planet", caption: "PLANET", color: "#a86eff", icon: "planet", sound: "bloop" },
+    { name: "rocket", caption: "ROCKET", color: "#ff7a59", icon: "rocket", sound: "tok" },
+    { name: "ufo", caption: "UFO", color: "#c8ff00", icon: "ufo", sound: "blip" },
+  ],
+};
+
 /** rock(0) beats scissors(2), paper(1) beats rock(0), scissors(2) beat paper(1). */
 const CLASSIC_RULES = [
   [0, 0, 1],
   [1, 0, 0],
   [0, 1, 0],
+];
+
+/** sword(0) beats axe(1), axe(1) breaks spear(2), spear(2) beats sword(0). */
+const WEAPONS_RULES = [
+  [0, 1, 0],
+  [0, 0, 1],
+  [1, 0, 0],
 ];
 
 export const SWARM_DEFINITIONS: readonly SwarmDefinition[] = [
@@ -222,6 +261,64 @@ export const SWARM_DEFINITIONS: readonly SwarmDefinition[] = [
       radius: 24.0,
       arena: SWARM_ARENA,
       physics: { ...DEFAULT_SWARM_PHYSICS, speed: 75, chaseBoost: 0.18, sight: 146 },
+      maxPlayFrames: 52 * 60,
+      holdFrames: SWARM_HOLD_FRAMES,
+    },
+    arc: {
+      minWinSeconds: 32,
+      maxWinSeconds: 38,
+      targetWinSeconds: 35,
+      minLeadChanges: 4,
+      maxLeadChanges: 16,
+      maxComebackShare: 0.1,
+    },
+  },
+  {
+    slug: "swarm-weapons",
+    id: "SwarmWeapons",
+    label: "Sword Axe Spear",
+    windowLabel: "oyren / arena · weapons",
+    rootHz: 116.54,
+    skin: WEAPONS_SKIN,
+    config: {
+      id: "swarm-weapons",
+      // Picked over 2001..2900 (57 seeds qualify): 8 lead changes, spear drops to 1/180 (0.6%) at 23.8 s, first contact at 0.13 s, wins at 35.8 s.
+      seed: 2550,
+      count: 180,
+      types: 3,
+      rules: WEAPONS_RULES,
+      radius: 25.5,
+      arena: SWARM_ARENA,
+      physics: { ...DEFAULT_SWARM_PHYSICS, speed: 67, chaseBoost: 0.17 },
+      maxPlayFrames: 52 * 60,
+      holdFrames: SWARM_HOLD_FRAMES,
+    },
+    arc: {
+      minWinSeconds: 32,
+      maxWinSeconds: 38,
+      targetWinSeconds: 35,
+      minLeadChanges: 4,
+      maxLeadChanges: 12,
+      maxComebackShare: 0.15,
+    },
+  },
+  {
+    slug: "swarm-cosmos",
+    id: "SwarmCosmos",
+    label: "Cosmos Rivals",
+    windowLabel: "oyren / arena · cosmos",
+    rootHz: 138.59,
+    skin: COSMOS_SKIN,
+    config: {
+      id: "swarm-cosmos",
+      // Picked over 2001..2900 (33 seeds qualify): 10 lead changes, moon drops to 1/160 (0.6%) at 21.5 s, first contact at 1.47 s, wins at 35.5 s.
+      seed: 2461,
+      count: 160,
+      types: 5,
+      rules: cyclicRules(5, 2),
+      radius: 24.0,
+      arena: SWARM_ARENA,
+      physics: { ...DEFAULT_SWARM_PHYSICS, speed: 76, chaseBoost: 0.18, sight: 147 },
       maxPlayFrames: 52 * 60,
       holdFrames: SWARM_HOLD_FRAMES,
     },

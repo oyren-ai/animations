@@ -99,6 +99,14 @@ const SPRITE_SCALE: Record<SwarmIcon, number> = {
   rook: 1.1,
   bishop: 1.14,
   knight: 1.16,
+  sword: 1.2,
+  axe: 1.18,
+  spear: 1.22,
+  sun: 1.16,
+  moon: 1.12,
+  planet: 1.24,
+  rocket: 1.18,
+  ufo: 1.22,
 };
 
 export interface BarSegment {

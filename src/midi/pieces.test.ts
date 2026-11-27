@@ -17,6 +17,10 @@ import {
   ODE_TO_JOY_OPENING_MOTIF,
   odeToJoyCarillon,
   pieceBytes,
+  SUGAR_PLUM_OPENING_MOTIF,
+  sugarPlumKalimba,
+  TOCCATA_D_MINOR_OPENING_MOTIF,
+  toccataInDMinorOrgan,
 } from "./pieces.ts";
 
 const [BUMBLEBEE, CANON, FUR_ELISE, MUGHAM, BAKU] = builtInPieces();
@@ -156,6 +160,28 @@ test("Ode to Joy: Beethoven Symphony No. 9 IV motif, D-major scale, bell carillo
   for (const n of parsed.notes) {
     assert.ok(dMajor.has(n.pitch % 12), `pitch ${n.pitch} is outside D major`);
     assert.ok(n.pitch >= 45 && n.pitch <= 81, `pitch ${n.pitch} outside A2..A5 carillon range`);
+  }
+});
+
+test("Toccata in D Minor: Bach BWV 565 opening mordent, church-organ programs, and D2..A5 compass", () => {
+  const parsed = parsedOf(toccataInDMinorOrgan());
+  assert.deepEqual(parsed.timeSignature, { numerator: 4, denominator: 4 });
+  const great = parsed.notes.filter((n) => n.track === 1);
+  assert.deepEqual(great.slice(0, 9).map((n) => n.pitch), [...TOCCATA_D_MINOR_OPENING_MOTIF]);
+  assert.deepEqual(parsed.tracks.slice(1).map((t) => t.programs[0]), [19, 19, 19]);
+  for (const n of parsed.notes) {
+    assert.ok(n.pitch >= 38 && n.pitch <= 81, `pitch ${n.pitch} outside D2..A5 organ compass`);
+  }
+});
+
+test("Dance of the Sugar Plum Fairy: Tchaikovsky motif, kalimba + bass programs, and E3..B5 compass", () => {
+  const parsed = parsedOf(sugarPlumKalimba());
+  assert.deepEqual(parsed.timeSignature, { numerator: 2, denominator: 4 });
+  const melody = parsed.notes.filter((n) => n.track === 1);
+  assert.deepEqual(melody.slice(0, 9).map((n) => n.pitch), [...SUGAR_PLUM_OPENING_MOTIF]);
+  assert.deepEqual(parsed.tracks.slice(1).map((t) => t.programs[0]), [108, 108, 32]);
+  for (const n of parsed.notes) {
+    assert.ok(n.pitch >= 52 && n.pitch <= 83, `pitch ${n.pitch} outside E3..B5 kalimba compass`);
   }
 });
 

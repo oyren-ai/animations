@@ -899,6 +899,358 @@ function drawChessPiece(ctx: CanvasRenderingContext2D, icon: SwarmIcon, u: numbe
   ctx.lineCap = "butt";
 }
 
+function drawWeapon(
+  ctx: CanvasRenderingContext2D,
+  icon: "sword" | "axe" | "spear",
+  u: number,
+  color: string,
+) {
+  contactShadow(ctx, u, 0.78);
+  const strokeW = Math.max(2.6, u * 0.22);
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+
+  const strokeAndFill = (trace: () => void, fill = color) => {
+    trace();
+    ctx.lineWidth = strokeW;
+    ctx.strokeStyle = OUTLINE;
+    ctx.stroke();
+    ctx.fillStyle = fill;
+    ctx.fill();
+  };
+
+  if (icon === "sword") {
+    ctx.save();
+    ctx.rotate(-0.68);
+    // Double-edged broadsword blade
+    const blade = () => {
+      ctx.beginPath();
+      ctx.moveTo(0, -1.04 * u);
+      ctx.lineTo(0.24 * u, -0.66 * u);
+      ctx.lineTo(0.2 * u, 0.34 * u);
+      ctx.lineTo(-0.2 * u, 0.34 * u);
+      ctx.lineTo(-0.24 * u, -0.66 * u);
+      ctx.closePath();
+    };
+    strokeAndFill(blade, color);
+    // Split metallic highlight half
+    ctx.save();
+    blade();
+    ctx.clip();
+    ctx.fillStyle = lighten(color, 0.44);
+    ctx.fillRect(-0.3 * u, -1.1 * u, 0.3 * u, 1.5 * u);
+    ctx.strokeStyle = "#395206";
+    ctx.lineWidth = Math.max(1.6, u * 0.08);
+    ctx.beginPath();
+    ctx.moveTo(0, -0.78 * u);
+    ctx.lineTo(0, 0.28 * u);
+    ctx.stroke();
+    ctx.restore();
+
+    // Steel crossguard
+    strokeAndFill(() => {
+      ctx.beginPath();
+      ctx.roundRect(-0.54 * u, 0.28 * u, 1.08 * u, 0.2 * u, 0.08 * u);
+    }, "#d7e6f0");
+
+    // Wrapped dark hilt & pommel
+    strokeAndFill(() => {
+      ctx.beginPath();
+      ctx.roundRect(-0.12 * u, 0.46 * u, 0.24 * u, 0.38 * u, 0.06 * u);
+    }, "#2e4152");
+    strokeAndFill(() => {
+      ctx.beginPath();
+      ctx.arc(0, 0.88 * u, 0.17 * u, 0, TAU);
+    }, lighten(color, 0.3));
+    ctx.restore();
+    return;
+  }
+
+  if (icon === "axe") {
+    // Central oak/slate shaft
+    strokeAndFill(() => {
+      ctx.beginPath();
+      ctx.roundRect(-0.12 * u, -0.84 * u, 0.24 * u, 1.72 * u, 0.09 * u);
+    }, "#8c6142");
+
+    // Bold symmetric twin-headed battle axe blades
+    const blades = () => {
+      ctx.beginPath();
+      // Right crescent head
+      ctx.moveTo(0.08 * u, -0.44 * u);
+      ctx.quadraticCurveTo(0.46 * u, -0.64 * u, 0.86 * u, -0.84 * u);
+      ctx.quadraticCurveTo(1.02 * u, -0.24 * u, 0.84 * u, 0.24 * u);
+      ctx.quadraticCurveTo(0.46 * u, 0.04 * u, 0.08 * u, -0.04 * u);
+      // Left crescent head
+      ctx.lineTo(-0.08 * u, -0.04 * u);
+      ctx.quadraticCurveTo(-0.46 * u, 0.04 * u, -0.84 * u, 0.24 * u);
+      ctx.quadraticCurveTo(-1.02 * u, -0.24 * u, -0.86 * u, -0.84 * u);
+      ctx.quadraticCurveTo(-0.46 * u, -0.64 * u, -0.08 * u, -0.44 * u);
+      ctx.closePath();
+    };
+    strokeAndFill(blades, color);
+
+    // Gleaming curved cutting edge bevels
+    ctx.save();
+    blades();
+    ctx.clip();
+    ctx.strokeStyle = lighten(color, 0.52);
+    ctx.lineWidth = Math.max(2.6, u * 0.18);
+    ctx.beginPath();
+    ctx.moveTo(0.84 * u, -0.82 * u);
+    ctx.quadraticCurveTo(0.98 * u, -0.24 * u, 0.82 * u, 0.22 * u);
+    ctx.moveTo(-0.84 * u, -0.82 * u);
+    ctx.quadraticCurveTo(-0.98 * u, -0.24 * u, -0.82 * u, 0.22 * u);
+    ctx.stroke();
+    ctx.restore();
+
+    // Central iron collar boss
+    strokeAndFill(() => {
+      ctx.beginPath();
+      ctx.roundRect(-0.18 * u, -0.48 * u, 0.36 * u, 0.48 * u, 0.08 * u);
+    }, "#2b3b4c");
+    ctx.fillStyle = lighten(color, 0.4);
+    ctx.beginPath();
+    ctx.arc(0, -0.24 * u, 0.08 * u, 0, TAU);
+    ctx.fill();
+    return;
+  }
+
+  // Winged cyan spear / halberd angled crisply
+  ctx.save();
+  ctx.rotate(0.62);
+  // Long slender shaft
+  strokeAndFill(() => {
+    ctx.beginPath();
+    ctx.roundRect(-0.09 * u, -0.18 * u, 0.18 * u, 1.12 * u, 0.07 * u);
+  }, "#6f8da6");
+  // Winged cross-lug collar
+  strokeAndFill(() => {
+    ctx.beginPath();
+    ctx.moveTo(-0.42 * u, -0.08 * u);
+    ctx.lineTo(0, -0.26 * u);
+    ctx.lineTo(0.42 * u, -0.08 * u);
+    ctx.lineTo(0.32 * u, 0.08 * u);
+    ctx.lineTo(0, -0.02 * u);
+    ctx.lineTo(-0.32 * u, 0.08 * u);
+    ctx.closePath();
+  }, "#d9f2ff");
+  // Sharp diamond spearhead
+  const head = () => {
+    ctx.beginPath();
+    ctx.moveTo(0, -1.08 * u);
+    ctx.lineTo(0.36 * u, -0.44 * u);
+    ctx.lineTo(0.16 * u, -0.1 * u);
+    ctx.lineTo(-0.16 * u, -0.1 * u);
+    ctx.lineTo(-0.36 * u, -0.44 * u);
+    ctx.closePath();
+  };
+  strokeAndFill(head, color);
+  ctx.save();
+  head();
+  ctx.clip();
+  ctx.fillStyle = lighten(color, 0.48);
+  ctx.fillRect(-0.42 * u, -1.12 * u, 0.42 * u, 1.1 * u);
+  ctx.restore();
+  ctx.restore();
+}
+
+function drawCosmosSprite(
+  ctx: CanvasRenderingContext2D,
+  icon: "sun" | "moon" | "planet" | "rocket" | "ufo",
+  u: number,
+  color: string,
+) {
+  contactShadow(ctx, u, 0.78);
+  const strokeW = Math.max(2.5, u * 0.21);
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+
+  const strokeAndFill = (trace: () => void, fill = color) => {
+    trace();
+    ctx.lineWidth = strokeW;
+    ctx.strokeStyle = OUTLINE;
+    ctx.stroke();
+    ctx.fillStyle = fill;
+    ctx.fill();
+  };
+
+  if (icon === "sun") {
+    // 8 crisp triangular rays around the core
+    const rays = () => {
+      ctx.beginPath();
+      const spikes = 8;
+      for (let i = 0; i < spikes * 2; i++) {
+        const a = (i / (spikes * 2)) * TAU - Math.PI / 2;
+        const r = (i % 2 === 0 ? 0.98 : 0.6) * u;
+        const px = Math.cos(a) * r;
+        const py = Math.sin(a) * r;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+    };
+    strokeAndFill(rays, "#f59e0b");
+    strokeAndFill(() => {
+      ctx.beginPath();
+      ctx.arc(0, 0, 0.56 * u, 0, TAU);
+    }, color);
+    ctx.fillStyle = "#fef3c7";
+    ctx.beginPath();
+    ctx.arc(-0.14 * u, -0.14 * u, 0.22 * u, 0, TAU);
+    ctx.fill();
+    return;
+  }
+
+  if (icon === "moon") {
+    const crescent = () => {
+      ctx.beginPath();
+      ctx.arc(0, 0, 0.86 * u, 0.55, TAU - 0.55, false);
+      ctx.arc(0.36 * u, -0.06 * u, 0.68 * u, -0.82, 0.96, true);
+      ctx.closePath();
+    };
+    strokeAndFill(crescent, color);
+    ctx.save();
+    crescent();
+    ctx.clip();
+    ctx.fillStyle = "#b8d2e6";
+    ctx.beginPath();
+    ctx.arc(-0.42 * u, 0.28 * u, 0.16 * u, 0, TAU);
+    ctx.arc(-0.24 * u, -0.34 * u, 0.12 * u, 0, TAU);
+    ctx.arc(-0.56 * u, -0.04 * u, 0.09 * u, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+    return;
+  }
+
+  if (icon === "planet") {
+    ctx.save();
+    ctx.rotate(-0.36);
+    // Back half of ring
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 1.04 * u, 0.3 * u, 0, Math.PI, TAU);
+    ctx.lineWidth = Math.max(4.4, u * 0.34);
+    ctx.strokeStyle = OUTLINE;
+    ctx.stroke();
+    ctx.lineWidth = Math.max(2.4, u * 0.18);
+    ctx.strokeStyle = "#e9d5ff";
+    ctx.stroke();
+
+    // Sphere
+    const globe = () => {
+      ctx.beginPath();
+      ctx.arc(0, 0, 0.6 * u, 0, TAU);
+    };
+    strokeAndFill(globe, color);
+    ctx.save();
+    globe();
+    ctx.clip();
+    ctx.fillStyle = lighten(color, 0.38);
+    ctx.fillRect(-0.7 * u, -0.44 * u, 1.4 * u, 0.16 * u);
+    ctx.fillStyle = "#5b21b6";
+    ctx.fillRect(-0.7 * u, 0.12 * u, 1.4 * u, 0.18 * u);
+    ctx.restore();
+
+    // Front half of ring sweeping over the sphere
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 1.04 * u, 0.3 * u, 0, 0, Math.PI);
+    ctx.lineWidth = Math.max(4.4, u * 0.34);
+    ctx.strokeStyle = OUTLINE;
+    ctx.stroke();
+    ctx.lineWidth = Math.max(2.4, u * 0.18);
+    ctx.strokeStyle = "#f3e8ff";
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
+
+  if (icon === "rocket") {
+    ctx.save();
+    ctx.rotate(0.55);
+    // Thruster tail flame
+    strokeAndFill(() => {
+      ctx.beginPath();
+      ctx.moveTo(-0.2 * u, 0.48 * u);
+      ctx.lineTo(0, 0.98 * u);
+      ctx.lineTo(0.2 * u, 0.48 * u);
+      ctx.closePath();
+    }, "#fde047");
+    // Swept side fins
+    strokeAndFill(() => {
+      ctx.beginPath();
+      ctx.moveTo(-0.28 * u, 0.08 * u);
+      ctx.lineTo(-0.66 * u, 0.56 * u);
+      ctx.lineTo(-0.22 * u, 0.48 * u);
+      ctx.closePath();
+    }, "#dc2626");
+    strokeAndFill(() => {
+      ctx.beginPath();
+      ctx.moveTo(0.28 * u, 0.08 * u);
+      ctx.lineTo(0.66 * u, 0.56 * u);
+      ctx.lineTo(0.22 * u, 0.48 * u);
+      ctx.closePath();
+    }, "#dc2626");
+    // Fuselage body
+    const body = () => {
+      ctx.beginPath();
+      ctx.moveTo(0, -0.96 * u);
+      ctx.bezierCurveTo(0.38 * u, -0.54 * u, 0.42 * u, 0.08 * u, 0.3 * u, 0.52 * u);
+      ctx.lineTo(-0.3 * u, 0.52 * u);
+      ctx.bezierCurveTo(-0.42 * u, 0.08 * u, -0.38 * u, -0.54 * u, 0, -0.96 * u);
+      ctx.closePath();
+    };
+    strokeAndFill(body, color);
+    ctx.save();
+    body();
+    ctx.clip();
+    ctx.fillStyle = lighten(color, 0.36);
+    ctx.fillRect(-0.45 * u, -1.0 * u, 0.45 * u, 1.6 * u);
+    ctx.restore();
+    // Porthole window
+    strokeAndFill(() => {
+      ctx.beginPath();
+      ctx.arc(0, -0.14 * u, 0.2 * u, 0, TAU);
+    }, "#38bdf8");
+    ctx.fillStyle = "#e0f2fe";
+    ctx.beginPath();
+    ctx.arc(-0.06 * u, -0.2 * u, 0.07 * u, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+    return;
+  }
+
+  // UFO flying saucer (Oyren lime)
+  // Upper glass cockpit dome
+  strokeAndFill(() => {
+    ctx.beginPath();
+    ctx.arc(0, -0.12 * u, 0.46 * u, Math.PI, TAU);
+    ctx.closePath();
+  }, "#e0f7ff");
+  // Wide saucer hull
+  const hull = () => {
+    ctx.beginPath();
+    ctx.ellipse(0, 0.1 * u, 0.96 * u, 0.34 * u, 0, 0, TAU);
+  };
+  strokeAndFill(hull, color);
+  ctx.save();
+  hull();
+  ctx.clip();
+  ctx.fillStyle = "#4d7c0f";
+  ctx.fillRect(-1.0 * u, 0.14 * u, 2.0 * u, 0.35 * u);
+  ctx.restore();
+  // Three bright rim lights
+  for (const lx of [-0.52, 0, 0.52] as const) {
+    ctx.fillStyle = OUTLINE;
+    ctx.beginPath();
+    ctx.arc(lx * u, 0.08 * u, 0.12 * u, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = "#fef9c3";
+    ctx.beginPath();
+    ctx.arc(lx * u, 0.08 * u, 0.075 * u, 0, TAU);
+    ctx.fill();
+  }
+}
+
 /**
  * Draw one sprite centred at (x, y). `size` is the diameter in px; `angle`
  * sets the heading for scissors; `variant` picks a rock or paper look;
@@ -934,6 +1286,10 @@ export function drawSprite(
     drawLeaf(ctx, u, color, variant);
   } else if (icon === "king" || icon === "queen" || icon === "rook" || icon === "bishop" || icon === "knight") {
     drawChessPiece(ctx, icon, u, color);
+  } else if (icon === "sword" || icon === "axe" || icon === "spear") {
+    drawWeapon(ctx, icon, u, color);
+  } else if (icon === "sun" || icon === "moon" || icon === "planet" || icon === "rocket" || icon === "ufo") {
+    drawCosmosSprite(ctx, icon, u, color);
   } else {
     drawRivalShape(ctx, icon, u, color);
   }
