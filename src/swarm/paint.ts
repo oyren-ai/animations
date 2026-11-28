@@ -107,6 +107,14 @@ const SPRITE_SCALE: Record<SwarmIcon, number> = {
   planet: 1.24,
   rocket: 1.18,
   ufo: 1.22,
+  key: 1.2,
+  lock: 1.14,
+  chest: 1.18,
+  whale: 1.22,
+  octopus: 1.18,
+  turtle: 1.18,
+  shell: 1.14,
+  seahorse: 1.18,
 };
 
 export interface BarSegment {

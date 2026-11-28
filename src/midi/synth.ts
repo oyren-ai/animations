@@ -15,7 +15,18 @@ import type { MidiNote, ParsedMidi } from "./types.ts";
  */
 
 export const SYNTH_SAMPLE_RATE = 48000;
-export type Instrument = "piano" | "bell" | "marimba" | "kalimba" | "strings" | "musicbox" | "tar" | "bass" | "organ";
+export type Instrument =
+  | "piano"
+  | "bell"
+  | "marimba"
+  | "kalimba"
+  | "strings"
+  | "musicbox"
+  | "tar"
+  | "bass"
+  | "organ"
+  | "harpsichord"
+  | "harp";
 
 export interface SynthOptions {
   /** Output sample rate in Hz (default 48000). */
@@ -57,9 +68,10 @@ export interface StereoAudio {
   sampleRate: number;
 }
 
-/** General MIDI program number to one of the nine voices (everything not listed is a piano). */
+/** General MIDI program number to one of the eleven voices (everything not listed is a piano). */
 export function instrumentForProgram(program: number): Instrument {
   const p = Math.trunc(program);
+  if (p === 6) return "harpsichord";
   if (p === 10) return "musicbox";
   if ((p >= 8 && p <= 9) || p === 14 || p === 98 || (p >= 112 && p <= 119)) return "bell";
   if (p >= 11 && p <= 13) return "marimba";
@@ -67,6 +79,7 @@ export function instrumentForProgram(program: number): Instrument {
   if (p === 25 || p === 26) return "tar";
   if (p === 32 || p === 33) return "bass";
   if ((p >= 40 && p <= 44) || (p >= 48 && p <= 51)) return "strings";
+  if (p === 46) return "harp";
   if (p >= 105 && p <= 108) return "kalimba";
   return "piano";
 }
@@ -95,6 +108,8 @@ const VOICE_GAIN: Record<Instrument, number> = {
   tar: 0.21,
   bass: 0.23,
   organ: 0.19,
+  harpsichord: 0.21,
+  harp: 0.22,
 };
 const DRUM_GAIN = 0.3;
 
@@ -575,6 +590,56 @@ function renderOrgan(ws: Workspace, p: NoteParams): VoiceOut {
   return { buf, len, hold: Math.round(hold * sr), release: Math.round(release * sr) };
 }
 
+/** Plucked Baroque concert harpsichord: bright paired brass Karplus-Strong strings + upper quill harmonics + crisp felt damper. */
+function renderHarpsichord(ws: Workspace, p: NoteParams): VoiceOut {
+  const { freq: f, sr, vn, rng } = p;
+  const t60 = clamp(2.6 * Math.pow(261.63 / Math.max(55, f), 0.38), 0.9, 3.4);
+  const hold = Math.max(p.holdSec, 0.075);
+  const release = 0.065; // crisp felt jack damper release
+  const len = Math.max(2, Math.round(Math.min(t60 * 1.15, hold + release) * sr));
+  const buf = ws.voice(len);
+
+  // Bright quill-plucked brass string pair (8' choir + subtle 4' octave shimmer)
+  const cutoff = Math.min(11000, f * (4.5 + 11 * vn * vn));
+  addKarplusStrong(ws, buf, len, sr, f * Math.pow(2, -1.1 / 1200), t60, cutoff, 0.36 + 0.24 * vn, rng);
+  addKarplusStrong(ws, buf, len, sr, f * Math.pow(2, 1.1 / 1200), t60 * 0.94, cutoff * 0.92, 0.3 + 0.22 * vn, rng);
+
+  // Dominant fundamental + bright metallic harpsichord harmonic ladder (2f, 3f, 4f, 5f)
+  addDecayingSine(buf, len, f, 0.62, t60 * 0.85, 0, sr);
+  addDecayingSine(buf, len, 2 * f, 0.36 * (0.45 + 0.55 * vn), t60 * 0.62, 0.2, sr);
+  addDecayingSine(buf, len, 3 * f, 0.22 * (0.35 + 0.65 * vn * vn), t60 * 0.42, 0.5, sr);
+  if (4 * f < sr * 0.42) addDecayingSine(buf, len, 4 * f, 0.14 * vn * vn, t60 * 0.28, 0.9, sr);
+  if (5 * f < sr * 0.42) addDecayingSine(buf, len, 5 * f, 0.08 * vn * vn, t60 * 0.2, 1.2, sr);
+
+  // Crisp crow-quill plectrum snap transient
+  addNoiseBurst(buf, len, sr, rng, 5600, 0.0022, 0.22 * Math.pow(vn, 1.35));
+  return { buf, len, hold: Math.round(hold * sr), release: Math.round(release * sr) };
+}
+
+/** Concert pedal harp: warm round plucked nylon/gut string + spruce soundboard bloom + natural free ring-out. */
+function renderHarp(ws: Workspace, p: NoteParams): VoiceOut {
+  const { freq: f, sr, vn, rng } = p;
+  const t60 = clamp(3.8 * Math.pow(261.63 / Math.max(55, f), 0.42), 1.25, 4.6);
+  const hold = Math.max(p.holdSec, 0.14);
+  const release = clamp(t60 * 0.45, 0.38, 1.35); // concert harp rings warmly unless explicitly damped
+  const len = Math.max(2, Math.round(Math.min(t60 * 1.2, hold + release) * sr));
+  const buf = ws.voice(len);
+
+  // Warm plucked string (slightly gentler cutoff than harpsichord for round finger-pad tone)
+  const cutoff = Math.min(7200, f * (2.6 + 7.5 * vn * vn));
+  addKarplusStrong(ws, buf, len, sr, f, t60, cutoff, 0.38 + 0.24 * vn, rng);
+
+  // Pure glowing harp fundamental + warm 2nd/3rd harmonics
+  addDecayingSine(buf, len, f, 0.78, t60 * 0.92, 0, sr);
+  addDecayingSine(buf, len, 2 * f, 0.32 * (0.35 + 0.65 * vn), t60 * 0.56, 0.15, sr);
+  if (3 * f < sr * 0.42) addDecayingSine(buf, len, 3 * f, 0.14 * vn * vn, t60 * 0.34, 0.4, sr);
+  if (4 * f < sr * 0.42) addDecayingSine(buf, len, 4 * f, 0.06 * vn * vn, t60 * 0.2, 0.8, sr);
+
+  // Soft fingertip pluck warmth + spruce soundboard tap
+  addNoiseBurst(buf, len, sr, rng, 1800, 0.004, 0.14 * Math.pow(vn, 1.4));
+  return { buf, len, hold: Math.round(hold * sr), release: Math.round(release * sr) };
+}
+
 /** GM percussion on channel 9: one-shot sweep / noise voices, deliberately soft. */
 function renderDrum(ws: Workspace, p: NoteParams): VoiceOut {
   const { pitch, sr, rng } = p;
@@ -929,6 +994,8 @@ export function renderNotes(notes: readonly MidiNote[], options: SynthOptions = 
       : instrument === "tar" ? renderTar(ws, params)
       : instrument === "bass" ? renderBass(ws, params)
       : instrument === "organ" ? renderOrgan(ws, params)
+      : instrument === "harpsichord" ? renderHarpsichord(ws, params)
+      : instrument === "harp" ? renderHarp(ws, params)
       : renderPiano(ws, params);
     const buf = voice.buf;
     const len = Math.min(shapeEnvelope(buf, voice.len, voice.hold, voice.release, sr), frames - start);

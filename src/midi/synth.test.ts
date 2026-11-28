@@ -13,7 +13,9 @@ import {
 import type { MidiNote, ParsedMidi } from "./types.ts";
 
 const SR = SYNTH_SAMPLE_RATE;
-const INSTRUMENTS: Instrument[] = ["piano", "bell", "marimba", "kalimba", "strings", "musicbox", "tar", "bass", "organ"];
+const INSTRUMENTS: Instrument[] = [
+  "piano", "bell", "marimba", "kalimba", "strings", "musicbox", "tar", "bass", "organ", "harpsichord", "harp",
+];
 
 function note(pitch: number, timeSec = 0.1, durationSec = 1.5, velocity = 100, track = 0, channel = 0): MidiNote {
   return { timeSec, durationSec, pitch, velocity, track, channel };
@@ -191,6 +193,8 @@ test("pitch accuracy: A4, C3 and C6 are within 5 cents (piano) and 10 cents (bel
     ["tar", 10],
     ["bass", 10],
     ["organ", 10],
+    ["harpsichord", 10],
+    ["harp", 10],
   ];
   for (const [instrument, tolerance] of cases) {
     for (const pitch of [69, 48, 84]) {
@@ -369,14 +373,14 @@ test("the output has no DC offset and the General MIDI program map picks the rig
     }
   }
   const expected: Array<[number, Instrument]> = [
-    [0, "piano"], [1, "piano"], [7, "piano"], [24, "piano"], [127, "piano"],
+    [0, "piano"], [1, "piano"], [6, "harpsichord"], [7, "piano"], [24, "piano"], [127, "piano"],
     [8, "bell"], [9, "bell"], [14, "bell"], [98, "bell"], [112, "bell"], [119, "bell"],
     [10, "musicbox"],
     [11, "marimba"], [12, "marimba"], [13, "marimba"],
     [19, "organ"], [20, "organ"],
     [25, "tar"], [26, "tar"],
     [32, "bass"], [33, "bass"],
-    [40, "strings"], [41, "strings"], [42, "strings"], [48, "strings"], [49, "strings"],
+    [40, "strings"], [41, "strings"], [42, "strings"], [46, "harp"], [48, "strings"], [49, "strings"],
     [105, "kalimba"], [106, "kalimba"], [107, "kalimba"], [108, "kalimba"],
     [15, "piano"], [45, "piano"], [97, "piano"], [99, "piano"], [104, "piano"], [109, "piano"], [111, "piano"], [120, "piano"],
   ];

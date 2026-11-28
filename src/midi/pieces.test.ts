@@ -17,10 +17,14 @@ import {
   ODE_TO_JOY_OPENING_MOTIF,
   odeToJoyCarillon,
   pieceBytes,
+  SPRING_OPENING_MOTIF,
+  springConcertHarp,
   SUGAR_PLUM_OPENING_MOTIF,
   sugarPlumKalimba,
   TOCCATA_D_MINOR_OPENING_MOTIF,
   toccataInDMinorOrgan,
+  TURKISH_MARCH_OPENING_MOTIF,
+  turkishMarchHarpsichord,
 } from "./pieces.ts";
 
 const [BUMBLEBEE, CANON, FUR_ELISE, MUGHAM, BAKU] = builtInPieces();
@@ -163,14 +167,20 @@ test("Ode to Joy: Beethoven Symphony No. 9 IV motif, D-major scale, bell carillo
   }
 });
 
-test("Toccata in D Minor: Bach BWV 565 opening mordent, church-organ programs, and D2..A5 compass", () => {
+test("Toccata in D Minor: Bach BWV 565 opening mordent, second flourish E-F-C#-D, D-minor close, and D2..Bb5 compass", () => {
   const parsed = parsedOf(toccataInDMinorOrgan());
   assert.deepEqual(parsed.timeSignature, { numerator: 4, denominator: 4 });
   const great = parsed.notes.filter((n) => n.track === 1);
   assert.deepEqual(great.slice(0, 9).map((n) => n.pitch), [...TOCCATA_D_MINOR_OPENING_MOTIF]);
+  // Second flourish (indices 9..15): A4 G4 A4 | E4 F4 C#4 D4 (only 4 notes after held A4!)
+  assert.deepEqual(great.slice(9, 16).map((n) => n.pitch), [69, 67, 69, 64, 65, 61, 62]);
+  // Final Bar 30 chord is pure D minor (F4 = 65 present, NO F# = 66/78!)
+  const finalChord = parsed.notes.filter((n) => n.timeSec >= parsed.durationSec - 3.0);
+  assert.ok(finalChord.some((n) => n.pitch % 12 === 5), "final chord has F natural (D minor)");
+  assert.ok(!finalChord.some((n) => n.pitch % 12 === 6), "final chord has no F# (not D major)");
   assert.deepEqual(parsed.tracks.slice(1).map((t) => t.programs[0]), [19, 19, 19]);
   for (const n of parsed.notes) {
-    assert.ok(n.pitch >= 38 && n.pitch <= 81, `pitch ${n.pitch} outside D2..A5 organ compass`);
+    assert.ok(n.pitch >= 38 && n.pitch <= 82, `pitch ${n.pitch} outside D2..Bb5 organ compass`);
   }
 });
 
@@ -182,6 +192,30 @@ test("Dance of the Sugar Plum Fairy: Tchaikovsky motif, kalimba + bass programs,
   assert.deepEqual(parsed.tracks.slice(1).map((t) => t.programs[0]), [108, 108, 32]);
   for (const n of parsed.notes) {
     assert.ok(n.pitch >= 52 && n.pitch <= 83, `pitch ${n.pitch} outside E3..B5 kalimba compass`);
+  }
+});
+
+test("Turkish March: Mozart K. 331 III opening motif, harpsichord programs, and A2..C#6 compass", () => {
+  const parsed = parsedOf(turkishMarchHarpsichord());
+  assert.deepEqual(parsed.timeSignature, { numerator: 2, denominator: 4 });
+  const rh = parsed.notes.filter((n) => n.track === 1);
+  assert.deepEqual(rh.slice(0, 14).map((n) => n.pitch), [...TURKISH_MARCH_OPENING_MOTIF]);
+  assert.deepEqual(parsed.tracks.slice(1).map((t) => t.programs[0]), [6, 6]);
+  for (const n of parsed.notes) {
+    assert.ok(n.pitch >= 45 && n.pitch <= 85, `pitch ${n.pitch} outside A2..C#6 harpsichord compass`);
+  }
+});
+
+test("Spring: Vivaldi RV 269 I opening ritornello, pure E-major diatonic scale, harp programs, and E2..E6 compass", () => {
+  const parsed = parsedOf(springConcertHarp());
+  assert.deepEqual(parsed.timeSignature, { numerator: 4, denominator: 4 });
+  const treble = parsed.notes.filter((n) => n.track === 1);
+  assert.deepEqual(treble.slice(0, 10).map((n) => n.pitch), [...SPRING_OPENING_MOTIF]);
+  assert.deepEqual(parsed.tracks.slice(1).map((t) => t.programs[0]), [46, 46, 46]);
+  const eMajor = new Set([4, 6, 8, 9, 11, 1, 3]);
+  for (const n of parsed.notes) {
+    assert.ok(eMajor.has(n.pitch % 12), `pitch ${n.pitch} is outside E major`);
+    assert.ok(n.pitch >= 40 && n.pitch <= 88, `pitch ${n.pitch} outside E2..E6 concert harp compass`);
   }
 });
 

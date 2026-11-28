@@ -1285,13 +1285,13 @@ export function odeToJoyCarillon(): MidiPiece {
     [[0, 0.95, 69, 6], [1, 0.95, 67, 3], [2, 0.95, 66], [3, 0.95, 64, -1]],
     [[0, 0.95, 62, 4], [1, 0.95, 62], [2, 0.95, 64, 3], [3, 0.95, 66, 5]],
     [[0, 1.45, 64, 5], [1.5, 0.48, 62, -1], [2, 1.9, 62, 5]],
-    // B (9..12)
+    // B (9..12): exact Beethoven Symphony No. 9 IV syncopation — beat 3 of bar 12 anticipates F#4 tied over barline into bar 13!
     [[0, 0.95, 64, 4], [1, 0.95, 64], [2, 0.95, 66, 3], [3, 0.95, 62, 2]],
     [[0, 0.95, 64, 4], [1, 0.48, 66, 3], [1.5, 0.48, 67, 4], [2, 0.95, 66, 4], [3, 0.95, 62, 2]],
     [[0, 0.95, 64, 5], [1, 0.48, 66, 3], [1.5, 0.48, 67, 5], [2, 0.95, 66, 5], [3, 0.95, 64, 2]],
-    [[0, 0.95, 62, 4], [1, 0.95, 64, 3], [2, 1.9, 57, 6]],
-    // A'' (13..16)
-    [[0, 0.95, 66, 6], [1, 0.95, 66], [2, 0.95, 67, 4], [3, 0.95, 69, 7]],
+    [[0, 0.95, 62, 4], [1, 0.95, 64, 3], [2, 0.95, 57, 6], [3, 1.92, 66, 7]],
+    // A'' (13..16): beat 0 of bar 13 holds the tied F#4 from bar 12 beat 3; melody continues on beat 1!
+    [[1, 0.95, 66], [2, 0.95, 67, 4], [3, 0.95, 69, 7]],
     [[0, 0.95, 69, 7], [1, 0.95, 67, 4], [2, 0.95, 66, 2], [3, 0.95, 64]],
     [[0, 0.95, 62, 5], [1, 0.95, 62], [2, 0.95, 64, 4], [3, 0.95, 66, 6]],
     [[0, 1.45, 64, 6], [1.5, 0.48, 62, 2], [2, 1.9, 62, 8]],
@@ -1322,7 +1322,8 @@ export function odeToJoyCarillon(): MidiPiece {
     { bass0: 45, bass2: 50, alto0: 61, alto2: 57, tenor0: 57 }, // A | D
   ];
 
-  // --- Verse 1 (Bars 0..15, beats 0..64): Pure bronze melody growing into 3-voice tower harmony ---
+  // --- Verse 1 (Bars 1..16, beats 0..64): Pure bronze melody growing into 3-voice tower harmony ---
+  // Note: Track 2 (Carillon Mid Bells) carries ONLY the pure single-line Beethoven melody!
   for (let bar = 0; bar < 16; bar++) {
     const b0 = bar * 4;
     const h = barHarmony[bar];
@@ -1338,12 +1339,15 @@ export function odeToJoyCarillon(): MidiPiece {
       bourdon.push(note(b0 + 2, 1.85, h.bass2, 74));
     }
 
-    // Warm inner alto & tenor chime voices enter from bar 8 (Section B) onward
+    // Warm inner alto & tenor chime voices enter from bar 8 (Section B) onward on bourdon/strings tracks
     if (bar >= 8) {
-      midBells.push(note(b0, 1.8, h.alto0, 68));
-      midBells.push(note(b0 + 2, 1.8, h.alto2, 66));
+      bourdon.push(note(b0, 1.85, h.alto0, 68));
+      bourdon.push(note(b0 + 2, 1.85, h.alto2, 66));
+      haloStrings.push(note(b0, 1.85, h.alto0, 50));
+      haloStrings.push(note(b0 + 2, 1.85, h.alto2, 48));
       if (bar >= 12) {
-        treble.push(note(b0, 1.8, themeBars[bar][0][2] + 12, 74));
+        const downbeatPitch = bar === 12 ? 78 : themeBars[bar][0][2] + 12;
+        treble.push(note(bar === 12 ? b0 - 1 : b0, bar === 12 ? 1.92 : 1.8, downbeatPitch, 74));
         bourdon.push(note(b0 + 1, 0.9, h.tenor0, 64));
       }
     }
@@ -1352,7 +1356,8 @@ export function odeToJoyCarillon(): MidiPiece {
     }
   }
 
-  // --- Verse 2 (Bars 16..23, beats 64..96): Triumphant 4-voice carillon peal of B + A''! ---
+  // --- Verse 2 (Bars 17..24, beats 64..96): Beethoven's own repeat of B + A'' in 4-voice carillon harmony ---
+  // Ends directly on Beethoven's real Bar 24 tonic D-major cadence (zero invented coda bars!).
   for (let i = 0; i < 8; i++) {
     const srcBar = 8 + i; // B (8..11) + A'' (12..15)
     const b0 = 64 + i * 4;
@@ -1361,52 +1366,34 @@ export function odeToJoyCarillon(): MidiPiece {
     const velBase = isFinalA ? 96 : 92;
 
     for (const [off, dur, p, dv = 0] of themeBars[srcBar]) {
-      // Mid bronze bell + gleaming upper treble octave bell!
-      midBells.push(note(b0 + off, dur, p, velBase - 4 + dv));
-      const upper = p === 57 ? 69 : p + 12; // keeps every treble pitch inside B4..A5!
-      treble.push(note(b0 + off, dur, upper, velBase + dv));
+      const isFinalTonic = i === 7 && off === 2;
+      const d = isFinalTonic ? 2.8 : dur;
+      midBells.push(note(b0 + off, d, p, velBase - 4 + dv));
+      const upper = p === 57 ? 69 : p + 12; // keeps every treble pitch inside B4..A5
+      treble.push(note(b0 + off, d, upper, velBase + dv));
     }
 
-    // Driving bourdon bass + festive inner bell counter-peal
+    // Driving bourdon bass + cathedral strings on Beethoven's real bars 17..24
     bourdon.push(note(b0, 1.85, h.bass0, 86));
     bourdon.push(note(b0 + 1, 0.9, h.tenor0, 72));
-    bourdon.push(note(b0 + 2, 1.85, h.bass2, 84));
-    bourdon.push(note(b0 + 3, 0.9, h.tenor0, 70));
-
-    midBells.push(note(b0, 1.8, h.alto0, 74));
-    midBells.push(note(b0 + 2, 1.8, h.alto2, 74));
-
-    // Cathedral strings halo sustains underneath the bronze peal
-    haloStrings.push(note(b0, 3.85, h.bass0 + 12, isFinalA ? 56 : 52));
-    haloStrings.push(note(b0, 3.85, h.alto0, isFinalA ? 52 : 48));
+    if (i < 7) {
+      bourdon.push(note(b0 + 2, 1.85, h.bass2, 84));
+      bourdon.push(note(b0 + 3, 0.9, h.tenor0, 70));
+      haloStrings.push(note(b0, 3.85, h.bass0 + 12, isFinalA ? 56 : 52));
+      haloStrings.push(note(b0, 1.85, h.alto0, isFinalA ? 52 : 48));
+      haloStrings.push(note(b0 + 2, 1.85, h.alto2, isFinalA ? 52 : 48));
+    } else {
+      // Bar 24 beat 2: resonant full-carillon D-major tonic chord directly on Beethoven's final half-note D4!
+      bourdon.push(note(b0 + 2, 2.8, 50, 96));   // D3
+      bourdon.push(note(b0 + 2, 2.8, 54, 84));   // F#3
+      bourdon.push(note(b0 + 2, 2.8, 57, 86));   // A3
+      treble.push(note(b0 + 2, 2.8, 78, 92));    // F#5
+      treble.push(note(b0 + 2, 2.8, 81, 88));    // A5
+      haloStrings.push(note(b0, 1.9, 57, 52));
+      haloStrings.push(note(b0 + 2, 2.8, 62, 56));
+      haloStrings.push(note(b0 + 2, 2.8, 66, 54));
+    }
   }
-
-  // --- Grand 2-bar D-Major Tower Peal Coda (beats 96..104) ---
-  // Joyous descending Westminster-like carillon flourish: A5 F#5 E5 D5 | A4 F#4 D4 + final resonant D chord!
-  const peal = [
-    [96.0, 0.48, 81, 94],  // A5
-    [96.5, 0.48, 78, 92],  // F#5
-    [97.0, 0.48, 76, 90],  // E5
-    [97.5, 0.48, 74, 92],  // D5
-    [98.0, 0.48, 78, 94],  // F#5
-    [98.5, 0.48, 74, 92],  // D5
-    [99.0, 0.48, 73, 88],  // C#5
-    [99.5, 0.48, 74, 96],  // D5
-  ] as const;
-  for (const [b, d, p, v] of peal) treble.push(note(b, d, p, v));
-  bourdon.push(note(96.0, 1.9, 50, 88)); // D3
-  bourdon.push(note(98.0, 1.9, 45, 86)); // A2
-
-  // Final monumental D-major carillon chord at beat 100 (resolving to F#4/D5 for loop continuity!)
-  bourdon.push(note(100.0, 3.2, 50, 96));   // D3
-  bourdon.push(note(100.05, 3.15, 54, 84)); // F#3
-  midBells.push(note(100.08, 3.1, 62, 88)); // D4
-  midBells.push(note(100.12, 3.05, 66, 94));// F#4 (matches Bar 1 opening pitch!)
-  midBells.push(note(100.16, 3.0, 69, 86)); // A4
-  treble.push(note(100.2, 2.95, 74, 96));   // D5
-  treble.push(note(100.24, 2.9, 78, 92));   // F#5
-  haloStrings.push(note(100.0, 3.2, 62, 54));
-  haloStrings.push(note(100.0, 3.2, 66, 52));
 
   const tracks: MidiWriteTrack[] = [
     { name: "Carillon Treble Bells", channel: 0, program: 14, notes: cleanTrackNotes(treble) },
@@ -1424,10 +1411,10 @@ export function odeToJoyCarillon(): MidiPiece {
       format: 1,
       ticksPerQuarter: 480,
       tempos: [
-        { beat: 0, bpm: 118 },
-        { beat: 64, bpm: 122 },
-        { beat: 96, bpm: 112 },
-        { beat: 100, bpm: 96 },
+        { beat: 0, bpm: 112 },
+        { beat: 64, bpm: 115 },
+        { beat: 92, bpm: 100 },
+        { beat: 94, bpm: 88 },
       ],
       tracks,
       title: "Ode to Joy",
@@ -1441,155 +1428,331 @@ export const TOCCATA_D_MINOR_OPENING_MOTIF = [81, 79, 81, 79, 77, 76, 74, 73, 74
 
 /**
  * Johann Sebastian Bach (1685-1750), Toccata in D Minor, BWV 565 (c. 1703-1708, public domain).
- * Concise cathedral tracker pipe-organ arrangement (~47 s) written directly in TypeScript for our
- * mechanical organ scene (full compass D2 = 38 .. A5 = 81):
- * - Opening three-octave Adagio mordents (A-G-A | G-F-E-D-C#-D)
- * - Deep D2 pedal point with rising C# diminished-seventh bloom to D minor
- * - Prestissimo cascading triplets and Baroque 16th-note runs across the 44-pipe facade
- * - Full-organ D-major Picardy cadence with glowing flanking towers
+ * Complete Toccata section (Bars 1-30, ending at Bach's real Bar 30 D-minor cadence before the Fugue),
+ * transcribed directly from the Mutopia Project Bach-Gesellschaft Ausgabe 1867 LilyPond source
+ * (https://www.mutopiaproject.org/ftp/BachJS/BWV565/ToccataFugue/ToccataFugue.ly).
+ * Compass D2 (38) .. Bb5 (82) so every note maps 1-to-1 to a speaking cathedral pipe.
  */
 export function toccataInDMinorOrgan(): MidiPiece {
   const great: MidiWriteNote[] = []; // Right hand / treble facade pipes (program 19)
   const choir: MidiWriteNote[] = []; // Left hand / mid accompaniment pipes (program 19)
   const pedal: MidiWriteNote[] = []; // Deep bass tower pipes (program 19)
 
-  // Helper: push the iconic Bach mordent + 6-note descent at beat b, doubled at octave below if requested.
-  const pushMordentPhrase = (
-    b: number,
-    highA: number,
-    doubleOctave: boolean,
-    vel: number,
-    step = 0.25,
-    holdA = 1.15,
-    holdEnd = 1.65,
-  ): number => {
-    const seq: Array<[number, number, number]> = [
-      [0.0, 0.16, highA],           // A
-      [0.18, 0.16, highA - 2],      // G
-      [0.36, holdA, highA],         // A (held fermata accent)
-      [0.36 + holdA + 0.12, step * 0.92, highA - 2],          // G
-      [0.36 + holdA + 0.12 + step, step * 0.92, highA - 4],   // F
-      [0.36 + holdA + 0.12 + 2 * step, step * 0.92, highA - 5], // E
-      [0.36 + holdA + 0.12 + 3 * step, step * 0.92, highA - 7], // D
-      [0.36 + holdA + 0.12 + 4 * step, step * 1.45, highA - 8], // C#
-      [0.36 + holdA + 0.12 + 5.55 * step, holdEnd, highA - 7],  // D (held)
-    ];
-    for (const [off, dur, p] of seq) {
-      const target = highA >= 69 ? great : choir;
-      target.push(note(b + off, dur, p, vel));
-      if (doubleOctave && p - 12 >= 38) {
-        (p - 12 >= 50 ? choir : pedal).push(note(b + off, dur, p - 12, vel - 6));
+  const pushTriplet = (b: number, p1: number, p2: number, p3: number, vel: number, doubleOctDown = true) => {
+    const step = 1 / 6; // 16th-note triplet = 1/6 quarter beat
+    const seq = [p1, p2, p3];
+    for (let i = 0; i < 3; i++) {
+      const p = seq[i];
+      great.push(note(b + i * step, step * 0.92, p, vel + (i === 0 ? 4 : -2)));
+      if (doubleOctDown && p - 12 >= 38) {
+        choir.push(note(b + i * step, step * 0.92, p - 12, vel - 8));
       }
     }
-    return b + 0.36 + holdA + 0.12 + 5.55 * step + holdEnd + 0.25;
   };
 
-  // Section 1: Three dramatic descending octave mordents (beats 0 .. 13.8)
-  let t = 0;
-  t = pushMordentPhrase(t, 81, true, 108, 0.25, 1.05, 1.35);  // A5/A4 -> D5/D4
-  t = pushMordentPhrase(t, 69, true, 104, 0.25, 0.95, 1.25);  // A4/A3 -> D4/D3
-  t = pushMordentPhrase(t, 57, false, 100, 0.27, 0.9, 1.35);  // A3 -> D3
-
-  // Section 2: Low D2/D3 pedal + C# diminished 7th chord bloom resolving to D minor (beats ~14 .. 24)
-  const bPedal = Math.ceil(t * 2) / 2;
-  pedal.push(note(bPedal, 8.8, 38, 106)); // Deep D2 pedal
-  pedal.push(note(bPedal, 8.8, 50, 88));  // D3 octave support
-  const dimArp: Array<[number, number, number]> = [
-    [0.5, 4.3, 61], // C#4
-    [1.1, 3.7, 64], // E4
-    [1.7, 3.1, 67], // G4
-    [2.3, 2.5, 70], // Bb4
-    [2.9, 1.9, 73], // C#5
-    [3.5, 1.3, 76], // E5
-  ];
-  for (const [off, dur, p] of dimArp) {
-    (p >= 67 ? great : choir).push(note(bPedal + off, dur, p, 94));
-  }
-  // Resolve into full D-minor triad (beats bPedal + 5.0 .. 8.8)
-  for (const p of [62, 65, 69, 74]) {
-    (p >= 69 ? great : choir).push(note(bPedal + 5.0, 3.6, p, 102));
-  }
-  great.push(note(bPedal + 6.4, 0.35, 73, 92)); // C#5 leading inflection
-  great.push(note(bPedal + 6.8, 1.8, 74, 104)); // D5
-
-  // Section 3: Prestissimo Baroque triplet & 16th-note flourishes across the full pipe facade
-  let b = bPedal + 9.2;
-  // Ascending/descending triplet cascade (A minor / D minor / C#dim7 / A7)
-  const tripletMeasures: readonly (readonly [number, readonly number[], number])[] = [
-    // [bassPedal, 12 rapid 1/3-beat notes in treble/choir, vel]
-    [38, [62, 65, 69, 74, 72, 70, 69, 67, 65, 64, 62, 61], 92], // D minor cascade
-    [45, [62, 64, 65, 67, 69, 70, 72, 73, 74, 76, 77, 79], 96], // Rising scale to G5
-    [38, [81, 79, 77, 76, 74, 73, 74, 76, 77, 79, 81, 77], 100], // High D minor wave
-    [43, [79, 77, 76, 74, 72, 70, 69, 67, 65, 67, 69, 70], 96], // G minor turn
-    [40, [76, 74, 73, 71, 69, 67, 65, 64, 62, 64, 65, 67], 95], // E half-dim sweep
-    [45, [69, 67, 65, 64, 61, 64, 67, 70, 73, 76, 79, 76], 102], // A7 / C#dim7 surge
-    [38, [74, 77, 81, 77, 74, 69, 74, 77, 81, 79, 77, 76], 104], // D minor arpeggio fireworks
-    [46, [74, 70, 67, 62, 67, 70, 74, 79, 77, 74, 70, 67], 100], // Bb / Gm7 sweep
-  ];
-
-  for (let m = 0; m < tripletMeasures.length; m++) {
-    const [bassP, seq, vel] = tripletMeasures[m];
-    pedal.push(note(b, 3.85, bassP, 96));
-    pedal.push(note(b + 2.0, 1.85, bassP + 12, 86));
-    // Counterpoint choir pulse on beats 0, 1, 2, 3
-    choir.push(note(b, 0.9, bassP + 19 <= 69 ? bassP + 19 : bassP + 12, 80));
-    choir.push(note(b + 1.0, 0.9, seq[3] - 12, 78));
-    choir.push(note(b + 2.0, 0.9, seq[6] - 12, 80));
-    choir.push(note(b + 3.0, 0.9, seq[9] - 12, 82));
-
-    for (let k = 0; k < seq.length; k++) {
-      const p = seq[k];
-      const off = k * (4 / 12);
-      const target = p >= 64 ? great : choir;
-      target.push(note(b + off, 0.31, p, vel + (k % 3 === 0 ? 5 : -3)));
+  // --- Bar 1: Flourish 1 (A5-G5-A5 | G5-F5-E5-D5-C#5-D5, doubled an octave lower) ---
+  let b = 0;
+  const pushFl1 = (start: number, hi: number, doubleOct: boolean, vel: number): number => {
+    const evs: readonly [number, number, number][] = [
+      [0.0, 0.14, hi],
+      [0.16, 0.14, hi - 2],
+      [0.32, 0.92, hi],
+      [1.36, 0.2, hi - 2],
+      [1.58, 0.2, hi - 4],
+      [1.8, 0.2, hi - 5],
+      [2.02, 0.2, hi - 7],
+      [2.24, 0.3, hi - 8],
+      [2.58, 1.05, hi - 7],
+    ];
+    for (const [off, dur, p] of evs) {
+      (hi >= 69 ? great : choir).push(note(start + off, dur, p, vel));
+      if (doubleOct && p - 12 >= 38) {
+        (p - 12 >= 50 ? choir : pedal).push(note(start + off, dur, p - 12, vel - 6));
+      }
     }
+    return start + 3.85;
+  };
+  b = pushFl1(b, 81, true, 108); // A5/A4 -> D5/D4
+
+  // --- Bar 1b: Flourish 2 (EXACT score: A4-G4-A4 | E4-F4-C#4-D4 — only 4 notes after A!, doubled octave lower) ---
+  const fl2: readonly [number, number, number][] = [
+    [0.0, 0.14, 69],    // A4
+    [0.16, 0.14, 67],   // G4
+    [0.32, 0.85, 69],   // A4 (fermata)
+    [1.28, 0.2, 64],    // E4
+    [1.5, 0.2, 65],     // F4
+    [1.72, 0.3, 61],    // C#4
+    [2.06, 1.05, 62],   // D4 (fermata)
+  ];
+  for (const [off, dur, p] of fl2) {
+    great.push(note(b + off, dur, p, 104));
+    choir.push(note(b + off, dur, p - 12, 98)); // A3 -> E3-F3-C#3-D3
+  }
+  b += 3.35;
+
+  // --- Bar 2: Flourish 3 (A3-G3-A3 | G3-F3-E3-D3-C#3-D3) ---
+  b = pushFl1(b, 57, false, 100);
+
+  // --- Bar 2b-3: Deep D2 pedal + C#dim7 arpeggio resolving to D MAJOR with inner G4-E4-F#4 (bwv565.ly lines 41-43, 617-619) ---
+  const bPedal = b;
+  pedal.push(note(bPedal, 5.4, 38, 108)); // D2 pedal
+  const dimChord: readonly [number, number, number][] = [
+    [0.15, 2.35, 49], // C#3
+    [0.45, 2.05, 52], // E3
+    [0.75, 1.75, 55], // G3
+    [1.05, 1.45, 58], // Bb3
+    [1.35, 1.15, 61], // C#4
+    [1.65, 0.85, 64], // E4
+  ];
+  for (const [off, dur, p] of dimChord) {
+    (p >= 58 ? great : choir).push(note(bPedal + off, dur, p, 96));
+  }
+  // Bar 3 beat 0: D MAJOR resolution (D3, A3, D4, F#4, A4, D5) + Bach's exact inner G4(16th) -> E4(16th) -> F#4(8th)!
+  const bRes = bPedal + 2.6;
+  choir.push(note(bRes, 2.6, 50, 96));   // D3
+  choir.push(note(bRes, 2.6, 57, 94));   // A3
+  great.push(note(bRes, 2.6, 62, 100));  // D4
+  great.push(note(bRes, 2.6, 69, 98));   // A4
+  great.push(note(bRes, 2.6, 74, 104));  // D5
+  // Moving inner third voice: G4(16th) -> E4(16th) -> F#4(held)
+  choir.push(note(bRes, 0.28, 67, 96));        // G4
+  choir.push(note(bRes + 0.3, 0.28, 64, 94));  // E4
+  choir.push(note(bRes + 0.6, 2.0, 66, 100));  // F#4 (D MAJOR!)
+
+  // --- Bars 4-10: Prestissimo (bwv565.ly lines 46-75 & 622-650) ---
+  b = bRes + 3.0;
+  const bPrestissimo = b;
+  // Pickup C#4 / C#3
+  great.push(note(b, 0.22, 61, 96));
+  choir.push(note(b, 0.22, 49, 88));
+  b += 0.25;
+
+  // Bar 4: (D4 E4 C#4)x3 + D4 E4 | (F4 G4 E4)x3 + F4 G4 (both hands an octave apart)
+  for (let k = 0; k < 3; k++) { pushTriplet(b, 62, 64, 61, 96); b += 0.5; }
+  great.push(note(b, 0.23, 62, 96), note(b + 0.25, 0.23, 64, 96));
+  choir.push(note(b, 0.23, 50, 88), note(b + 0.25, 0.23, 52, 88));
+  b += 0.5;
+  for (let k = 0; k < 3; k++) { pushTriplet(b, 65, 67, 64, 98); b += 0.5; }
+  great.push(note(b, 0.23, 65, 98), note(b + 0.25, 0.23, 67, 98));
+  choir.push(note(b, 0.23, 53, 90), note(b + 0.25, 0.23, 55, 90));
+  b += 0.5;
+
+  // Bar 5: (A4 Bb4 G4)x3 + A4 fermata + rest + pickup C#5/C#4
+  for (let k = 0; k < 3; k++) { pushTriplet(b, 69, 70, 67, 100); b += 0.5; }
+  great.push(note(b, 0.65, 69, 104));
+  choir.push(note(b, 0.65, 57, 96));
+  b += 1.25;
+  great.push(note(b, 0.22, 73, 98));
+  choir.push(note(b, 0.22, 61, 90));
+  b += 0.25;
+
+  // Bar 6: Octave higher! (D5 E5 C#5)x3 + D5 E5 | (F5 G5 E5)x3 + F5 G5
+  for (let k = 0; k < 3; k++) { pushTriplet(b, 74, 76, 73, 100); b += 0.5; }
+  great.push(note(b, 0.23, 74, 100), note(b + 0.25, 0.23, 76, 100));
+  choir.push(note(b, 0.23, 62, 92), note(b + 0.25, 0.23, 64, 92));
+  b += 0.5;
+  for (let k = 0; k < 3; k++) { pushTriplet(b, 77, 79, 76, 102); b += 0.5; }
+  great.push(note(b, 0.23, 77, 102), note(b + 0.25, 0.23, 79, 102));
+  choir.push(note(b, 0.23, 65, 94), note(b + 0.25, 0.23, 67, 94));
+  b += 0.5;
+
+  // Bar 7: (A5 Bb5 G5)x3 + A5 fermata + rest + pickup A5/A4
+  for (let k = 0; k < 3; k++) { pushTriplet(b, 81, 82, 79, 104); b += 0.5; }
+  great.push(note(b, 0.65, 81, 108));
+  choir.push(note(b, 0.65, 69, 98));
+  b += 1.25;
+  great.push(note(b, 0.22, 81, 102));
+  choir.push(note(b, 0.22, 69, 94));
+  b += 0.25;
+
+  // Bars 8-10a: Falling 3-note broken-chord chain in both hands (bwv565.ly lines 65-72 & 641-648)
+  const fallChain: readonly [number, number, number][] = [
+    [79, 82, 76], // G5 Bb5 E5
+    [77, 81, 74], // F5 A5 D5
+    [76, 79, 72], // E5 G5 C5
+    [74, 77, 70], // D5 F5 Bb4
+    [72, 76, 69], // C5 E5 A4
+    [70, 74, 67], // Bb4 D5 G4
+    [69, 72, 65], // A4 C5 F4
+    [67, 70, 64], // G4 Bb4 E4
+    [65, 69, 62], // F4 A4 D4
+    [64, 67, 61], // E4 G4 C#4
+  ];
+  for (const [p1, p2, p3] of fallChain) {
+    pushTriplet(b, p1, p2, p3, 100); b += 0.5;
+    pushTriplet(b, p1, p2, p3, 96); b += 0.5;
+  }
+
+  // Bar 10b-12a: Pedal D2 + C#dim7 chord + Bar 11 solo scale flourish -> Bar 12 D MINOR fermata (bwv565.ly lines 73-78, 449-454)
+  b += 0.5;
+  pedal.push(note(b, 4.4, 38, 108)); // D2
+  choir.push(note(b, 3.0, 49, 92), note(b, 3.0, 52, 92), note(b, 3.0, 55, 92), note(b, 3.0, 58, 92));
+  great.push(note(b, 1.4, 61, 94), note(b, 1.4, 64, 94), note(b, 1.4, 67, 94), note(b, 1.4, 70, 98));
+  b += 1.5;
+  // Bar 11 RH solo scale run: Bb4 -> A4 G4 F4 E4 D4 C#4 B3 C#4 A3 C#4 E4 G4 F4 E4
+  const bar11Run: readonly [number, number][] = [
+    [70, 0.2], [69, 0.16], [67, 0.16], [65, 0.16], [64, 0.16], [62, 0.16], [61, 0.16], [59, 0.16],
+    [61, 0.2], [57, 0.2], [61, 0.2], [64, 0.16], [67, 0.16], [65, 0.35], [64, 0.22],
+  ];
+  for (const [p, d] of bar11Run) {
+    great.push(note(b, d * 0.92, p, 98));
+    b += d;
+  }
+  // Bar 12 beat 0: D MINOR fermata resolution!
+  pedal.push(note(b, 1.15, 38, 108)); // D2
+  choir.push(note(b, 1.15, 50, 96));  // D3
+  great.push(note(b, 1.15, 62, 100), note(b, 1.15, 65, 104)); // D4 + F4 (D minor!)
+  b += 1.5;
+
+  // --- Bars 12b-15: Exact Bach 16th-note bariolage over A4 pedal-point (bwv565.ly lines 78-91 & 654-660) ---
+  const bBariolage = b;
+  const bar12_15: readonly number[] = [
+    69, // pickup A4
+    // Bar 12b: d e f d e f g e
+    74, 76, 77, 74, 76, 77, 79, 76,
+    // Bar 13: f g a f g a bes g a f g e f d e cis
+    77, 79, 81, 77, 79, 81, 82, 79, 81, 77, 79, 76, 77, 74, 76, 73,
+    // Bar 14: d a bes g a f g e f d g e f d e cis
+    74, 69, 70, 67, 69, 65, 67, 64, 65, 62, 67, 64, 65, 62, 64, 61,
+    // Bar 15: octave lower! d a bes g a f g e f d g e f d e cis
+    62, 57, 58, 55, 57, 53, 55, 52, 53, 50, 55, 52, 53, 50, 52, 49,
+  ];
+  for (let i = 0; i < bar12_15.length; i++) {
+    const p = bar12_15[i];
+    (p >= 61 ? great : choir).push(note(b + i * 0.25, 0.22, p, 96 + (i % 4 === 0 ? 4 : -2)));
+    // LH pulsing A4 / A3 pedal-point on off-sixteenths (bwv565.ly lines 654-660)
+    if (i >= 1 && i % 2 === 1) {
+      choir.push(note(b + i * 0.25, 0.2, i < 25 ? 69 : 57, 76));
+    }
+  }
+  b += bar12_15.length * 0.25;
+
+  // --- Bars 16-21: Real Bach contrapuntal exchanges & pedal descents (bwv565.ly lines 91-125 & 1177-1188) ---
+  // Bar 16 & Bar 17: identical 4-beat exchange over D3-C3-Bb2-A2 pedal!
+  for (let rep = 0; rep < 2; rep++) {
+    if (rep === 0) choir.push(note(b, 0.45, 50, 98)); // D3 downbeat
+    else great.push(note(b, 0.45, 64, 98), note(b, 0.45, 69, 100)); // [E4, A4] downbeat
+    const fig: readonly [number, number][] = [
+      [0.25, 65], [0.5, 70], [0.75, 65], [1.0, 64], [1.25, 69], [1.5, 64],
+      [1.75, 62], [2.0, 67], [2.25, 62], [2.5, 64], [2.75, 69],
+    ];
+    for (const [off, p] of fig) great.push(note(b + off, 0.22, p, 96));
+    // Ending chord hits [F4,Bb4], [E4,A4], [D4,G4]
+    great.push(note(b + 3.0, 0.24, 65, 98), note(b + 3.0, 0.24, 70, 98));
+    great.push(note(b + 3.35, 0.24, 64, 98), note(b + 3.35, 0.24, 69, 98));
+    great.push(note(b + 3.7, 0.24, 62, 98), note(b + 3.7, 0.24, 67, 98));
+    // Pedal D3 C3 Bb2 (and A2 downbeat of Bar 17)
+    if (rep === 1) pedal.push(note(b, 0.45, 45, 102));
+    pedal.push(note(b + 2.5, 0.45, 50, 100), note(b + 3.0, 0.45, 48, 98), note(b + 3.5, 0.45, 46, 98));
     b += 4.0;
   }
 
-  // Section 4: Climactic double-manual broken-chord ascent (A7 pedal -> dramatic suspension)
-  const climbChords: readonly (readonly [number, readonly number[], number])[] = [
-    [45, [57, 61, 64, 69, 73, 76, 81, 76], 102], // A major dominant
-    [45, [58, 62, 65, 70, 74, 77, 81, 77], 104], // Bb/A tension
-    [45, [55, 61, 64, 67, 70, 73, 76, 79], 106], // C#dim7/A climax
-    [45, [57, 61, 64, 69, 73, 76, 79, 81], 108], // A7 summit -> A5!
+  // Bar 18: [E4,A4] -> 32nd-note scale flourish (bwv565.ly lines 98-106) over A2 pedal
+  pedal.push(note(b, 1.5, 45, 104)); // A2
+  choir.push(note(b, 0.9, 61, 92), note(b, 0.9, 64, 92));
+  great.push(note(b, 0.9, 69, 100));
+  const bar18Run: readonly number[] = [
+    69, 67, 65, 64, 62, 61, 59, 61, 57, 59, 61, 62,
+    64, 65, 67, 69, 67, 65, 64, 65, 62, 65, 69, 73,
   ];
-  for (const [bassP, arp, vel] of climbChords) {
-    pedal.push(note(b, 3.8, bassP, 102));
-    pedal.push(note(b, 3.8, bassP + 12, 88));
-    for (let k = 0; k < arp.length; k++) {
-      const p = arp[k];
-      (p >= 67 ? great : choir).push(note(b + k * 0.45, 0.44, p, vel - 4 + k));
+  for (let i = 0; i < bar18Run.length; i++) {
+    (bar18Run[i] >= 62 ? great : choir).push(note(b + 1.0 + i * 0.125, 0.115, bar18Run[i], 96));
+  }
+  b += 4.0;
+
+  // Bar 19-20: Rising D5 scale to Bb5 + chordal descent over D3-C3-Bb2-A2-G#2 pedal (bwv565.ly lines 108-115)
+  const bar19Run: readonly number[] = [74, 69, 71, 73, 74, 76, 77, 79, 81, 82];
+  for (let i = 0; i < bar19Run.length; i++) great.push(note(b + i * 0.2, 0.18, bar19Run[i], 100));
+  pedal.push(note(b + 1.5, 0.45, 50, 100), note(b + 2.0, 0.45, 48, 98), note(b + 2.5, 0.45, 46, 98), note(b + 3.0, 0.45, 45, 98));
+  great.push(note(b + 2.25, 0.35, 77, 100), note(b + 2.25, 0.35, 82, 102));
+  great.push(note(b + 2.75, 0.35, 76, 100), note(b + 2.75, 0.35, 81, 102));
+  great.push(note(b + 3.25, 0.35, 74, 100), note(b + 3.25, 0.35, 79, 102));
+  great.push(note(b + 3.65, 0.3, 73, 100), note(b + 3.65, 0.3, 76, 100), note(b + 3.65, 0.3, 81, 104));
+  b += 4.0;
+
+  // Bar 20-21: Descending chromatic/scalar cadence into G pedal (bwv565.ly lines 116-124)
+  pedal.push(note(b + 0.0, 0.45, 50, 100), note(b + 0.5, 0.45, 48, 98), note(b + 1.0, 0.45, 46, 98), note(b + 1.5, 0.45, 45, 98), note(b + 2.0, 0.45, 44, 100));
+  great.push(note(b + 0.0, 0.45, 76, 100), note(b + 0.5, 0.45, 74, 98), note(b + 1.0, 0.45, 72, 98), note(b + 1.5, 0.45, 70, 98));
+  choir.push(note(b + 2.0, 0.45, 61, 96), note(b + 2.0, 0.45, 64, 96), note(b + 2.0, 0.45, 69, 98));
+  b += 2.5;
+  pedal.push(note(b, 2.0, 43, 104)); // G2 pedal (Bar 21)
+  const bar21Run: readonly number[] = [
+    61, 59, 57, 61, 64, 67, 70, 69, 67, 65, 64, 65, 64, 62, 61, 62, 60, 58, 57, 55, 53, 52, 50,
+  ];
+  for (let i = 0; i < bar21Run.length; i++) {
+    (bar21Run[i] >= 61 ? great : choir).push(note(b + i * 0.15, 0.14, bar21Run[i], 98));
+  }
+  b += bar21Run.length * 0.15 + 0.15;
+
+  // --- Bars 22-27a: Prestissimo diminished-7th triplet storm (bwv565.ly lines 126-138 & 691-706) ---
+  const bStorm = b;
+  pedal.push(note(b, 1.8, 55, 104)); // G3
+  choir.push(note(b, 1.8, 61, 96), note(b, 1.8, 64, 96), note(b, 1.8, 67, 96));
+  great.push(note(b, 1.8, 70, 100), note(b, 1.8, 73, 102), note(b, 1.8, 76, 104));
+  b += 2.0;
+
+  // Diminished-7th triplets descending then surging back up to Bar 27 climax!
+  const stormPairs: readonly [readonly [number, number, number], readonly [number, number, number], number][] = [
+    [[73, 76, 73], [70, 73, 70], 3], // Bar 22b-23a
+    [[67, 70, 67], [64, 67, 64], 3], // Bar 23b-24a
+    [[61, 64, 61], [58, 61, 58], 3], // Bar 24b-25a
+    [[61, 64, 61], [64, 67, 64], 3], // Bar 25b-26a
+    [[67, 70, 67], [70, 67, 70], 2], // Bar 26b
+    [[73, 70, 73], [76, 73, 76], 2], // Bar 27a
+  ];
+  for (const [t1, t2, reps] of stormPairs) {
+    for (let r = 0; r < reps; r++) {
+      pushTriplet(b, t1[0], t1[1], t1[2], 102, true); b += 0.5;
+      pushTriplet(b, t2[0], t2[1], t2[2], 100, true); b += 0.5;
     }
-    b += 3.8;
   }
 
-  // Section 5: Monumental Maestoso Coda (D minor -> G minor -> A7 -> Radiant D Major Picardy cadence)
-  const codaSteps: readonly (readonly [number, number, readonly number[], readonly number[], number])[] = [
-    // [dur, pedalPitch, choirPitches, greatPitches, vel]
-    [2.0, 38, [50, 57, 62], [65, 69, 74, 81], 108], // Dm
-    [2.0, 43, [55, 58, 62], [67, 70, 74, 79], 106], // Gm
-    [2.0, 45, [52, 57, 61], [67, 69, 73, 76], 108], // A7
-    [1.6, 38, [50, 58, 62], [67, 70, 74, 79], 106], // Gm/D plagal swell
-    [1.6, 38, [50, 57, 61], [67, 70, 73, 76], 110], // C#dim7/D final suspense
+  // --- Bars 27b-30: Monumental Bach Maestoso cadence ending in PURE D MINOR (bwv565.ly lines 138-144, 706-715, 1193-1199) ---
+  const bCoda = b;
+  // Bar 27 beat 2: A7/G -> beat 3: Dm/F
+  pedal.push(note(b, 0.92, 43, 108)); // G2
+  choir.push(note(b, 0.92, 57, 98), note(b, 0.92, 61, 96), note(b, 0.92, 64, 96));
+  great.push(note(b, 0.92, 69, 104), note(b, 0.92, 73, 104), note(b, 0.92, 76, 106), note(b, 0.92, 81, 110));
+  b += 1.0;
+
+  pedal.push(note(b, 0.92, 41, 108)); // F2
+  choir.push(note(b, 0.92, 57, 98), note(b, 0.92, 62, 98), note(b, 0.92, 65, 98));
+  great.push(note(b, 0.92, 69, 104), note(b, 0.92, 74, 106), note(b, 0.92, 77, 106), note(b, 0.92, 81, 110));
+  b += 1.0;
+
+  // Bar 28: Gm/Bb -> A7/A with Bach's exact pedal line (Bb2 -> A2 G2 A2 -> E2 F2 D2 E2 C#2)
+  pedal.push(note(b, 1.4, 46, 108), note(b + 1.5, 0.24, 45, 100), note(b + 1.75, 0.24, 43, 100));
+  choir.push(note(b, 1.2, 62, 96), note(b, 1.2, 67, 98));
+  great.push(note(b, 1.2, 70, 106), note(b, 1.2, 74, 106), note(b, 1.2, 79, 110));
+  b += 2.0;
+
+  pedal.push(note(b, 0.7, 45, 108), note(b + 0.75, 0.24, 40, 100), note(b + 1.0, 0.24, 41, 100), note(b + 1.25, 0.24, 38, 100), note(b + 1.5, 0.24, 40, 100), note(b + 1.75, 0.24, 49, 100));
+  choir.push(note(b, 1.2, 61, 96), note(b, 1.2, 64, 98));
+  great.push(note(b, 1.2, 69, 106), note(b, 1.2, 73, 106), note(b, 1.2, 76, 106), note(b, 1.2, 79, 110));
+  b += 2.0;
+
+  // Bar 29: Pedal cadence figure D2..A2 + RH suspension [A4,C#5] -> [F4,A4,D5] -> F4 -> E4
+  const bar29Ped: readonly [number, number, number][] = [
+    [0.0, 0.45, 50], [0.5, 0.45, 47], [1.0, 0.45, 49], [1.5, 0.45, 45],
+    [2.0, 0.45, 53], [2.5, 0.45, 50], [3.0, 0.95, 45],
   ];
-  for (const [dur, pedP, chPs, grPs, vel] of codaSteps) {
-    pedal.push(note(b, dur - 0.12, pedP, vel));
-    for (const p of chPs) choir.push(note(b, dur - 0.12, p, vel - 10));
-    for (const p of grPs) great.push(note(b, dur - 0.12, p, vel - 2));
-    b += dur;
-  }
+  for (const [off, dur, p] of bar29Ped) pedal.push(note(b + off, dur, p, 104));
+  great.push(note(b + 1.5, 0.45, 69, 102), note(b + 1.5, 0.45, 73, 102));
+  great.push(note(b + 2.0, 0.5, 65, 102), note(b + 2.0, 0.5, 69, 104), note(b + 2.0, 0.5, 74, 108));
+  great.push(note(b + 2.5, 0.45, 65, 102));
+  great.push(note(b + 3.0, 0.95, 64, 104)); // E4
+  choir.push(note(b + 2.0, 0.95, 57, 98), note(b + 3.0, 0.95, 61, 100)); // A3 -> C#4 leading tone
+  b += 4.0;
 
-  // Final thunderous D-major Picardy third cadence (D2 + D3 + A3 + D4 + F#4 + A4 + D5 + F#5 + A5)
-  const finalDur = 4.4;
+  // Bar 30: REAL BACH BAR 30 CADENCE IN PURE D MINOR (D2 + D3 + A3 + D4 + F4 + A4 + D5 — NO F#!)
+  const finalDur = 3.2;
   pedal.push(note(b, finalDur, 38, 114));       // D2
-  pedal.push(note(b + 0.03, finalDur - 0.03, 50, 102)); // D3
-  choir.push(note(b + 0.06, finalDur - 0.06, 57, 98));  // A3
-  choir.push(note(b + 0.09, finalDur - 0.09, 62, 100)); // D4
-  choir.push(note(b + 0.12, finalDur - 0.12, 66, 102)); // F#4 (Picardy third!)
-  great.push(note(b + 0.15, finalDur - 0.15, 69, 104)); // A4
-  great.push(note(b + 0.18, finalDur - 0.18, 74, 108)); // D5
-  great.push(note(b + 0.21, finalDur - 0.21, 78, 106)); // F#5
-  great.push(note(b + 0.24, finalDur - 0.24, 81, 110)); // A5
+  pedal.push(note(b + 0.02, finalDur - 0.02, 50, 104)); // D3
+  choir.push(note(b + 0.04, finalDur - 0.04, 57, 100)); // A3
+  choir.push(note(b + 0.06, finalDur - 0.06, 62, 102)); // D4
+  great.push(note(b + 0.08, finalDur - 0.08, 65, 106)); // F4 (D MINOR!)
+  great.push(note(b + 0.10, finalDur - 0.10, 69, 104)); // A4
+  great.push(note(b + 0.12, finalDur - 0.12, 74, 110)); // D5
 
   const tracks: MidiWriteTrack[] = [
     { name: "Great Manual Pipes", channel: 0, program: 19, notes: cleanTrackNotes(great) },
@@ -1601,17 +1764,17 @@ export function toccataInDMinorOrgan(): MidiPiece {
     file: "toccata-in-d-minor-organ.mid",
     title: "Toccata in D Minor",
     composer: "Johann Sebastian Bach",
-    credit: "J. S. Bach, Toccata in D Minor, BWV 565 (c. 1703-1708, public domain); tracker pipe-organ arrangement MIT",
+    credit: "J. S. Bach, Toccata in D Minor, BWV 565, mm. 1-30 (Bach-Gesellschaft 1867 / Mutopia, public domain); tracker organ arrangement MIT",
     options: {
       format: 1,
       ticksPerQuarter: 480,
       tempos: [
-        { beat: 0, bpm: 84 },
-        { beat: bPedal, bpm: 88 },
-        { beat: bPedal + 9.2, bpm: 132 },
-        { beat: bPedal + 41.2, bpm: 126 },
-        { beat: b - 9.2, bpm: 96 },
-        { beat: b, bpm: 82 },
+        { beat: 0, bpm: 86 },
+        { beat: bPrestissimo, bpm: 138 },
+        { beat: bBariolage, bpm: 144 },
+        { beat: bStorm, bpm: 152 },
+        { beat: bCoda, bpm: 112 },
+        { beat: b, bpm: 84 },
       ],
       tracks,
       title: "Toccata in D Minor",
@@ -1625,203 +1788,178 @@ export const SUGAR_PLUM_OPENING_MOTIF = [79, 76, 79, 78, 75, 76, 74, 74, 74] as 
 
 /**
  * Pyotr Ilyich Tchaikovsky (1840-1893), Dance of the Sugar Plum Fairy from The Nutcracker, Op. 71
- * (1892, public domain). Chromatic concert kalimba arrangement (~46 s) written directly in TypeScript
- * covering E3 (52) .. B5 (83) so every melody and accompaniment note maps 1-to-1 to a real steel tine.
+ * (1892, public domain). Complete Part A (Bars 1-20, ending cleanly on the real Part A E-minor
+ * cadence at Bar 20), transcribed directly from the 1922 G. Schirmer public-domain edition
+ * (arr. Stepan Esipoff, NYPL / Archive.org: https://archive.org/details/nutcrackersuiteo00tcha, pp. 16-17).
+ * Compass E3 (52) .. B5 (83) so every note maps 1-to-1 to a physical steel kalimba tine.
  */
 export function sugarPlumKalimba(): MidiPiece {
-  const melody: MidiWriteNote[] = []; // Upper/mid spring-steel tines (program 108 = kalimba)
-  const harmony: MidiWriteNote[] = []; // Inner kalimba chords / counter-line (program 108 = kalimba)
-  const bass: MidiWriteNote[] = [];   // Low resonator bass tines (program 32 = acoustic pizzicato bass)
+  const melody: MidiWriteNote[] = [];  // Upper spring-steel tines (program 108 = kalimba)
+  const harmony: MidiWriteNote[] = []; // Inner kalimba chord tines (program 108 = kalimba)
+  const bass: MidiWriteNote[] = [];    // Low pizzicato resonator bass tines (program 32)
 
-  type Ev = readonly [number, number, number, number?]; // [beatOff in 2/4 bar, dur, pitch, velOffset?]
+  type Ev = readonly [number, number, number, number?]; // [beatOff, durBeats, pitch, velOff?]
 
-  // 2/4 time: 1 bar = 2.0 beats.
-  // Bar 0 (1-bar pizzicato intro = ~1.55 s so the famous Sugar Plum melody enters inside the first 2 seconds!)
-  const bassIntro: readonly Ev[] = [
-    [0.0, 0.35, 52, 4], // E3
-    [0.5, 0.35, 59, 0], // B3
-    [1.0, 0.35, 55, 2], // G3
-    [1.5, 0.35, 59, 0], // B3
-  ];
-  for (const [off, dur, p, dv = 0] of bassIntro) {
-    bass.push(note(off, dur, p, 78 + dv));
-    harmony.push(note(off, dur * 0.9, p + 12, 54 + dv));
-  }
-
-  // Helper to write one 2/4 bar starting at beat b0.
   const writeBar = (
     b0: number,
     melEvs: readonly Ev[],
-    bassEvs: readonly Ev[],
     harmEvs: readonly Ev[],
+    bassEvs: readonly Ev[],
     velBase: number,
   ) => {
     for (const [off, dur, p, dv = 0] of melEvs) melody.push(note(b0 + off, dur, p, velBase + dv));
-    for (const [off, dur, p, dv = 0] of bassEvs) bass.push(note(b0 + off, dur, p, velBase - 14 + dv));
-    for (const [off, dur, p, dv = 0] of harmEvs) harmony.push(note(b0 + off, dur, p, velBase - 22 + dv));
+    for (const [off, dur, p, dv = 0] of harmEvs) harmony.push(note(b0 + off, dur, p, velBase - 18 + dv));
+    for (const [off, dur, p, dv = 0] of bassEvs) bass.push(note(b0 + off, dur, p, velBase - 12 + dv));
   };
 
-  // Standard walking pizzicato patterns in 2/4 (2 beats per bar)
-  const pizzEm: readonly Ev[] = [[0.0, 0.35, 52, 4], [0.5, 0.35, 59], [1.0, 0.35, 55], [1.5, 0.35, 59]];
-  const pizzB7: readonly Ev[] = [[0.0, 0.35, 59, 4], [0.5, 0.35, 63], [1.0, 0.35, 54], [1.5, 0.35, 59]];
-  const pizzAm: readonly Ev[] = [[0.0, 0.35, 57, 4], [0.5, 0.35, 64], [1.0, 0.35, 60], [1.5, 0.35, 64]];
-  const pizzG: readonly Ev[] = [[0.0, 0.35, 55, 4], [0.5, 0.35, 62], [1.0, 0.35, 59], [1.5, 0.35, 62]];
-  const pizzC: readonly Ev[] = [[0.0, 0.35, 60, 4], [0.5, 0.35, 64], [1.0, 0.35, 55], [1.5, 0.35, 64]];
-
-  const bars: readonly (readonly [readonly Ev[], readonly Ev[], readonly Ev[], number])[] = [
-    // --- A1: Iconic Opening Theme (Bars 1..8, beats 2..18) ---
-    // Bar 1: rest G5 E5 G5
-    [[[0.5, 0.24, 79, 8], [1.0, 0.24, 76, 4], [1.5, 0.42, 79, 8]], pizzEm, [[0.0, 0.35, 64], [1.0, 0.35, 67]], 92],
-    // Bar 2: F#5 - D#5 E5
-    [[[0.0, 0.45, 78, 8], [1.0, 0.35, 75, 5], [1.5, 0.42, 76, 7]], pizzB7, [[0.0, 0.35, 66], [1.0, 0.35, 63]], 92],
-    // Bar 3: D5 D5 D5 - C#5 C#5 C#5
-    [
-      [[0.0, 0.2, 74, 5], [0.25, 0.2, 74, 2], [0.5, 0.32, 74, 6], [1.0, 0.2, 73, 5], [1.25, 0.2, 73, 2], [1.5, 0.32, 73, 6]],
-      [[0.0, 0.35, 56, 3], [0.5, 0.35, 62], [1.0, 0.35, 55, 3], [1.5, 0.35, 61]],
-      [[0.0, 0.3, 65], [1.0, 0.3, 64]],
-      90,
-    ],
-    // Bar 4: C5 C5 C5 - B4 E5 C5 E5 | Bar 5: B4
-    [
-      [[0.0, 0.2, 72, 5], [0.25, 0.2, 72, 2], [0.5, 0.32, 72, 6], [1.0, 0.22, 71, 4], [1.25, 0.22, 76, 6], [1.5, 0.22, 72, 4], [1.75, 0.22, 76, 6]],
-      [[0.0, 0.35, 54, 3], [0.5, 0.35, 60], [1.0, 0.35, 59, 4], [1.5, 0.35, 64]],
-      [[0.0, 0.3, 64], [1.0, 0.3, 67]],
-      92,
-    ],
-    // Bar 5: B4 landing + crisp bass pizzicato echo
-    [[[0.0, 0.55, 71, 6]], [[0.0, 0.35, 59, 4], [0.5, 0.35, 52], [1.0, 0.35, 55], [1.5, 0.35, 59]], [[0.5, 0.3, 64], [1.0, 0.3, 67], [1.5, 0.3, 71]], 88],
-
-    // --- A2: High B5 Answer (Bars 6..10, beats 12..22) ---
-    // Bar 6: rest G5 E5 G5
-    [[[0.5, 0.24, 79, 9], [1.0, 0.24, 76, 5], [1.5, 0.42, 79, 9]], pizzEm, [[0.0, 0.35, 64], [1.0, 0.35, 67]], 94],
-    // Bar 7: F#5 - B5 G5
-    [[[0.0, 0.45, 78, 8], [1.0, 0.38, 83, 10], [1.5, 0.42, 79, 8]], pizzG, [[0.0, 0.35, 66], [1.0, 0.35, 71]], 96],
-    // Bar 8: F#5 F#5 F#5 - E5 E5 E5
-    [
-      [[0.0, 0.2, 78, 6], [0.25, 0.2, 78, 3], [0.5, 0.32, 78, 7], [1.0, 0.2, 76, 6], [1.25, 0.2, 76, 3], [1.5, 0.32, 76, 7]],
-      [[0.0, 0.35, 59, 4], [0.5, 0.35, 66], [1.0, 0.35, 57, 4], [1.5, 0.35, 64]],
-      [[0.0, 0.3, 71], [1.0, 0.3, 69]],
-      95,
-    ],
-    // Bar 9: D#5 D#5 D#5 - E5 + harmonic sparkle
-    [
-      [[0.0, 0.2, 75, 6], [0.25, 0.2, 75, 3], [0.5, 0.32, 75, 7], [1.0, 0.65, 76, 9]],
-      [[0.0, 0.35, 59, 4], [0.5, 0.35, 63], [1.0, 0.35, 52, 6], [1.5, 0.35, 59]],
-      [[0.0, 0.3, 66], [1.0, 0.4, 67], [1.5, 0.35, 71]],
-      96,
-    ],
-
-    // --- B Section: Sparkling Celesta-Style Arpeggios & Chromatic Filigree (Bars 10..17) ---
-    // Bar 10: G major shimmer ascent
-    [
-      [[0.0, 0.22, 67, 4], [0.25, 0.22, 71, 5], [0.5, 0.22, 74, 6], [0.75, 0.22, 79, 8], [1.0, 0.22, 78, 7], [1.25, 0.22, 76, 6], [1.5, 0.22, 74, 5], [1.75, 0.22, 71, 4]],
-      pizzG,
-      [[0.0, 0.4, 62], [1.0, 0.4, 67]],
-      94,
-    ],
-    // Bar 11: C major sparkling turn
-    [
-      [[0.0, 0.22, 72, 6], [0.25, 0.22, 76, 7], [0.5, 0.22, 79, 9], [0.75, 0.22, 76, 6], [1.0, 0.22, 74, 6], [1.25, 0.22, 72, 5], [1.5, 0.22, 71, 6], [1.75, 0.22, 69, 5]],
-      pizzC,
-      [[0.0, 0.4, 64], [1.0, 0.4, 67]],
-      94,
-    ],
-    // Bar 12: A minor chromatic descent
-    [
-      [[0.0, 0.22, 76, 7], [0.25, 0.22, 75, 5], [0.5, 0.22, 76, 7], [0.75, 0.22, 72, 6], [1.0, 0.22, 71, 6], [1.25, 0.22, 69, 5], [1.5, 0.22, 67, 5], [1.75, 0.22, 66, 6]],
-      pizzAm,
-      [[0.0, 0.4, 64], [1.0, 0.4, 60]],
-      95,
-    ],
-    // Bar 13: B7 filigree flourish up to B5
-    [
-      [[0.0, 0.22, 66, 5], [0.25, 0.22, 71, 6], [0.5, 0.22, 75, 7], [0.75, 0.22, 78, 8], [1.0, 0.22, 83, 10], [1.25, 0.22, 81, 8], [1.5, 0.22, 79, 7], [1.75, 0.22, 78, 7]],
-      pizzB7,
-      [[0.0, 0.4, 63], [1.0, 0.4, 66]],
-      98,
-    ],
-    // Bar 14: High E minor twinkle run
-    [
-      [[0.0, 0.22, 79, 8], [0.25, 0.22, 76, 6], [0.5, 0.22, 79, 8], [0.75, 0.22, 83, 10], [1.0, 0.22, 81, 8], [1.25, 0.22, 79, 7], [1.5, 0.22, 78, 7], [1.75, 0.22, 76, 6]],
-      pizzEm,
-      [[0.0, 0.4, 67], [1.0, 0.4, 71]],
-      98,
-    ],
-    // Bar 15: Cascading chromatic descent from B5 back to F#5
-    [
-      [[0.0, 0.22, 83, 9], [0.25, 0.22, 82, 7], [0.5, 0.22, 81, 7], [0.75, 0.22, 79, 7], [1.0, 0.22, 78, 8], [1.25, 0.22, 76, 6], [1.5, 0.22, 75, 7], [1.75, 0.22, 71, 6]],
-      pizzB7,
-      [[0.0, 0.4, 66], [1.0, 0.4, 63]],
-      96,
-    ],
-    // Bar 16: Suspended dominant anticipation (B7 -> lead-in back to A')
-    [
-      [[0.0, 0.25, 78, 7], [0.5, 0.25, 75, 6], [1.0, 0.25, 71, 6], [1.5, 0.35, 78, 8]],
-      [[0.0, 0.35, 59, 4], [0.5, 0.35, 54], [1.0, 0.35, 59], [1.5, 0.35, 63]],
-      [[0.0, 0.35, 66], [1.0, 0.35, 63]],
-      92,
-    ],
-
-    // --- A' Recapitulation: Full Sugar Plum Theme with Richer Accompaniment (Bars 17..25) ---
-    // Bar 17: rest G5 E5 G5
-    [[[0.5, 0.24, 79, 10], [1.0, 0.24, 76, 6], [1.5, 0.42, 79, 10]], pizzEm, [[0.0, 0.35, 64], [0.5, 0.35, 71], [1.0, 0.35, 67], [1.5, 0.35, 71]], 96],
-    // Bar 18: F#5 - D#5 E5
-    [[[0.0, 0.45, 78, 9], [1.0, 0.35, 75, 6], [1.5, 0.42, 76, 8]], pizzB7, [[0.0, 0.35, 66], [0.5, 0.35, 71], [1.0, 0.35, 63], [1.5, 0.35, 66]], 96],
-    // Bar 19: D5 D5 D5 - C#5 C#5 C#5
-    [
-      [[0.0, 0.2, 74, 6], [0.25, 0.2, 74, 3], [0.5, 0.32, 74, 7], [1.0, 0.2, 73, 6], [1.25, 0.2, 73, 3], [1.5, 0.32, 73, 7]],
-      [[0.0, 0.35, 56, 4], [0.5, 0.35, 62], [1.0, 0.35, 55, 4], [1.5, 0.35, 61]],
-      [[0.0, 0.32, 65], [0.5, 0.32, 68], [1.0, 0.32, 64], [1.5, 0.32, 67]],
-      95,
-    ],
-    // Bar 20: C5 C5 C5 - B4 E5 C5 E5
-    [
-      [[0.0, 0.2, 72, 6], [0.25, 0.2, 72, 3], [0.5, 0.32, 72, 7], [1.0, 0.22, 71, 5], [1.25, 0.22, 76, 7], [1.5, 0.22, 72, 5], [1.75, 0.22, 76, 7]],
-      [[0.0, 0.35, 54, 4], [0.5, 0.35, 60], [1.0, 0.35, 59, 5], [1.5, 0.35, 64]],
-      [[0.0, 0.32, 64], [0.5, 0.32, 69], [1.0, 0.32, 67], [1.5, 0.32, 71]],
-      96,
-    ],
-    // Bar 21: B4 - G5 E5 G5
-    [[[0.0, 0.42, 71, 6], [0.5, 0.24, 79, 10], [1.0, 0.24, 76, 6], [1.5, 0.42, 79, 10]], pizzEm, [[0.0, 0.35, 64], [1.0, 0.35, 67]], 98],
-    // Bar 22: F#5 - B5 G5
-    [[[0.0, 0.45, 78, 9], [1.0, 0.38, 83, 12], [1.5, 0.42, 79, 9]], pizzG, [[0.0, 0.35, 66], [1.0, 0.35, 71]], 100],
-    // Bar 23: F#5 F#5 F#5 - E5 E5 E5
-    [
-      [[0.0, 0.2, 78, 7], [0.25, 0.2, 78, 4], [0.5, 0.32, 78, 8], [1.0, 0.2, 76, 7], [1.25, 0.2, 76, 4], [1.5, 0.32, 76, 8]],
-      [[0.0, 0.35, 59, 4], [0.5, 0.35, 66], [1.0, 0.35, 57, 4], [1.5, 0.35, 64]],
-      [[0.0, 0.32, 71], [1.0, 0.32, 69]],
-      98,
-    ],
-    // Bar 24: D#5 D#5 D#5 - F#5 B5
-    [
-      [[0.0, 0.2, 75, 7], [0.25, 0.2, 75, 4], [0.5, 0.32, 75, 8], [1.0, 0.32, 78, 9], [1.5, 0.42, 83, 11]],
-      [[0.0, 0.35, 59, 5], [0.5, 0.35, 63], [1.0, 0.35, 54, 5], [1.5, 0.35, 59]],
-      [[0.0, 0.32, 66], [1.0, 0.32, 71]],
-      100,
-    ],
-    // Bar 25: Final Sparkling Coda Arpeggio Cascade (E4 -> G4 -> B4 -> E5 -> G5 -> B5)
-    [
-      [[0.0, 0.24, 76, 8], [0.25, 0.24, 79, 9], [0.5, 0.24, 83, 11], [0.75, 0.24, 79, 8], [1.0, 0.24, 76, 7], [1.25, 0.24, 71, 7], [1.5, 0.24, 76, 9], [1.75, 0.24, 79, 10]],
-      [[0.0, 0.4, 52, 6], [0.5, 0.4, 59, 4], [1.0, 0.4, 55, 5], [1.5, 0.4, 59, 5]],
-      [[0.0, 0.4, 64], [0.5, 0.4, 67], [1.0, 0.4, 71], [1.5, 0.4, 74]],
-      100,
-    ],
-  ];
-
-  for (let i = 0; i < bars.length; i++) {
-    const [mEvs, bEvs, hEvs, vel] = bars[i];
-    writeBar(2.0 + i * 2.0, mEvs, bEvs, hEvs, vel);
+  // --- Bars 1-4 (beats 0..8): Exact 4-bar pp leggero E-minor introduction (Schirmer 1922 p. 16 sys 1) ---
+  for (let bar = 0; bar < 4; bar++) {
+    const b0 = bar * 2.0;
+    const isEven = bar % 2 === 0;
+    // Bass pizzicato E3 on beats 0 and 1
+    bass.push(note(b0 + 0.0, 0.36, 52, 74), note(b0 + 1.0, 0.36, 52, 72));
+    if (isEven) {
+      // Bars 1 & 3: [E4, G4, B4] on offbeats 0.5 & 1.5
+      for (const off of [0.5, 1.5]) {
+        harmony.push(note(b0 + off, 0.34, 64, 64), note(b0 + off, 0.34, 67, 66), note(b0 + off, 0.34, 71, 68));
+      }
+    } else {
+      // Bars 2 & 4: [D#4, F#4, A4] on 0.5, [D4, F4, G#4] on 1.5
+      harmony.push(note(b0 + 0.5, 0.34, 63, 64), note(b0 + 0.5, 0.34, 66, 66), note(b0 + 0.5, 0.34, 69, 68));
+      harmony.push(note(b0 + 1.5, 0.34, 62, 64), note(b0 + 1.5, 0.34, 65, 66), note(b0 + 1.5, 0.34, 68, 68));
+    }
   }
 
-  // Final resonant E-minor kalimba chord sweep at beat 52.0 (matching E3..B5 compass)
-  const bEnd = 2.0 + bars.length * 2.0; // beat 52.0
-  bass.push(note(bEnd, 2.6, 52, 96));         // E3
-  harmony.push(note(bEnd + 0.05, 2.55, 59, 86)); // B3
-  harmony.push(note(bEnd + 0.1, 2.5, 64, 88));   // E4
-  melody.push(note(bEnd + 0.15, 2.45, 67, 94));  // G4
-  melody.push(note(bEnd + 0.2, 2.4, 71, 96));    // B4
-  melody.push(note(bEnd + 0.25, 2.35, 76, 104)); // E5
-  melody.push(note(bEnd + 0.3, 2.3, 79, 100));   // G5 (matches opening pitch for seamless loop!)
+  // Helper: Phrase A1 (Score Bars 5-8 or Bars 13-16, 4 complete bars = 8 beats)
+  // Exact score rhythm: rest(.5) G5(.25) E5(.25) G5(.5) F#5(.5) | D#5(.5) E5(.5) D5(.25) D5(.25) D5(.5) |
+  //                     C#5(.25) C#5(.25) C#5(.5) C5(.25) C5(.25) C5(.5) | B4(.25) E5(.25) C5(.25) E5(.25) B4(.5) + bass turnaround
+  const pushPhraseA1 = (b0: number, vel: number): number => {
+    // Bar 5: rest(.5) G5(.25) E5(.25) G5(.5) F#5(.5)
+    writeBar(
+      b0 + 0,
+      [[0.5, 0.21, 79, 8], [0.75, 0.21, 76, 4], [1.0, 0.42, 79, 8], [1.5, 0.42, 78, 7]],
+      [[0.5, 0.21, 71], [0.75, 0.21, 67], [1.0, 0.4, 71], [1.5, 0.4, 69]],
+      [[0.0, 0.36, 52, 4], [0.5, 0.34, 59], [1.0, 0.36, 52, 2], [1.5, 0.34, 64]],
+      vel,
+    );
+    // Bar 6: D#5(.5) E5(.5) D5(.25) D5(.25) D5(.5)
+    writeBar(
+      b0 + 2,
+      [[0.0, 0.42, 75, 6], [0.5, 0.42, 76, 8], [1.0, 0.21, 74, 6], [1.25, 0.21, 74, 3], [1.5, 0.42, 74, 7]],
+      [[0.0, 0.4, 66], [0.5, 0.4, 67], [1.0, 0.21, 65], [1.25, 0.21, 68], [1.5, 0.4, 68]],
+      [[0.0, 0.36, 52, 3], [0.5, 0.34, 63], [1.0, 0.36, 52, 2], [1.5, 0.34, 62]],
+      vel,
+    );
+    // Bar 7: C#5(.25) C#5(.25) C#5(.5) C5(.25) C5(.25) C5(.5)
+    writeBar(
+      b0 + 4,
+      [[0.0, 0.21, 73, 6], [0.25, 0.21, 73, 3], [0.5, 0.42, 73, 7], [1.0, 0.21, 72, 6], [1.25, 0.21, 72, 3], [1.5, 0.42, 72, 7]],
+      [[0.0, 0.21, 67], [0.25, 0.21, 67], [0.5, 0.4, 67], [1.0, 0.21, 66], [1.25, 0.21, 66], [1.5, 0.4, 66]],
+      [[0.0, 0.36, 55, 3], [0.5, 0.34, 61], [1.0, 0.36, 54, 3], [1.5, 0.34, 60]],
+      vel,
+    );
+    // Bar 8: B4(.25) E5(.25) C5(.25) E5(.25) B4(.5) + bass-clarinet 32nd turnaround G4-F#4-E4-D#4 (inside E3..B5!)
+    writeBar(
+      b0 + 6,
+      [[0.0, 0.21, 71, 6], [0.25, 0.21, 76, 8], [0.5, 0.21, 72, 6], [0.75, 0.21, 76, 8], [1.0, 0.44, 71, 7]],
+      [[0.0, 0.21, 67], [0.25, 0.21, 67], [0.5, 0.21, 69], [0.75, 0.21, 69], [1.0, 0.42, 67]],
+      [[0.0, 0.36, 59, 4], [0.5, 0.34, 57], [1.0, 0.36, 59, 4], [1.5, 0.11, 67, -2], [1.625, 0.11, 66, -2], [1.75, 0.11, 64, -2], [1.875, 0.11, 63, -2]],
+      vel,
+    );
+    return b0 + 8;
+  };
+
+  // --- Bars 5-8 (beats 8..16): Phrase A1 ---
+  let b = pushPhraseA1(8.0, 94);
+
+  // --- Bars 9-12 (beats 16..24): Exact Score Phrase A2 (Schirmer 1922 p. 16 sys 3!) ---
+  // Bar 9: rest(.5) G4(.25) E4(.25) G4(.5) F#4(.5) (printed an octave lower than Bar 5!)
+  writeBar(
+    b + 0,
+    [[0.5, 0.21, 67, 6], [0.75, 0.21, 64, 3], [1.0, 0.42, 67, 7], [1.5, 0.42, 66, 6]],
+    [[0.5, 0.21, 59], [0.75, 0.21, 55], [1.0, 0.4, 59], [1.5, 0.4, 57]],
+    [[0.0, 0.36, 52, 2], [0.5, 0.34, 61], [1.0, 0.36, 52, 2], [1.5, 0.34, 60]],
+    92,
+  );
+  // Bar 10: C5(.5) B4(.5) G5(.25) G5(.25) G5(.5)
+  writeBar(
+    b + 2,
+    [[0.0, 0.42, 72, 7], [0.5, 0.42, 71, 6], [1.0, 0.21, 79, 9], [1.25, 0.21, 79, 6], [1.5, 0.42, 79, 10]],
+    [[0.0, 0.4, 66], [0.5, 0.4, 64], [1.0, 0.21, 73], [1.25, 0.21, 73], [1.5, 0.4, 73], [1.0, 0.21, 70], [1.5, 0.4, 70]],
+    [[0.0, 0.36, 57, 4], [0.5, 0.34, 63], [1.0, 0.36, 55, 4], [1.5, 0.34, 64]],
+    95,
+  );
+  // Bar 11: F#5(.25) F#5(.25) F#5(.5) E5(.25) E5(.25) E5(.5)
+  writeBar(
+    b + 4,
+    [[0.0, 0.21, 78, 8], [0.25, 0.21, 78, 5], [0.5, 0.42, 78, 9], [1.0, 0.21, 76, 8], [1.25, 0.21, 76, 5], [1.5, 0.42, 76, 9]],
+    [[0.0, 0.21, 72], [0.25, 0.21, 72], [0.5, 0.4, 72], [1.0, 0.21, 71], [1.25, 0.21, 71], [1.5, 0.4, 71]],
+    [[0.0, 0.36, 59, 4], [0.5, 0.34, 66], [1.0, 0.36, 58, 4], [1.5, 0.34, 67]],
+    96,
+  );
+  // Bar 12: D#5(.25) F#5(.25) E5(.25) F#5(.25) D#5(.5) (stays open on D#5 over B major!) + turnaround
+  writeBar(
+    b + 6,
+    [[0.0, 0.21, 75, 7], [0.25, 0.21, 78, 9], [0.5, 0.21, 76, 7], [0.75, 0.21, 78, 9], [1.0, 0.44, 75, 8]],
+    [[0.0, 0.21, 71], [0.25, 0.21, 71], [0.5, 0.21, 70], [0.75, 0.21, 71], [1.0, 0.42, 71]],
+    [[0.0, 0.36, 59, 5], [0.5, 0.34, 63], [1.0, 0.36, 59, 5], [1.5, 0.11, 59, -2], [1.625, 0.11, 57, -2], [1.75, 0.11, 55, -2], [1.875, 0.11, 54, -2]],
+    95,
+  );
+  b += 8;
+
+  // --- Bars 13-16 (beats 24..32): Exact Score Return of Phrase A1 (Schirmer 1922 p. 16 sys 4) ---
+  b = pushPhraseA1(b, 98);
+
+  // --- Bars 17-20 (beats 32..40): Exact Score Part A Closing Cadence (Schirmer 1922 p. 17 sys 1!) ---
+  // Bar 17: rest(.5) E5(.25) C#5(.25) E5(.5) D#5(.5) + bass turnaround F4-E4-D#4-C#4
+  writeBar(
+    b + 0,
+    [[0.5, 0.21, 76, 7], [0.75, 0.21, 73, 4], [1.0, 0.42, 76, 8], [1.5, 0.42, 75, 7]],
+    [[0.5, 0.21, 70], [0.75, 0.21, 66], [1.0, 0.4, 70], [1.5, 0.4, 69]],
+    [[0.0, 0.36, 61, 4], [0.5, 0.4, 59], [1.0, 0.11, 65, -2], [1.125, 0.11, 64, -2], [1.25, 0.11, 63, -2], [1.375, 0.11, 61, -2], [1.5, 0.36, 60, 2]],
+    96,
+  );
+  // Bar 18: rest(.5) D5(.25) B4(.25) D5(.5) C#5(.5) + turnaround E4-D4-C#4-B3
+  writeBar(
+    b + 2,
+    [[0.5, 0.21, 74, 7], [0.75, 0.21, 71, 4], [1.0, 0.42, 74, 8], [1.5, 0.42, 73, 7]],
+    [[0.5, 0.21, 68], [0.75, 0.21, 64], [1.0, 0.4, 68], [1.5, 0.4, 67]],
+    [[0.0, 0.45, 59, 4], [0.5, 0.36, 52], [1.0, 0.11, 64, -2], [1.125, 0.11, 62, -2], [1.25, 0.11, 61, -2], [1.375, 0.11, 59, -2], [1.5, 0.36, 59, 2]],
+    95,
+  );
+  // Bar 19: rest(.5) C5(.25) A4(.25) C5(.5) B4(.5) + turnaround D4-C4-B3-A3
+  writeBar(
+    b + 4,
+    [[0.5, 0.21, 72, 7], [0.75, 0.21, 69, 4], [1.0, 0.42, 72, 8], [1.5, 0.42, 71, 8]],
+    [[0.5, 0.21, 66], [0.75, 0.21, 62], [1.0, 0.4, 66], [1.5, 0.4, 67]],
+    [[0.0, 0.45, 57, 4], [0.5, 0.36, 52], [1.0, 0.11, 62, -2], [1.125, 0.11, 60, -2], [1.25, 0.11, 59, -2], [1.375, 0.11, 57, -2], [1.5, 0.36, 57, 2]],
+    96,
+  );
+  // Bar 20: rest(.5) rising 32nd-note arpeggio B4-D#5-F#5-B5 -> resolving on rolled E-minor tonic cadence E5!
+  writeBar(
+    b + 6,
+    [
+      [0.5, 0.12, 71, 6],
+      [0.625, 0.12, 75, 7],
+      [0.75, 0.12, 78, 8],
+      [0.875, 0.12, 83, 10],
+      [1.0, 2.2, 76, 12], // E5 tonic resolution (real Part A cadence!)
+    ],
+    [
+      [0.0, 0.42, 64],
+      [0.5, 0.42, 67],
+      [1.05, 2.15, 64, 4], // E4
+      [1.1, 2.1, 67, 6],   // G4
+      [1.15, 2.05, 71, 8], // B4
+    ],
+    [
+      [0.0, 0.42, 59, 4],
+      [0.5, 0.42, 59, 4],
+      [1.0, 2.2, 52, 12],  // E3 tonic bass
+      [1.05, 2.15, 59, 8], // B3
+    ],
+    98,
+  );
 
   const tracks: MidiWriteTrack[] = [
     { name: "Kalimba Treble Tines", channel: 0, program: 108, notes: cleanTrackNotes(melody) },
@@ -1833,20 +1971,481 @@ export function sugarPlumKalimba(): MidiPiece {
     file: "sugar-plum-kalimba.mid",
     title: "Dance of the Sugar Plum Fairy",
     composer: "Pyotr Ilyich Tchaikovsky",
-    credit: "P. I. Tchaikovsky, The Nutcracker Op. 71 (1892, public domain); chromatic concert kalimba arrangement MIT",
+    credit: "P. I. Tchaikovsky, The Nutcracker Op. 71, mm. 1-20 (G. Schirmer 1922, public domain); kalimba arrangement MIT",
     options: {
       format: 1,
       ticksPerQuarter: 480,
       tempos: [
-        { beat: 0, bpm: 74 },
-        { beat: 20, bpm: 78 },
-        { beat: 34, bpm: 75 },
-        { beat: 50, bpm: 70 },
-        { beat: bEnd, bpm: 62 },
+        { beat: 0, bpm: 54 },
+        { beat: 16, bpm: 55 },
+        { beat: 32, bpm: 54 },
+        { beat: 38, bpm: 48 },
       ],
       tracks,
       title: "Dance of the Sugar Plum Fairy",
       timeSignature: [2, 4],
+    },
+  };
+}
+
+/** Score-verified opening melody pitches of Mozart's Rondo Alla Turca (K. 331, III, A minor). */
+export const TURKISH_MARCH_OPENING_MOTIF = [71, 69, 68, 69, 72, 74, 72, 71, 72, 76, 77, 76, 75, 76] as const;
+
+/**
+ * Wolfgang Amadeus Mozart (1756-1791), Rondo Alla Turca ("Turkish March") from Piano Sonata No. 11
+ * in A major, K. 331, III (Allegretto, 2/4 time, 1783, public domain).
+ * Bars 1-32 with Mozart's written repeats (Section A x2, Section B + A-return, Section C A-major refrain x2),
+ * ending on Mozart's real A-major cadence at the end of Section C, transcribed directly from Mutopia Project
+ * (https://www.mutopiaproject.org/ftp/MozartWA/KV331/KV331_3_RondoAllaTurca/KV331_3_RondoAllaTurca-lys.zip).
+ * Compass A2 (45) .. C#6 (85) so every note maps 1-to-1 to a physical brass string, wooden jack, and manual key.
+ */
+export function turkishMarchHarpsichord(): MidiPiece {
+  const rh: MidiWriteNote[] = []; // Harpsichord right-hand treble (program 6)
+  const lh: MidiWriteNote[] = []; // Harpsichord left-hand bass/chords (program 6)
+
+  type MelEv = readonly [number, number, number, number?]; // [beatOff, durBeats, pitch, velOff?]
+
+  const pushLhAlberti = (b: number, bassP: number, chord: readonly number[], vel: number, beats = 4) => {
+    lh.push(note(b, 0.42, bassP, vel + 4));
+    for (let k = 1; k < beats; k++) {
+      for (const c of chord) lh.push(note(b + k * 0.5, 0.42, c, vel - 6 + (k === 2 ? 2 : 0)));
+    }
+  };
+
+  // Helper: Mozart righta + lefta (Score Bars 1-8 + 1-beat pickup = 16 beats; ends on Bar 8 beat 0 E5 quarter)
+  const pushSectionA = (bPickup: number, ending: "half" | "tonic", velBase: number): number => {
+    // 1-beat pickup: B4 A4 G#4 A4 (h16 a gis a)
+    const pk: readonly MelEv[] = [[0.0, 0.23, 71, 2], [0.25, 0.23, 69], [0.5, 0.23, 68], [0.75, 0.23, 69, 2]];
+    for (const [off, dur, p, dv = 0] of pk) rh.push(note(bPickup + off, dur, p, velBase + dv));
+
+    const b0 = bPickup + 1.0;
+    // Bar 1: C5(0.5) rest(0.5) D5 C5 B4 C5 | LH: a8 <c' e'> <c' e'> <c' e'>
+    for (const [off, dur, p, dv = 0] of [[0.0, 0.46, 72, 6], [1.0, 0.23, 74, 2], [1.25, 0.23, 72], [1.5, 0.23, 71], [1.75, 0.23, 72, 2]] as readonly MelEv[]) {
+      rh.push(note(b0 + off, dur, p, velBase + dv));
+    }
+    pushLhAlberti(b0 + 0, 45, [60, 64], velBase - 14);
+
+    // Bar 2: E5(0.5) rest(0.5) F5 E5 D#5 E5
+    for (const [off, dur, p, dv = 0] of [[0.0, 0.46, 76, 8], [1.0, 0.23, 77, 2], [1.25, 0.23, 76], [1.5, 0.23, 75], [1.75, 0.23, 76, 2]] as readonly MelEv[]) {
+      rh.push(note(b0 + 2 + off, dur, p, velBase + dv));
+    }
+    pushLhAlberti(b0 + 2, 45, [60, 64], velBase - 14);
+
+    // Bar 3: B5 A5 G#5 A5 B5 A5 G#5 A5 | LH: a8 <c' e'> a8 <c' e'>
+    for (const [off, p] of [[0.0, 83], [0.25, 81], [0.5, 80], [0.75, 81], [1.0, 83], [1.25, 81], [1.5, 80], [1.75, 81]] as const) {
+      rh.push(note(b0 + 4 + off, 0.23, p, velBase + (off % 1 === 0 ? 6 : 2)));
+    }
+    lh.push(note(b0 + 4.0, 0.42, 45, velBase - 10), note(b0 + 4.5, 0.42, 60, velBase - 16), note(b0 + 4.5, 0.42, 64, velBase - 16));
+    lh.push(note(b0 + 5.0, 0.42, 45, velBase - 10), note(b0 + 5.5, 0.42, 60, velBase - 16), note(b0 + 5.5, 0.42, 64, velBase - 16));
+
+    if (ending === "half") {
+      // Bar 4: C6(1.0) A5(0.5) C6(0.5)
+      rh.push(note(b0 + 6.0, 0.92, 84, velBase + 10), note(b0 + 7.0, 0.46, 81, velBase + 4), note(b0 + 7.5, 0.46, 84, velBase + 6));
+      pushLhAlberti(b0 + 6, 45, [60, 64], velBase - 12);
+      // Bar 5: B5 <F#5 A5> <E5 G5> <F#5 A5> (righta line 39; melody B5 A5 G5 A5!)
+      for (const [off, p] of [[0.0, 83], [0.5, 81], [1.0, 79], [1.5, 81]] as const) rh.push(note(b0 + 8 + off, 0.46, p, velBase + 4));
+      pushLhAlberti(b0 + 8, 52, [59, 64], velBase - 14);
+      // Bar 6: B5 A5 G5 A5
+      for (const [off, p] of [[0.0, 83], [0.5, 81], [1.0, 79], [1.5, 81]] as const) rh.push(note(b0 + 10 + off, 0.46, p, velBase + 4));
+      pushLhAlberti(b0 + 10, 52, [59, 64], velBase - 14);
+      // Bar 7: B5 A5 G5 F#5 | LH: e8 <h e'> h,8 h8
+      for (const [off, p] of [[0.0, 83], [0.5, 81], [1.0, 79], [1.5, 78]] as const) rh.push(note(b0 + 12 + off, 0.46, p, velBase + 5));
+      lh.push(note(b0 + 12.0, 0.42, 52, velBase - 10), note(b0 + 12.5, 0.42, 59, velBase - 14), note(b0 + 12.5, 0.42, 64, velBase - 14));
+      lh.push(note(b0 + 13.0, 0.42, 47, velBase - 10), note(b0 + 13.5, 0.42, 59, velBase - 12));
+      // Bar 8 beat 0: E5(1.0) half-cadence in E minor (beat 1.0 will carry the next section's pickup!)
+      rh.push(note(b0 + 14.0, 0.92, 76, velBase + 6));
+      lh.push(note(b0 + 14.0, 0.92, 52, velBase - 10));
+    } else {
+      // rightaa + leftaa (Bars 20-24, closing on A minor!)
+      // Bar 20: C6(1.0) A5(0.5) B5(0.5) | LH: f8 <a dis'> <a dis'> <a dis'>
+      rh.push(note(b0 + 6.0, 0.92, 84, velBase + 10), note(b0 + 7.0, 0.46, 81, velBase + 4), note(b0 + 7.5, 0.46, 83, velBase + 5));
+      pushLhAlberti(b0 + 6, 53, [57, 63], velBase - 12);
+      // Bar 21: C6 B5 A5 G#5 | LH: e8 <a e'> d8 <f h>
+      for (const [off, p] of [[0.0, 84], [0.5, 83], [1.0, 81], [1.5, 80]] as const) rh.push(note(b0 + 8 + off, 0.46, p, velBase + 5));
+      lh.push(note(b0 + 8.0, 0.42, 52, velBase - 12), note(b0 + 8.5, 0.42, 57, velBase - 14), note(b0 + 8.5, 0.42, 64, velBase - 14));
+      lh.push(note(b0 + 9.0, 0.42, 50, velBase - 12), note(b0 + 9.5, 0.42, 53, velBase - 14), note(b0 + 9.5, 0.42, 59, velBase - 14));
+      // Bar 22: A5 E5 F5 D5 | LH: c8 <e a> d8 <f h>
+      for (const [off, p] of [[0.0, 81], [0.5, 76], [1.0, 77], [1.5, 74]] as const) rh.push(note(b0 + 10 + off, 0.46, p, velBase + 5));
+      lh.push(note(b0 + 10.0, 0.42, 48, velBase - 12), note(b0 + 10.5, 0.42, 52, velBase - 14), note(b0 + 10.5, 0.42, 57, velBase - 14));
+      lh.push(note(b0 + 11.0, 0.42, 50, velBase - 12), note(b0 + 11.5, 0.42, 53, velBase - 14), note(b0 + 11.5, 0.42, 59, velBase - 14));
+      // Bar 23: C5(1.0) B4(0.75) A4(0.125) B4(0.125) | LH: <e a> <e a> <e gis> <e gis>
+      rh.push(note(b0 + 12.0, 0.92, 72, velBase + 6), note(b0 + 13.0, 0.72, 71, velBase + 5), note(b0 + 13.75, 0.12, 69, velBase + 3), note(b0 + 13.875, 0.12, 71, velBase + 4));
+      lh.push(note(b0 + 12.0, 0.42, 52, velBase - 12), note(b0 + 12.0, 0.42, 57, velBase - 14), note(b0 + 12.5, 0.42, 52, velBase - 14), note(b0 + 12.5, 0.42, 57, velBase - 14));
+      lh.push(note(b0 + 13.0, 0.42, 52, velBase - 12), note(b0 + 13.0, 0.42, 56, velBase - 14), note(b0 + 13.5, 0.42, 52, velBase - 14), note(b0 + 13.5, 0.42, 56, velBase - 14));
+      // Bar 24 beat 0: A4(1.0) A-minor tonic cadence!
+      rh.push(note(b0 + 14.0, 0.92, 69, velBase + 8));
+      lh.push(note(b0 + 14.0, 0.92, 45, velBase - 8), note(b0 + 14.0, 0.92, 57, velBase - 10));
+    }
+    return b0 + 15.0; // beat 1.0 of Bar 8/24 where next pickup starts
+  };
+
+  // --- Section A (Bars 1-8) + written repeat (Bars 1-8 again) = 32 beats ---
+  let b = pushSectionA(0.0, "half", 94);
+  b = pushSectionA(b, "half", 96);
+
+  // --- Section B (Bars 9-16, rightb + leftb, KV331_3_RondoAllaTurcaNotes.ly lines 56-66 & 187-190) ---
+  // Pickup: <C5 E5>(0.5) <D5 F5>(0.5)
+  const bSecB = b;
+  const pushBHalf = (start: number, mel: readonly [number, number, number][], bassBar: readonly [number, number, number][], cadBass: number) => {
+    for (const [off, dur, p] of mel) rh.push(note(start + off, dur, p, 96));
+    for (const [off, dur, p] of bassBar) lh.push(note(start + off, dur, p, 84));
+    lh.push(note(start + 3.0, 0.92, cadBass, 86));
+  };
+  // Bars 9-10: pickup E5 F5 | G5 G5 A5 G5 F5 E5 | D5 (C major -> G)
+  pushBHalf(
+    b,
+    [[0.0, 0.46, 76], [0.5, 0.46, 77], [1.0, 0.46, 79], [1.5, 0.46, 79], [2.0, 0.23, 81], [2.25, 0.23, 79], [2.5, 0.23, 77], [2.75, 0.23, 76], [3.0, 0.92, 74]],
+    [[1.0, 0.42, 48], [1.5, 0.42, 60], [2.0, 0.42, 52], [2.5, 0.42, 64]],
+    55,
+  );
+  b += 4.0;
+  // Bars 11-12: pickup E5 F5 | G5 G5 A5 G5 F5 E5 | D5
+  pushBHalf(
+    b,
+    [[0.0, 0.46, 76], [0.5, 0.46, 77], [1.0, 0.46, 79], [1.5, 0.46, 79], [2.0, 0.23, 81], [2.25, 0.23, 79], [2.5, 0.23, 77], [2.75, 0.23, 76], [3.0, 0.92, 74]],
+    [[1.0, 0.42, 48], [1.5, 0.42, 60], [2.0, 0.42, 52], [2.5, 0.42, 64]],
+    55,
+  );
+  b += 4.0;
+  // Bars 13-14: pickup C5 D5 | E5 E5 F5 E5 D5 C5 | B4 (A minor -> E)
+  pushBHalf(
+    b,
+    [[0.0, 0.46, 72], [0.5, 0.46, 74], [1.0, 0.46, 76], [1.5, 0.46, 76], [2.0, 0.23, 77], [2.25, 0.23, 76], [2.5, 0.23, 74], [2.75, 0.23, 72], [3.0, 0.92, 71]],
+    [[1.0, 0.42, 45], [1.5, 0.42, 57], [2.0, 0.42, 48], [2.5, 0.42, 60]],
+    52,
+  );
+  b += 4.0;
+  // Bars 15-16: pickup C5 D5 | E5 E5 F5 E5 D5 C5 | B4
+  pushBHalf(
+    b,
+    [[0.0, 0.46, 72], [0.5, 0.46, 74], [1.0, 0.46, 76], [1.5, 0.46, 76], [2.0, 0.23, 77], [2.25, 0.23, 76], [2.5, 0.23, 74], [2.75, 0.23, 72], [3.0, 0.92, 71]],
+    [[1.0, 0.42, 45], [1.5, 0.42, 57], [2.0, 0.42, 48], [2.5, 0.42, 60]],
+    52,
+  );
+  b += 4.0;
+
+  // --- Return of Section A (Bars 17-24, rightaa + leftaa, closing in A minor!) ---
+  b = pushSectionA(b, "tonic", 98);
+
+  // --- Section C: Exact Mozart A-Major Janissary Refrain (rightc + leftc, lines 68-75 & 192-218) x2 ---
+  // Exact Mozart pitches: <A4 A5> <B4 B5> | <C#5 C#6>(1.0) <A4 A5> <B4 B5> | <C#5 C#6> <B4 B5> <A4 A5> <G#4 G#5> |
+  //                       <F#4 F#5> <G#4 G#5> <A4 A5> <B4 B5> | <G#4 G#5> <E4 E5> <A4 A5> <B4 B5> |
+  //                       <C#5 C#6>(1.0) <A4 A5> <B4 B5> | <C#5 C#6> <B4 B5> <A4 A5> <G#4 G#5> |
+  //                       <F#4 F#5> <B4 B5> <G#4 G#5> <E4 E5> | <A4 A5>(1.0)
+  const bSecC = b;
+  const pushSectionC = (start: number, vel: number, isFinal: boolean): number => {
+    const oct = (off: number, dur: number, lowP: number, dv = 0) => {
+      rh.push(note(start + off, dur, lowP, vel + dv));
+      rh.push(note(start + off, dur, lowP + 12, vel + 2 + dv));
+    };
+    // Pickup (beat 0..1): A4/A5(0.5) B4/B5(0.5)
+    oct(0.0, 0.46, 69, 4); oct(0.5, 0.46, 71, 6);
+    // Bar 25: C#5/C#6(1.0) A4/A5(0.5) B4/B5(0.5)
+    oct(1.0, 0.92, 73, 10); oct(2.0, 0.46, 69, 4); oct(2.5, 0.46, 71, 6);
+    // Bar 26: C#5/C#6 B4/B5 A4/A5 G#4/G#5
+    oct(3.0, 0.46, 73, 8); oct(3.5, 0.46, 71, 4); oct(4.0, 0.46, 69, 4); oct(4.5, 0.46, 68, 4);
+    // Bar 27: F#4/F#5 G#4/G#5 A4/A5 B4/B5
+    oct(5.0, 0.46, 66, 6); oct(5.5, 0.46, 68, 4); oct(6.0, 0.46, 69, 6); oct(6.5, 0.46, 71, 6);
+    // Bar 28: G#4/G#5 E4/E5 A4/A5 B4/B5
+    oct(7.0, 0.46, 68, 6); oct(7.5, 0.46, 64, 4); oct(8.0, 0.46, 69, 4); oct(8.5, 0.46, 71, 6);
+    // Bar 29: C#5/C#6(1.0) A4/A5(0.5) B4/B5(0.5)
+    oct(9.0, 0.92, 73, 10); oct(10.0, 0.46, 69, 4); oct(10.5, 0.46, 71, 6);
+    // Bar 30: C#5/C#6 B4/B5 A4/A5 G#4/G#5
+    oct(11.0, 0.46, 73, 8); oct(11.5, 0.46, 71, 4); oct(12.0, 0.46, 69, 4); oct(12.5, 0.46, 68, 4);
+    // Bar 31: F#4/F#5 B4/B5 G#4/G#5 E4/E5
+    oct(13.0, 0.46, 66, 8); oct(13.5, 0.46, 71, 8); oct(14.0, 0.46, 68, 8); oct(14.5, 0.46, 64, 6);
+    // Bar 32 beat 0: A4/A5(1.0 or held final cadence!)
+    const finDur = isFinal ? 2.2 : 0.92;
+    oct(15.0, finDur, 69, 12);
+
+    // Exact leftc accompaniment (KV331_3_RondoAllaTurcaNotes.ly lines 192-218: stral, stral, strd, strdis, strel, stral, stral, strd, stre, a,4!)
+    const pushStrum = (off: number, root: number, third: number, fifth: number, top: number, beatsCount: number) => {
+      lh.push(note(start + off, 0.42, root, vel - 10), note(start + off, 0.42, third, vel - 14), note(start + off, 0.42, fifth, vel - 14), note(start + off, 0.42, top, vel - 12));
+      for (let k = 1; k < beatsCount; k++) lh.push(note(start + off + k * 0.5, 0.42, top, vel - 14));
+    };
+    pushStrum(1.0, 45, 49, 52, 57, 4);  // Bar 25: A major
+    pushStrum(3.0, 45, 49, 52, 57, 4);  // Bar 26: A major
+    pushStrum(5.0, 50, 54, 57, 62, 2);  // Bar 27a: D major
+    pushStrum(6.0, 51, 54, 57, 63, 2);  // Bar 27b: D# dim
+    pushStrum(7.0, 52, 56, 59, 64, 4);  // Bar 28: E major
+    pushStrum(9.0, 45, 49, 52, 57, 4);  // Bar 29: A major
+    pushStrum(11.0, 45, 49, 52, 57, 4); // Bar 30: A major
+    pushStrum(13.0, 50, 54, 57, 62, 2); // Bar 31a: D major
+    pushStrum(14.0, 52, 56, 59, 64, 2); // Bar 31b: E major
+    lh.push(note(start + 15.0, finDur, 45, vel - 6), note(start + 15.0, finDur, 52, vel - 10), note(start + 15.0, finDur, 57, vel - 8), note(start + 15.0, finDur, 61, vel - 10));
+    return start + 16.0;
+  };
+  b = pushSectionC(b, 100, false);
+  b = pushSectionC(b, 104, true);
+
+  const tracks: MidiWriteTrack[] = [
+    { name: "Harpsichord Treble", channel: 0, program: 6, notes: cleanTrackNotes(rh) },
+    { name: "Harpsichord Bass", channel: 1, program: 6, notes: cleanTrackNotes(lh) },
+  ];
+
+  return {
+    file: "turkish-march-harpsichord.mid",
+    title: "Turkish March",
+    composer: "Wolfgang Amadeus Mozart",
+    credit: "W. A. Mozart, Piano Sonata No. 11 K. 331 III, mm. 1-32 (Mutopia Project, public domain); harpsichord arrangement MIT",
+    options: {
+      format: 1,
+      ticksPerQuarter: 480,
+      tempos: [
+        { beat: 0, bpm: 122 },
+        { beat: bSecB, bpm: 124 },
+        { beat: bSecC, bpm: 128 },
+        { beat: b - 3.0, bpm: 112 },
+      ],
+      tracks,
+      title: "Turkish March",
+      timeSignature: [2, 4],
+    },
+  };
+}
+
+/** Score-verified opening ritornello pitches of Vivaldi's Spring (Op. 8 No. 1, RV 269, I, E major). */
+export const SPRING_OPENING_MOTIF = [76, 80, 80, 80, 78, 76, 83, 83, 81, 80] as const;
+
+/**
+ * Antonio Vivaldi (1678-1741), Spring ("La Primavera"), Concerto No. 1 in E major, Op. 8 No. 1,
+ * RV 269, I. Allegro (4/4 time, 1725, public domain).
+ * Complete Opening Ritornello + Birdsong Episode ("Canto dè gl' Vcelli") + Tutti Return (Bars 1-31 beat 1,
+ * ending cleanly on Vivaldi's real E-major Tutti cadence at Bar 31 beat 1), transcribed directly from Mutopia Project
+ * (https://www.mutopiaproject.org/ftp/VivaldiA/O8/spring/spring-lys.zip: spring1.ly, spring1a.ly, spring1b.ly, spring1c.ly, spring1d.ly).
+ * Pure E-major diatonic compass E2 (40) .. E6 (88) matching all 29 concert pedal harp strings 1-to-1.
+ */
+export function springConcertHarp(): MidiPiece {
+  const treble: MidiWriteNote[] = []; // Violin Principale / Violin I melody & birdsong (program 46)
+  const mid: MidiWriteNote[] = [];    // Violin II + Viola inner harmony & birdsong counterpoint (program 46)
+  const bass: MidiWriteNote[] = [];   // Cello / Continuo bass strings (program 46)
+
+  type Ev = readonly [number, number, number, number?]; // [beatOff, durBeats, pitch, velOff?]
+
+  // Pickup (beat 0.0): E5 (0.50 beat) + Violin II B4 + Viola G#4 + Cello E3 (spring1a..d line 10)
+  treble.push(note(0.0, 0.46, 76, 98));
+  mid.push(note(0.0, 0.46, 71, 78), note(0.0, 0.46, 68, 72));
+  bass.push(note(0.0, 0.46, 52, 82));
+
+  // Helper: Ritornello Part 1 (Bars 1-3 Forte or Bars 4-6 Piano, 12 beats, exact spring1a/b/c/d!)
+  const pushRitornelloPart1 = (b0: number, vel: number, isPianoEcho: boolean): number => {
+    const bar12: readonly Ev[] = [
+      [0.0, 0.46, 80, 6], [0.5, 0.46, 80, 4], [1.0, 0.46, 80, 6],
+      [1.5, 0.23, 78, 2], [1.75, 0.23, 76, 2],
+      [2.0, 1.44, 83, 10], [3.5, 0.23, 83, 4], [3.75, 0.23, 81, 3],
+    ];
+    const bar3: readonly Ev[] = isPianoEcho
+      // Bar 6 exact spring1a.ly line 17: gis8 a16 b a8 gis | fis4 r8 e8
+      ? [
+          [0.0, 0.46, 80, 6], [0.5, 0.23, 81, 4], [0.75, 0.23, 83, 6],
+          [1.0, 0.46, 81, 4], [1.5, 0.46, 80, 4],
+          [2.0, 0.92, 78, 6], [3.5, 0.46, 76, 8],
+        ]
+      // Bar 3 exact spring1a.ly line 13: gis8 a16 b a8 gis | fis dis b e
+      : [
+          [0.0, 0.46, 80, 6], [0.5, 0.23, 81, 4], [0.75, 0.23, 83, 6],
+          [1.0, 0.46, 81, 4], [1.5, 0.46, 80, 4],
+          [2.0, 0.46, 78, 6], [2.5, 0.46, 75, 4], [3.0, 0.46, 71, 4], [3.5, 0.46, 76, 4],
+        ];
+    for (const [off, dur, p, dv = 0] of bar12) treble.push(note(b0 + off, dur, p, vel + dv));
+    for (const [off, dur, p, dv = 0] of bar12) treble.push(note(b0 + 4 + off, dur, p, vel + dv));
+    for (const [off, dur, p, dv = 0] of bar3) treble.push(note(b0 + 8 + off, dur, p, vel + dv));
+
+    // Violin II + Viola + Cello (exact spring1b/c/d lines 11-16; chromatic cello passing ais kept diatonic A2->B2 for E-major pedal harp)
+    for (const barOff of [0, 4]) {
+      for (const beat of [0, 1, 2, 3]) bass.push(note(b0 + barOff + beat, 0.9, beat % 2 === 0 ? 40 : 52, vel - 14));
+      for (const [off, dur, p] of [[0.0, 0.46, 76], [0.5, 0.46, 76], [1.0, 0.46, 76], [1.5, 0.46, 76], [2.0, 1.44, 80], [3.5, 0.23, 80], [3.75, 0.23, 78]] as const) {
+        mid.push(note(b0 + barOff + off, dur, p - 12, vel - 20)); // Violin II down octave into mid harp strings
+      }
+      mid.push(note(b0 + barOff + 0.0, 0.9, 59, vel - 24), note(b0 + barOff + 2.0, 1.4, 64, vel - 24));
+    }
+    // Bar 3/6 bass & mid: e8 e8 a, a, | b4 r8 e8
+    bass.push(note(b0 + 8.0, 0.46, 52, vel - 14), note(b0 + 8.5, 0.46, 52, vel - 16), note(b0 + 9.0, 0.9, 45, vel - 14), note(b0 + 10.0, 0.92, 47, vel - 12), note(b0 + 11.5, 0.46, 52, vel - 14));
+    mid.push(note(b0 + 8.0, 0.46, 64, vel - 20), note(b0 + 8.5, 0.23, 66, vel - 22), note(b0 + 8.75, 0.23, 68, vel - 22), note(b0 + 9.0, 0.46, 66, vel - 20), note(b0 + 9.5, 0.46, 64, vel - 20), note(b0 + 10.0, 0.92, 63, vel - 18), note(b0 + 11.5, 0.46, 68, vel - 20));
+    return b0 + 12;
+  };
+
+  // Helper: Ritornello Part 2 (3 bars = 12 beats + downbeat resolution e4, exact spring1a.ly lines 18-20 / 28-30!)
+  // Bar A/B: b'8 a16 gis a8 b | cis b4 e,8
+  // Bar C:   cis'8 b4 a8 | gis fis16 e fis4
+  const pushRitornelloPart2 = (b0: number, vel: number, endMode: "echo-pickup" | "birdsong" | "final-cadence"): number => {
+    const barAB: readonly Ev[] = [
+      [0.0, 0.46, 83, 8], [0.5, 0.23, 81, 4], [0.75, 0.23, 80, 4],
+      [1.0, 0.46, 81, 5], [1.5, 0.46, 83, 7],
+      [2.0, 0.46, 85, 9], [2.5, 0.94, 83, 8], [3.5, 0.46, 76, 4],
+    ];
+    const barC: readonly Ev[] = [
+      [0.0, 0.46, 85, 9], [0.5, 0.94, 83, 8], [1.5, 0.46, 81, 6],
+      [2.0, 0.46, 80, 6], [2.5, 0.23, 78, 5], [2.75, 0.23, 76, 5], [3.0, 0.94, 78, 8],
+    ];
+    for (const [off, dur, p, dv = 0] of barAB) treble.push(note(b0 + off, dur, p, vel + dv));
+    for (const [off, dur, p, dv = 0] of barAB) treble.push(note(b0 + 4 + off, dur, p, vel + dv));
+    for (const [off, dur, p, dv = 0] of barC) treble.push(note(b0 + 8 + off, dur, p, vel + dv));
+
+    for (const barOff of [0, 4]) {
+      for (const beat of [0, 1, 2, 3]) bass.push(note(b0 + barOff + beat, 0.9, beat % 2 === 0 ? 40 : 52, vel - 14));
+      for (const [off, dur, p] of [[0.0, 0.46, 68], [0.5, 0.23, 66], [0.75, 0.23, 64], [1.0, 0.46, 66], [1.5, 0.46, 68], [2.0, 0.46, 69], [2.5, 0.94, 68], [3.5, 0.46, 68]] as const) {
+        mid.push(note(b0 + barOff + off, dur, p, vel - 20));
+      }
+    }
+    // Bar C accompaniment (spring1b/d lines 19): e4 e8 b e e, b'' b,
+    bass.push(note(b0 + 8.0, 0.9, 52, vel - 14), note(b0 + 9.0, 0.46, 52, vel - 16), note(b0 + 9.5, 0.46, 47, vel - 14), note(b0 + 10.0, 0.46, 52, vel - 14), note(b0 + 10.5, 0.46, 40, vel - 12), note(b0 + 11.0, 0.46, 59, vel - 14), note(b0 + 11.5, 0.46, 47, vel - 12));
+    mid.push(note(b0 + 8.0, 0.46, 69, vel - 20), note(b0 + 8.5, 0.94, 68, vel - 20), note(b0 + 9.5, 0.46, 66, vel - 20), note(b0 + 10.0, 0.92, 64, vel - 18), note(b0 + 11.0, 0.92, 63, vel - 18));
+
+    if (endMode === "echo-pickup") {
+      // Bar 10 beat 0..2: e4 r8 e8 (exact spring1a.ly line 22!)
+      treble.push(note(b0 + 12.0, 0.92, 76, vel + 4), note(b0 + 13.5, 0.46, 76, vel - 14));
+      mid.push(note(b0 + 12.0, 0.92, 64, vel - 18), note(b0 + 13.5, 0.46, 68, vel - 24));
+      bass.push(note(b0 + 12.0, 0.92, 40, vel - 12), note(b0 + 13.5, 0.46, 52, vel - 22));
+      return b0 + 14; // Bar 10 beat 2 where Piano Part 2 begins!
+    }
+    if (endMode === "birdsong") {
+      // Bar 13 beat 0..2: E5 cadence downbeat (e4 + rest) before Solo Birdsong enters halfway through the bar!
+      treble.push(note(b0 + 12.0, 0.92, 76, vel + 2));
+      mid.push(note(b0 + 12.0, 0.92, 64, vel - 18), note(b0 + 12.0, 0.92, 68, vel - 20));
+      bass.push(note(b0 + 12.0, 0.92, 40, vel - 14));
+      return b0 + 14; // Bar 13 beat 2 (half-bar) where mark B Solo Birdsong starts!
+    }
+    // Final real Tutti cadence on Bar 31 beat 0 (spring1a..d): rolled E-major concert-harp cadence!
+    const finDur = 2.8;
+    bass.push(note(b0 + 12.0, finDur, 40, 106), note(b0 + 12.12, finDur - 0.12, 52, 98), note(b0 + 12.24, finDur - 0.24, 59, 94));
+    mid.push(note(b0 + 12.36, finDur - 0.36, 64, 92), note(b0 + 12.48, finDur - 0.48, 68, 90), note(b0 + 12.6, finDur - 0.6, 71, 92));
+    treble.push(note(b0 + 12.0, finDur, 76, 108), note(b0 + 12.24, finDur - 0.24, 80, 102), note(b0 + 12.48, finDur - 0.48, 83, 104), note(b0 + 12.72, finDur - 0.72, 88, 108));
+    return b0 + 12 + finDur;
+  };
+
+  // --- Opening Ritornello (Bars 1-13, beats 0.5 .. 54.5, exact spring1a.ly lines 10-27!) ---
+  let b = 0.5;
+  b = pushRitornelloPart1(b, 98, false);       // Bars 1-3 Forte
+  b = pushRitornelloPart1(b, 76, true);        // Bars 4-6 Piano echo
+  b = pushRitornelloPart2(b, 98, "echo-pickup"); // Bars 7-10a Forte
+  b = pushRitornelloPart2(b, 78, "birdsong");    // Bars 10b-13 Piano echo -> lands at Bar 13 beat 2 (b = 52.5)
+
+  // --- Episode 1: Birdsong ("Canto dè gl' Vcelli", Bars 13b-27, exact spring1.ly + spring1a.ly + spring1b.ly!) ---
+  const bBird = b;
+  // Bar 13b-16: Solo B5 repeated mordent chirps + Violin II G#5 trill + descending E6-D#6-C#6-B5-A5-G#5-F#5-E5 cascade!
+  // Bar 13b (2 beats): Solo b4 b4 (B5) over Violin II r16 a gis a gis4
+  treble.push(note(b + 0.0, 0.9, 83, 94), note(b + 1.0, 0.9, 83, 92));
+  mid.push(note(b + 0.25, 0.22, 69, 72), note(b + 0.5, 0.22, 68, 70), note(b + 0.75, 0.22, 69, 72), note(b + 1.0, 0.85, 68, 74));
+  b += 2.0;
+
+  // Bar 14 (4 beats): Solo b4 b4 b4 b4 | Vln II a-gis-a-gis trills (spring1.ly line 27 & spring1b.ly line 26)
+  for (const off of [0, 1, 2, 3]) treble.push(note(b + off, 0.85, 83, 94 - (off % 2) * 4));
+  for (const half of [0, 2]) {
+    mid.push(note(b + half + 0.25, 0.22, 69, 72), note(b + half + 0.5, 0.22, 68, 70), note(b + half + 0.75, 0.22, 69, 72), note(b + half + 1.0, 0.85, 68, 74));
+  }
+  b += 4.0;
+
+  // Bar 15 (4 beats): Solo 8th-note chirps B5 x8 | Vln II descending 32nd birdsong flick B5-A5-G#5-F#5-E5 x2 (spring1b.ly line 27)
+  for (let k = 0; k < 8; k++) treble.push(note(b + k * 0.5, 0.38, 83, 94 + (k % 2 === 0 ? 4 : -4)));
+  for (const half of [0, 2]) {
+    for (const [off, p] of [[0.5, 71], [0.65, 69], [0.8, 68], [0.95, 66], [1.1, 64]] as const) {
+      mid.push(note(b + half + off, off === 1.1 ? 0.75 : 0.14, p, 78));
+    }
+  }
+  b += 4.0;
+
+  // Bar 16 (4 beats): Solo B5 x7 + C#6(16th) D#6(16th) (spring1.ly line 30)
+  for (let k = 0; k < 7; k++) treble.push(note(b + k * 0.5, 0.38, 83, 96));
+  treble.push(note(b + 3.5, 0.22, 85, 96), note(b + 3.75, 0.22, 87, 98));
+  mid.push(note(b + 0.25, 0.22, 69, 72), note(b + 0.5, 0.22, 68, 70), note(b + 0.75, 0.22, 69, 72), note(b + 1.0, 0.85, 68, 74));
+  mid.push(note(b + 2.25, 0.22, 69, 72), note(b + 2.5, 0.22, 68, 70), note(b + 2.75, 0.22, 69, 72), note(b + 3.0, 0.85, 68, 74));
+  b += 4.0;
+
+  // Bar 17 (4 beats): Solo descending E-major scale E6-D#6-C#6-B5-A5-G#5-F#5-E5 (spring1.ly line 31) + Vln II answer
+  const birdScale = [88, 87, 85, 83, 81, 80, 78, 76];
+  for (let k = 0; k < birdScale.length; k++) treble.push(note(b + k * 0.25, 0.22, birdScale[k], 100 - k));
+  for (const [off, p] of [[2.5, 71], [2.65, 69], [2.8, 68], [2.95, 66], [3.1, 64]] as const) {
+    mid.push(note(b + off, off === 3.1 ? 0.75 : 0.14, p, 82));
+  }
+  b += 4.0;
+
+  // Bar 18-19 (8 beats): High E6 repeated chirps answering E5 trill (spring1.ly lines 33-35 & spring1b.ly lines 30-31)
+  for (const half of [0, 2]) {
+    for (const [off, p] of [[0.5, 71], [0.65, 69], [0.8, 68], [0.95, 66], [1.1, 64]] as const) {
+      mid.push(note(b + half + off, off === 1.1 ? 0.75 : 0.14, p, 80));
+    }
+  }
+  // Bar 19: r4 r8 e'8 e e e e | Bar 20: e,4. e'8 e e e e
+  treble.push(note(b + 1.5, 0.42, 88, 98), note(b + 2.0, 0.42, 88, 96), note(b + 2.5, 0.42, 88, 96), note(b + 3.0, 0.42, 88, 96), note(b + 3.5, 0.42, 88, 98));
+  b += 4.0;
+  // Bar 20: E5 trill (E5-F#5-E5-F#5-E5) -> high E6 x5
+  for (let k = 0; k < 6; k++) treble.push(note(b + k * 0.25, 0.22, k % 2 === 0 ? 76 : 78, 88));
+  treble.push(note(b + 1.5, 0.42, 88, 100), note(b + 2.0, 0.42, 88, 98), note(b + 2.5, 0.42, 88, 98), note(b + 3.0, 0.42, 88, 98), note(b + 3.5, 0.42, 88, 100));
+  for (let k = 0; k < 8; k++) mid.push(note(b + k * 0.5, 0.42, k % 2 === 0 ? 68 : 69, 72));
+  b += 4.0;
+
+  // Bar 21-23 (12 beats): Iconic birdsong oscillation b16(e) b(cis) (spring1.ly lines 36-38 & spring1a.ly lines 39-42)
+  // Bar 21: E5 trill (2 beats) | B5(1.0) + B5-E6-B5-C#6
+  for (let k = 0; k < 4; k++) treble.push(note(b + k * 0.25, 0.22, k % 2 === 0 ? 76 : 78, 86));
+  treble.push(note(b + 2.0, 0.92, 83, 98), note(b + 3.0, 0.23, 83, 94), note(b + 3.25, 0.23, 88, 102), note(b + 3.5, 0.23, 83, 94), note(b + 3.75, 0.23, 85, 98));
+  for (const off of [0, 1, 2, 3]) mid.push(note(b + off, 0.45, 68, 72), note(b + off + 0.5, 0.45, 69, 72));
+  b += 4.0;
+  // Bar 22: B5(1.0) + B5-E6-B5-C#6 | B5-E6-B5-C#6 x2
+  treble.push(note(b + 0.0, 0.92, 83, 98), note(b + 1.0, 0.23, 83, 94), note(b + 1.25, 0.23, 88, 102), note(b + 1.5, 0.23, 83, 94), note(b + 1.75, 0.23, 85, 98));
+  for (const off of [2.0, 3.0]) {
+    treble.push(note(b + off, 0.23, 83, 96), note(b + off + 0.25, 0.23, 88, 104), note(b + off + 0.5, 0.23, 83, 96), note(b + off + 0.75, 0.23, 85, 100));
+  }
+  for (const off of [0.0, 1.0, 2.0, 3.0]) mid.push(note(b + off, 0.45, 64, 74), note(b + off + 0.5, 0.45, 71, 74));
+  b += 4.0;
+  // Bar 23: B5-E6-B5-C#6 x2 | B5(0.5) E5(0.5) G#5 trill(1.0)
+  for (const off of [0.0, 1.0]) {
+    treble.push(note(b + off, 0.23, 83, 96), note(b + off + 0.25, 0.23, 88, 104), note(b + off + 0.5, 0.23, 83, 96), note(b + off + 0.75, 0.23, 85, 100));
+  }
+  treble.push(note(b + 2.0, 0.46, 83, 96), note(b + 2.5, 0.46, 76, 94), note(b + 3.0, 0.23, 80, 96), note(b + 3.25, 0.23, 81, 92), note(b + 3.5, 0.23, 80, 96), note(b + 3.75, 0.23, 81, 92));
+  mid.push(note(b + 0.0, 0.9, 64, 74), note(b + 1.0, 0.9, 71, 74), note(b + 2.0, 0.9, 64, 74), note(b + 3.0, 0.9, 68, 76));
+  b += 4.0;
+
+  // Bar 24-27 (12 beats -> Bar 27 beat 3.5 Tutti pickup E5!, exact spring1.ly lines 39-43):
+  // High E6 paired chirps + E6 trills leading directly into Tutti Ritornello Return!
+  // Bar 24: G#5 trills (b+1, b+3) over gentle E-major harp bass
+  for (const off of [0.0, 2.0]) {
+    treble.push(note(b + off + 1.0, 0.23, 80, 92), note(b + off + 1.25, 0.23, 81, 88), note(b + off + 1.5, 0.23, 80, 92), note(b + off + 1.75, 0.23, 81, 88));
+    mid.push(note(b + off + 0.0, 0.9, 64, 72), note(b + off + 1.0, 0.9, 68, 72));
+  }
+  b += 4.0;
+  // Bar 25: E6(1.0) E6(1.0) | E6 trill(2.0) (spring1.ly lines 41-42)
+  treble.push(note(b + 0.0, 0.85, 88, 100), note(b + 1.0, 0.85, 88, 98));
+  for (let k = 0; k < 8; k++) treble.push(note(b + 2.0 + k * 0.25, 0.22, k % 2 === 0 ? 88 : 87, 94));
+  bass.push(note(b + 0.0, 1.8, 52, 76), note(b + 2.0, 1.8, 52, 76));
+  mid.push(note(b + 0.0, 0.9, 68, 76), note(b + 1.0, 0.9, 71, 76), note(b + 2.0, 1.8, 68, 78));
+  b += 4.0;
+  // Bar 26-27a: E6(1.0) E6(1.0) | E6 trill(1.0) + rest(0.5) + Tutti pickup E5(0.5)! (spring1.ly lines 42-43)
+  treble.push(note(b + 0.0, 0.85, 88, 102), note(b + 1.0, 0.85, 88, 100));
+  for (let k = 0; k < 4; k++) treble.push(note(b + 2.0 + k * 0.25, 0.22, k % 2 === 0 ? 88 : 87, 96));
+  treble.push(note(b + 3.5, 0.46, 76, 102)); // Tutti pickup E5!
+  mid.push(note(b + 0.0, 0.9, 68, 78), note(b + 1.0, 0.9, 71, 78), note(b + 2.0, 0.9, 68, 78), note(b + 3.5, 0.46, 64, 82));
+  bass.push(note(b + 0.0, 1.8, 52, 80), note(b + 2.0, 0.9, 52, 80), note(b + 3.5, 0.46, 52, 86));
+  b += 4.0;
+
+  // --- Bars 28-31a: Real Vivaldi Tutti Ritornello Return ending on real E-major Bar 31 beat 1 cadence! ---
+  const bTutti = b;
+  b = pushRitornelloPart2(b, 104, "final-cadence");
+
+  const tracks: MidiWriteTrack[] = [
+    { name: "Harp Treble Strings", channel: 0, program: 46, notes: cleanTrackNotes(treble) },
+    { name: "Harp Mid Strings", channel: 1, program: 46, notes: cleanTrackNotes(mid) },
+    { name: "Harp Bass Strings", channel: 2, program: 46, notes: cleanTrackNotes(bass) },
+  ];
+
+  return {
+    file: "spring-concert-harp.mid",
+    title: "Spring",
+    composer: "Antonio Vivaldi",
+    credit: "A. Vivaldi, The Four Seasons Op. 8 No. 1 RV 269 I, mm. 1-31 (Mutopia Project, public domain); concert pedal harp arrangement MIT",
+    options: {
+      format: 1,
+      ticksPerQuarter: 480,
+      tempos: [
+        { beat: 0, bpm: 132 },
+        { beat: bBird, bpm: 134 },
+        { beat: bTutti, bpm: 132 },
+        { beat: bTutti + 10.0, bpm: 112 },
+        { beat: bTutti + 12.0, bpm: 92 },
+      ],
+      tracks,
+      title: "Spring",
+      timeSignature: [4, 4],
     },
   };
 }
@@ -1864,6 +2463,8 @@ export function builtInPieces(): MidiPiece[] {
     odeToJoyCarillon(),
     toccataInDMinorOrgan(),
     sugarPlumKalimba(),
+    turkishMarchHarpsichord(),
+    springConcertHarp(),
   ];
 }
 

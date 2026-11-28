@@ -34,7 +34,15 @@ export type SwarmIcon =
   | "moon"
   | "planet"
   | "rocket"
-  | "ufo";
+  | "ufo"
+  | "key"
+  | "lock"
+  | "chest"
+  | "whale"
+  | "octopus"
+  | "turtle"
+  | "shell"
+  | "seahorse";
 
 /** Conversion timbre played when this type wins a contact (see `audio.ts`). */
 export type SwarmSound = "tok" | "fwip" | "snip" | "bloop" | "ting" | "blip" | "twinkle" | "knock";
@@ -61,7 +69,9 @@ export type SwarmSlug =
   | "swarm-elements"
   | "swarm-chess"
   | "swarm-weapons"
-  | "swarm-cosmos";
+  | "swarm-cosmos"
+  | "swarm-vault"
+  | "swarm-ocean";
 
 export interface SwarmDefinition {
   slug: SwarmSlug;
@@ -141,6 +151,28 @@ const COSMOS_SKIN: SwarmSkin = {
     { name: "planet", caption: "PLANET", color: "#a86eff", icon: "planet", sound: "bloop" },
     { name: "rocket", caption: "ROCKET", color: "#ff7a59", icon: "rocket", sound: "tok" },
     { name: "ufo", caption: "UFO", color: "#c8ff00", icon: "ufo", sound: "blip" },
+  ],
+};
+
+const VAULT_SKIN: SwarmSkin = {
+  title: "WHO WINS?",
+  rules: "key opens lock · lock seals chest · chest hides key",
+  types: [
+    { name: "key", caption: "KEY", color: "#c8ff00", icon: "key", sound: "ting" },
+    { name: "lock", caption: "LOCK", color: "#38bdf8", icon: "lock", sound: "tok" },
+    { name: "chest", caption: "CHEST", color: "#fbbf24", icon: "chest", sound: "knock" },
+  ],
+};
+
+const OCEAN_SKIN: SwarmSkin = {
+  title: "WHO WINS?",
+  rules: "every sea rival takes two others and falls to two",
+  types: [
+    { name: "whale", caption: "WHALE", color: "#38bdf8", icon: "whale", sound: "bloop" },
+    { name: "octopus", caption: "OCTOPUS", color: "#a86eff", icon: "octopus", sound: "fwip" },
+    { name: "turtle", caption: "TURTLE", color: "#c8ff00", icon: "turtle", sound: "tok" },
+    { name: "shell", caption: "SHELL", color: "#ff7a59", icon: "shell", sound: "twinkle" },
+    { name: "seahorse", caption: "SEAHORSE", color: "#fbbf24", icon: "seahorse", sound: "ting" },
   ],
 };
 
@@ -319,6 +351,64 @@ export const SWARM_DEFINITIONS: readonly SwarmDefinition[] = [
       radius: 24.0,
       arena: SWARM_ARENA,
       physics: { ...DEFAULT_SWARM_PHYSICS, speed: 76, chaseBoost: 0.18, sight: 147 },
+      maxPlayFrames: 52 * 60,
+      holdFrames: SWARM_HOLD_FRAMES,
+    },
+    arc: {
+      minWinSeconds: 32,
+      maxWinSeconds: 38,
+      targetWinSeconds: 35,
+      minLeadChanges: 4,
+      maxLeadChanges: 16,
+      maxComebackShare: 0.1,
+    },
+  },
+  {
+    slug: "swarm-vault",
+    id: "SwarmVault",
+    label: "Key Lock Chest",
+    windowLabel: "oyren / arena · vault",
+    rootHz: 127.09,
+    skin: VAULT_SKIN,
+    config: {
+      id: "swarm-vault",
+      // Picked over 3001..3900 (50 seeds qualify): 12 lead changes, chest drops to 1/180 (0.6%) at 17.6 s, first contact at 0.10 s, wins at 34.4 s.
+      seed: 3137,
+      count: 180,
+      types: 3,
+      rules: WEAPONS_RULES, // 0(key) beats 1(lock), 1(lock) beats 2(chest), 2(chest) beats 0(key)
+      radius: 25.5,
+      arena: SWARM_ARENA,
+      physics: { ...DEFAULT_SWARM_PHYSICS, speed: 68, chaseBoost: 0.17 },
+      maxPlayFrames: 52 * 60,
+      holdFrames: SWARM_HOLD_FRAMES,
+    },
+    arc: {
+      minWinSeconds: 32,
+      maxWinSeconds: 38,
+      targetWinSeconds: 35,
+      minLeadChanges: 4,
+      maxLeadChanges: 12,
+      maxComebackShare: 0.15,
+    },
+  },
+  {
+    slug: "swarm-ocean",
+    id: "SwarmOcean",
+    label: "Ocean Rivals",
+    windowLabel: "oyren / arena · ocean",
+    rootHz: 110.0,
+    skin: OCEAN_SKIN,
+    config: {
+      id: "swarm-ocean",
+      // Picked over 3001..3900 (35 seeds qualify): 10 lead changes, octopus drops to 1/160 (0.6%) at 26.7 s, first contact at 1.48 s, wins at 34.4 s.
+      seed: 3637,
+      count: 160,
+      types: 5,
+      rules: cyclicRules(5, 2),
+      radius: 24.0,
+      arena: SWARM_ARENA,
+      physics: { ...DEFAULT_SWARM_PHYSICS, speed: 77, chaseBoost: 0.18, sight: 148 },
       maxPlayFrames: 52 * 60,
       holdFrames: SWARM_HOLD_FRAMES,
     },

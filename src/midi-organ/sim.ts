@@ -20,7 +20,7 @@ export const STAGE = {
 } as const;
 
 export const ORGAN_LOW_PITCH = 38;  // D2
-export const ORGAN_HIGH_PITCH = 81; // A5
+export const ORGAN_HIGH_PITCH = 82; // Bb5 (covers full BWV 565 Toccata Bars 1..30)
 
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"] as const;
 const ACCIDENTAL_PCS = new Set([1, 3, 6, 8, 10]);

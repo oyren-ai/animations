@@ -1251,6 +1251,326 @@ function drawCosmosSprite(
   }
 }
 
+function drawVaultSprite(
+  ctx: CanvasRenderingContext2D,
+  icon: "key" | "lock" | "chest",
+  u: number,
+  color: string,
+) {
+  contactShadow(ctx, u, 0.8);
+  const strokeW = Math.max(2.6, u * 0.22);
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+
+  const strokeAndFill = (trace: () => void, fill = color) => {
+    trace();
+    ctx.lineWidth = strokeW;
+    ctx.strokeStyle = OUTLINE;
+    ctx.stroke();
+    ctx.fillStyle = fill;
+    ctx.fill();
+  };
+
+  if (icon === "key") {
+    ctx.save();
+    ctx.rotate(-0.62);
+    // Shaft + twin bitting teeth
+    strokeAndFill(() => {
+      ctx.beginPath();
+      ctx.roundRect(-0.13 * u, -0.1 * u, 0.26 * u, 1.04 * u, 0.09 * u);
+    }, color);
+    strokeAndFill(() => {
+      ctx.beginPath();
+      ctx.roundRect(0.06 * u, 0.44 * u, 0.42 * u, 0.17 * u, 0.05 * u);
+    }, color);
+    strokeAndFill(() => {
+      ctx.beginPath();
+      ctx.roundRect(0.06 * u, 0.72 * u, 0.34 * u, 0.16 * u, 0.05 * u);
+    }, color);
+    // Ornate circular bow
+    strokeAndFill(() => {
+      ctx.beginPath();
+      ctx.arc(0, -0.46 * u, 0.48 * u, 0, TAU);
+    }, color);
+    ctx.fillStyle = lighten(color, 0.45);
+    ctx.beginPath();
+    ctx.arc(-0.12 * u, -0.58 * u, 0.18 * u, 0, TAU);
+    ctx.fill();
+    // Key bow inner hole
+    ctx.fillStyle = OUTLINE;
+    ctx.beginPath();
+    ctx.arc(0, -0.46 * u, 0.2 * u, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+    return;
+  }
+
+  if (icon === "lock") {
+    // Curved steel padlock shackle
+    ctx.beginPath();
+    ctx.arc(0, -0.26 * u, 0.44 * u, Math.PI, TAU);
+    ctx.lineTo(0.44 * u, 0.06 * u);
+    ctx.moveTo(-0.44 * u, -0.26 * u);
+    ctx.lineTo(-0.44 * u, 0.06 * u);
+    ctx.lineWidth = Math.max(5.5, u * 0.44);
+    ctx.strokeStyle = OUTLINE;
+    ctx.stroke();
+    ctx.lineWidth = Math.max(3.0, u * 0.23);
+    ctx.strokeStyle = "#d9f2ff";
+    ctx.stroke();
+
+    // Solid rounded padlock body
+    const body = () => {
+      ctx.beginPath();
+      ctx.roundRect(-0.74 * u, -0.1 * u, 1.48 * u, 0.96 * u, 0.22 * u);
+    };
+    strokeAndFill(body, color);
+    ctx.save();
+    body();
+    ctx.clip();
+    ctx.fillStyle = lighten(color, 0.36);
+    ctx.fillRect(-0.8 * u, -0.14 * u, 0.76 * u, 1.05 * u);
+    ctx.restore();
+
+    // Crisp dark keyhole
+    ctx.fillStyle = "#082032";
+    ctx.beginPath();
+    ctx.arc(0, 0.28 * u, 0.15 * u, 0, TAU);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-0.08 * u, 0.34 * u);
+    ctx.lineTo(0.08 * u, 0.34 * u);
+    ctx.lineTo(0.12 * u, 0.64 * u);
+    ctx.lineTo(-0.12 * u, 0.64 * u);
+    ctx.closePath();
+    ctx.fill();
+    return;
+  }
+
+  // Amber-gold banded treasure chest
+  const lid = () => {
+    ctx.beginPath();
+    ctx.moveTo(-0.82 * u, -0.02 * u);
+    ctx.quadraticCurveTo(-0.82 * u, -0.74 * u, 0, -0.74 * u);
+    ctx.quadraticCurveTo(0.82 * u, -0.74 * u, 0.82 * u, -0.02 * u);
+    ctx.closePath();
+  };
+  strokeAndFill(lid, lighten(color, 0.12));
+
+  const base = () => {
+    ctx.beginPath();
+    ctx.roundRect(-0.82 * u, -0.06 * u, 1.64 * u, 0.88 * u, [0.06 * u, 0.06 * u, 0.18 * u, 0.18 * u]);
+  };
+  strokeAndFill(base, color);
+
+  // Dark bronze iron straps
+  ctx.fillStyle = "#5c2f0c";
+  ctx.fillRect(-0.56 * u, -0.64 * u, 0.2 * u, 1.44 * u);
+  ctx.fillRect(0.36 * u, -0.64 * u, 0.2 * u, 1.44 * u);
+  ctx.fillRect(-0.82 * u, -0.12 * u, 1.64 * u, 0.14 * u);
+
+  // Center brass latch plate
+  strokeAndFill(() => {
+    ctx.beginPath();
+    ctx.roundRect(-0.2 * u, -0.22 * u, 0.4 * u, 0.44 * u, 0.08 * u);
+  }, "#fef08a");
+  ctx.fillStyle = OUTLINE;
+  ctx.beginPath();
+  ctx.arc(0, 0, 0.07 * u, 0, TAU);
+  ctx.fill();
+}
+
+function drawOceanSprite(
+  ctx: CanvasRenderingContext2D,
+  icon: "whale" | "octopus" | "turtle" | "shell" | "seahorse",
+  u: number,
+  color: string,
+) {
+  contactShadow(ctx, u, 0.82);
+  const strokeW = Math.max(2.5, u * 0.21);
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+
+  const strokeAndFill = (trace: () => void, fill = color) => {
+    trace();
+    ctx.lineWidth = strokeW;
+    ctx.strokeStyle = OUTLINE;
+    ctx.stroke();
+    ctx.fillStyle = fill;
+    ctx.fill();
+  };
+
+  if (icon === "whale") {
+    // Playful rounded whale silhouette with uplifted tail fluke & tiny water spout
+    const body = () => {
+      ctx.beginPath();
+      ctx.moveTo(-0.84 * u, 0.16 * u);
+      ctx.bezierCurveTo(-0.84 * u, -0.56 * u, -0.1 * u, -0.62 * u, 0.34 * u, -0.16 * u);
+      ctx.quadraticCurveTo(0.56 * u, 0.06 * u, 0.72 * u, -0.24 * u);
+      ctx.lineTo(0.96 * u, -0.44 * u);
+      ctx.quadraticCurveTo(0.84 * u, -0.06 * u, 0.94 * u, 0.14 * u);
+      ctx.quadraticCurveTo(0.66 * u, 0.16 * u, 0.52 * u, 0.36 * u);
+      ctx.bezierCurveTo(0.16 * u, 0.64 * u, -0.84 * u, 0.62 * u, -0.84 * u, 0.16 * u);
+      ctx.closePath();
+    };
+    strokeAndFill(body, color);
+    ctx.save();
+    body();
+    ctx.clip();
+    ctx.fillStyle = "#e0f7ff";
+    ctx.fillRect(-0.9 * u, 0.26 * u, 1.3 * u, 0.45 * u);
+    ctx.restore();
+    // Water spout arcs
+    ctx.strokeStyle = "#e0f7ff";
+    ctx.lineWidth = Math.max(2, u * 0.12);
+    ctx.beginPath();
+    ctx.moveTo(-0.34 * u, -0.46 * u);
+    ctx.quadraticCurveTo(-0.46 * u, -0.82 * u, -0.62 * u, -0.76 * u);
+    ctx.moveTo(-0.34 * u, -0.46 * u);
+    ctx.quadraticCurveTo(-0.22 * u, -0.82 * u, -0.06 * u, -0.76 * u);
+    ctx.stroke();
+    // Friendly ink eye
+    ctx.fillStyle = OUTLINE;
+    ctx.beginPath();
+    ctx.arc(-0.46 * u, 0.08 * u, 0.1 * u, 0, TAU);
+    ctx.fill();
+    return;
+  }
+
+  if (icon === "octopus") {
+    // Four symmetrical curled tentacles below
+    for (const tx of [-0.66, -0.24, 0.24, 0.66] as const) {
+      ctx.beginPath();
+      ctx.moveTo(tx * 0.45 * u, 0.12 * u);
+      ctx.quadraticCurveTo(tx * 1.1 * u, 0.46 * u, tx * 0.9 * u, 0.78 * u);
+      ctx.lineWidth = Math.max(5.2, u * 0.4);
+      ctx.strokeStyle = OUTLINE;
+      ctx.stroke();
+      ctx.lineWidth = Math.max(2.8, u * 0.22);
+      ctx.strokeStyle = color;
+      ctx.stroke();
+    }
+    // Round dome mantle
+    const head = () => {
+      ctx.beginPath();
+      ctx.arc(0, -0.18 * u, 0.62 * u, 0, TAU);
+    };
+    strokeAndFill(head, color);
+    ctx.fillStyle = lighten(color, 0.4);
+    ctx.beginPath();
+    ctx.arc(-0.18 * u, -0.4 * u, 0.18 * u, 0, TAU);
+    ctx.fill();
+    // Bright eyes
+    for (const ex of [-0.22, 0.22] as const) {
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(ex * u, -0.06 * u, 0.14 * u, 0, TAU);
+      ctx.fill();
+      ctx.fillStyle = OUTLINE;
+      ctx.beginPath();
+      ctx.arc(ex * u, -0.05 * u, 0.075 * u, 0, TAU);
+      ctx.fill();
+    }
+    return;
+  }
+
+  if (icon === "turtle") {
+    // Top-down Oyren-lime sea turtle with four swept flippers & patterned oval shell
+    const flipper = (fx: number, fy: number, rx: number, ry: number, rot: number) => {
+      strokeAndFill(() => {
+        ctx.beginPath();
+        ctx.ellipse(fx * u, fy * u, rx * u, ry * u, rot, 0, TAU);
+      }, "#84cc16");
+    };
+    flipper(-0.66, -0.22, 0.42, 0.18, -0.45);
+    flipper(0.66, -0.22, 0.42, 0.18, 0.45);
+    flipper(-0.48, 0.56, 0.3, 0.14, 0.6);
+    flipper(0.48, 0.56, 0.3, 0.14, -0.6);
+    // Head
+    strokeAndFill(() => {
+      ctx.beginPath();
+      ctx.arc(0, -0.72 * u, 0.24 * u, 0, TAU);
+    }, "#a3e635");
+    // Sculpted domed shell
+    const shell = () => {
+      ctx.beginPath();
+      ctx.ellipse(0, 0.08 * u, 0.54 * u, 0.66 * u, 0, 0, TAU);
+    };
+    strokeAndFill(shell, color);
+    // Hexagonal center scute marking
+    ctx.strokeStyle = "#365314";
+    ctx.lineWidth = Math.max(1.8, u * 0.1);
+    ctx.beginPath();
+    for (let k = 0; k < 6; k++) {
+      const a = (k / 6) * TAU - Math.PI / 2;
+      const px = Math.cos(a) * 0.28 * u;
+      const py = 0.08 * u + Math.sin(a) * 0.34 * u;
+      if (k === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.stroke();
+    return;
+  }
+
+  if (icon === "shell") {
+    // Coral fluted scallop seashell with hinge base
+    const fan = () => {
+      ctx.beginPath();
+      ctx.moveTo(-0.34 * u, 0.72 * u);
+      ctx.lineTo(-0.88 * u, -0.06 * u);
+      ctx.arc(0, -0.06 * u, 0.88 * u, Math.PI, TAU);
+      ctx.lineTo(0.34 * u, 0.72 * u);
+      ctx.closePath();
+    };
+    strokeAndFill(fan, color);
+    // Fluted radial ribs
+    ctx.strokeStyle = lighten(color, 0.45);
+    ctx.lineWidth = Math.max(2, u * 0.11);
+    for (const a of [-0.72, -0.36, 0, 0.36, 0.72] as const) {
+      ctx.beginPath();
+      ctx.moveTo(0, 0.58 * u);
+      ctx.lineTo(Math.sin(a) * 0.76 * u, -0.06 * u - Math.cos(a) * 0.72 * u);
+      ctx.stroke();
+    }
+    // Hinge collar
+    strokeAndFill(() => {
+      ctx.beginPath();
+      ctx.roundRect(-0.38 * u, 0.54 * u, 0.76 * u, 0.24 * u, 0.09 * u);
+    }, lighten(color, 0.25));
+    return;
+  }
+
+  // Golden curved seahorse S-profile
+  const horse = () => {
+    ctx.beginPath();
+    ctx.moveTo(0.06 * u, -0.88 * u);
+    ctx.bezierCurveTo(0.46 * u, -0.84 * u, 0.56 * u, -0.44 * u, 0.78 * u, -0.44 * u); // snout
+    ctx.lineTo(0.76 * u, -0.26 * u);
+    ctx.bezierCurveTo(0.42 * u, -0.24 * u, 0.24 * u, -0.06 * u, 0.34 * u, 0.24 * u); // belly
+    ctx.bezierCurveTo(0.42 * u, 0.58 * u, 0.16 * u, 0.9 * u, -0.18 * u, 0.88 * u); // curled tail outer
+    ctx.bezierCurveTo(-0.46 * u, 0.84 * u, -0.5 * u, 0.52 * u, -0.22 * u, 0.48 * u);
+    ctx.bezierCurveTo(-0.08 * u, 0.48 * u, -0.02 * u, 0.64 * u, -0.16 * u, 0.66 * u); // tail spiral
+    ctx.bezierCurveTo(-0.02 * u, 0.66 * u, 0.04 * u, 0.44 * u, -0.18 * u, 0.24 * u); // back curve
+    ctx.bezierCurveTo(-0.56 * u, -0.04 * u, -0.44 * u, -0.68 * u, 0.06 * u, -0.88 * u);
+    ctx.closePath();
+  };
+  strokeAndFill(horse, color);
+  // Dorsal fin accent
+  strokeAndFill(() => {
+    ctx.beginPath();
+    ctx.moveTo(-0.38 * u, -0.18 * u);
+    ctx.lineTo(-0.68 * u, -0.02 * u);
+    ctx.lineTo(-0.32 * u, 0.16 * u);
+    ctx.closePath();
+  }, "#fef08a");
+  // Ink eye
+  ctx.fillStyle = OUTLINE;
+  ctx.beginPath();
+  ctx.arc(0.24 * u, -0.56 * u, 0.095 * u, 0, TAU);
+  ctx.fill();
+}
+
 /**
  * Draw one sprite centred at (x, y). `size` is the diameter in px; `angle`
  * sets the heading for scissors; `variant` picks a rock or paper look;
@@ -1290,6 +1610,10 @@ export function drawSprite(
     drawWeapon(ctx, icon, u, color);
   } else if (icon === "sun" || icon === "moon" || icon === "planet" || icon === "rocket" || icon === "ufo") {
     drawCosmosSprite(ctx, icon, u, color);
+  } else if (icon === "key" || icon === "lock" || icon === "chest") {
+    drawVaultSprite(ctx, icon, u, color);
+  } else if (icon === "whale" || icon === "octopus" || icon === "turtle" || icon === "shell" || icon === "seahorse") {
+    drawOceanSprite(ctx, icon, u, color);
   } else {
     drawRivalShape(ctx, icon, u, color);
   }
