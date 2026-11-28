@@ -16,6 +16,13 @@ const REPO_MIDI_EXPORT_NAME: Record<string, string> = {
   "fur-elise-music-box.mid": "fur-elise.mid",
   "flight-of-the-bumblebee.mid": "flight-of-the-bumblebee.mid",
   "arshin-mal-alan-askars-song.mid": "arshin-mal-alan-askars-song.mid",
+  "minuet-in-g-marimba.mid": "minuet-in-g-marimba.mid",
+  "ode-to-joy-carillon.mid": "ode-to-joy-carillon.mid",
+  "toccata-in-d-minor-organ.mid": "toccata-in-d-minor-organ.mid",
+  "toccata-opening-organ.mid": "toccata-opening-organ.mid",
+  "sugar-plum-kalimba.mid": "sugar-plum-kalimba.mid",
+  "turkish-march-harpsichord.mid": "turkish-march-harpsichord.mid",
+  "spring-concert-harp.mid": "spring-concert-harp.mid",
 };
 
 export interface MidiAssetResult { file: string; wav: string; notes: number; durationSec: number; midiDigest: string; audioDigest: string }

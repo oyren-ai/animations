@@ -91,6 +91,38 @@ const SPRITE_SCALE: Record<SwarmIcon, number> = {
   square: 1.02,
   star: 1.22,
   hexagon: 1.08,
+  fire: 1.16,
+  water: 1.12,
+  leaf: 1.16,
+  king: 1.16,
+  queen: 1.16,
+  rook: 1.1,
+  bishop: 1.14,
+  knight: 1.16,
+  sword: 1.2,
+  axe: 1.18,
+  spear: 1.22,
+  sun: 1.16,
+  moon: 1.12,
+  planet: 1.24,
+  rocket: 1.18,
+  ufo: 1.22,
+  key: 1.2,
+  lock: 1.14,
+  chest: 1.18,
+  whale: 1.22,
+  octopus: 1.18,
+  turtle: 1.18,
+  shell: 1.14,
+  seahorse: 1.18,
+  battery: 1.16,
+  magnet: 1.18,
+  gear: 1.2,
+  bee: 1.18,
+  butterfly: 1.24,
+  flower: 1.2,
+  clover: 1.2,
+  bird: 1.2,
 };
 
 export interface BarSegment {
@@ -331,7 +363,8 @@ function paintWorkspaceWindowBase(ctx: CanvasRenderingContext2D, definition: Swa
 
   // Small centred monospace workspace path label.
   const windowLabel =
-    definition.slug === "swarm-rps-classic" ? "oyren / arena · rps" : "oyren / arena · five-rivals";
+    definition.windowLabel ??
+    (definition.slug === "swarm-rps-classic" ? "oyren / arena · rps" : "oyren / arena · five-rivals");
   ctx.font = `500 16px ${MONO_FONT}`;
   ctx.textBaseline = "alphabetic";
   ctx.textAlign = "left";

@@ -1,4 +1,5 @@
 import { HIT_COMPOSITIONS, synthesizeHitWav } from "../src/hits/index.ts";
+import { SETPIECE_COMPOSITIONS } from "../src/setpieces/index.ts";
 import { HIT_SEED } from "../src/hits/types.ts";
 import { synthesizePieceWav } from "../src/music/synth.ts";
 import { buildCarpetLoomScore } from "../src/music-carpet/score.ts";
@@ -266,6 +267,24 @@ for (const hit of HIT_COMPOSITIONS) {
   });
   console.log(
     `${hit.spec.id}: 48 kHz stereo audio synthesized; ${hit.spec.totalFrames} frames (${(hit.spec.totalFrames / VIDEO.fps).toFixed(2)}s)`,
+  );
+}
+
+for (const sp of SETPIECE_COMPOSITIONS) {
+  const trace = sp.simulate();
+  const audio = sp.synthesizeAudio(trace);
+  writeFileSync(new URL("../public/generated/" + sp.spec.slug + ".wav", import.meta.url), audio.wav);
+  results.push({
+    id: sp.spec.id,
+    seed: sp.spec.seed,
+    frames: sp.spec.totalFrames,
+    payoffFrame: sp.spec.payoffFrame,
+    channels: 2,
+    sampleRate: 48000,
+    audioDigest: createHash("sha256").update(audio.wav).digest("hex"),
+  });
+  console.log(
+    `${sp.spec.id}: payoff=${(sp.spec.payoffFrame / VIDEO.fps).toFixed(2)}s; ${sp.spec.totalFrames} frames (${(sp.spec.totalFrames / VIDEO.fps).toFixed(2)}s); peak=${audio.peakDb.toFixed(2)}dBFS`,
   );
 }
 
