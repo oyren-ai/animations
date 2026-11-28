@@ -115,6 +115,14 @@ const SPRITE_SCALE: Record<SwarmIcon, number> = {
   turtle: 1.18,
   shell: 1.14,
   seahorse: 1.18,
+  battery: 1.16,
+  magnet: 1.18,
+  gear: 1.2,
+  bee: 1.18,
+  butterfly: 1.24,
+  flower: 1.2,
+  clover: 1.2,
+  bird: 1.2,
 };
 
 export interface BarSegment {

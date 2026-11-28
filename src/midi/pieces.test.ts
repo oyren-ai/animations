@@ -23,6 +23,7 @@ import {
   sugarPlumKalimba,
   TOCCATA_D_MINOR_OPENING_MOTIF,
   toccataInDMinorOrgan,
+  toccataOpeningOrgan,
   TURKISH_MARCH_OPENING_MOTIF,
   turkishMarchHarpsichord,
 } from "./pieces.ts";
@@ -219,13 +220,30 @@ test("Spring: Vivaldi RV 269 I opening ritornello, pure E-major diatonic scale, 
   }
 });
 
-test("every built-in piece is deterministic, 45-60 s as a video, sorted, with no gaps > 2 s and no overlaps", () => {
+test("Toccata Opening (Bars 1-12a): verified opening + Prestissimo ending on Bar 12 D-minor pause", () => {
+  const parsed = parsedOf(toccataOpeningOrgan());
+  assert.deepEqual(parsed.timeSignature, { numerator: 4, denominator: 4 });
+  const great = parsed.notes.filter((n) => n.track === 1);
+  assert.deepEqual(great.slice(0, 9).map((n) => n.pitch), [...TOCCATA_D_MINOR_OPENING_MOTIF]);
+  assert.deepEqual(great.slice(9, 16).map((n) => n.pitch), [69, 67, 69, 64, 65, 61, 62]);
+  assert.ok(parsed.durationSec >= 23.0 && parsed.durationSec <= 27.0, `unexpected opening duration ${parsed.durationSec}s`);
+  const finalChord = parsed.notes.filter((n) => n.timeSec >= parsed.durationSec - 2.0);
+  assert.ok(finalChord.some((n) => n.pitch % 12 === 5), "Bar 12 pause has F natural (D minor)");
+  assert.ok(!finalChord.some((n) => n.pitch % 12 === 6), "Bar 12 pause has no F#");
+});
+
+test("every built-in piece is deterministic, sorted, with no gaps > 2 s and no overlaps", () => {
   for (const piece of builtInPieces()) {
     assert.deepEqual(pieceBytes(piece), pieceBytes(piece));
     const parsed = parsedOf(piece);
     assert.ok(parsed.notes.length >= 220, `${piece.file}: ${parsed.notes.length} notes`);
     const videoSeconds = 1.1 + parsed.durationSec + 2.2;
-    assert.ok(videoSeconds >= 45 && videoSeconds <= 60, `${piece.file}: video length ${videoSeconds.toFixed(2)} s outside 45..60 s`);
+    const isShortExcerpt = piece.file === "toccata-opening-organ.mid";
+    if (isShortExcerpt) {
+      assert.ok(videoSeconds >= 25 && videoSeconds <= 34, `${piece.file}: excerpt length ${videoSeconds.toFixed(2)} s outside 25..34 s`);
+    } else {
+      assert.ok(videoSeconds >= 45 && videoSeconds <= 60, `${piece.file}: video length ${videoSeconds.toFixed(2)} s outside 45..60 s`);
+    }
 
     let prevOnset = 0;
     const lastEnd = new Map<string, number>();

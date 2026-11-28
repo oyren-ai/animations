@@ -42,7 +42,15 @@ export type SwarmIcon =
   | "octopus"
   | "turtle"
   | "shell"
-  | "seahorse";
+  | "seahorse"
+  | "battery"
+  | "magnet"
+  | "gear"
+  | "bee"
+  | "butterfly"
+  | "flower"
+  | "clover"
+  | "bird";
 
 /** Conversion timbre played when this type wins a contact (see `audio.ts`). */
 export type SwarmSound = "tok" | "fwip" | "snip" | "bloop" | "ting" | "blip" | "twinkle" | "knock";
@@ -71,7 +79,9 @@ export type SwarmSlug =
   | "swarm-weapons"
   | "swarm-cosmos"
   | "swarm-vault"
-  | "swarm-ocean";
+  | "swarm-ocean"
+  | "swarm-circuits"
+  | "swarm-meadow";
 
 export interface SwarmDefinition {
   slug: SwarmSlug;
@@ -173,6 +183,28 @@ const OCEAN_SKIN: SwarmSkin = {
     { name: "turtle", caption: "TURTLE", color: "#c8ff00", icon: "turtle", sound: "tok" },
     { name: "shell", caption: "SHELL", color: "#ff7a59", icon: "shell", sound: "twinkle" },
     { name: "seahorse", caption: "SEAHORSE", color: "#fbbf24", icon: "seahorse", sound: "ting" },
+  ],
+};
+
+const CIRCUITS_SKIN: SwarmSkin = {
+  title: "WHO WINS?",
+  rules: "battery powers magnet · magnet turns gear · gear charges battery",
+  types: [
+    { name: "battery", caption: "BATTERY", color: "#c8ff00", icon: "battery", sound: "blip" },
+    { name: "magnet", caption: "MAGNET", color: "#ff6b5b", icon: "magnet", sound: "knock" },
+    { name: "gear", caption: "GEAR", color: "#38bdf8", icon: "gear", sound: "ting" },
+  ],
+};
+
+const MEADOW_SKIN: SwarmSkin = {
+  title: "WHO WINS?",
+  rules: "every meadow rival tags two others and yields to two",
+  types: [
+    { name: "bee", caption: "BEE", color: "#fbbf24", icon: "bee", sound: "twinkle" },
+    { name: "butterfly", caption: "BUTTERFLY", color: "#a86eff", icon: "butterfly", sound: "fwip" },
+    { name: "flower", caption: "FLOWER", color: "#fb7185", icon: "flower", sound: "bloop" },
+    { name: "clover", caption: "CLOVER", color: "#c8ff00", icon: "clover", sound: "tok" },
+    { name: "bird", caption: "BIRD", color: "#38bdf8", icon: "bird", sound: "ting" },
   ],
 };
 
@@ -409,6 +441,64 @@ export const SWARM_DEFINITIONS: readonly SwarmDefinition[] = [
       radius: 24.0,
       arena: SWARM_ARENA,
       physics: { ...DEFAULT_SWARM_PHYSICS, speed: 77, chaseBoost: 0.18, sight: 148 },
+      maxPlayFrames: 52 * 60,
+      holdFrames: SWARM_HOLD_FRAMES,
+    },
+    arc: {
+      minWinSeconds: 32,
+      maxWinSeconds: 38,
+      targetWinSeconds: 35,
+      minLeadChanges: 4,
+      maxLeadChanges: 16,
+      maxComebackShare: 0.1,
+    },
+  },
+  {
+    slug: "swarm-circuits",
+    id: "SwarmCircuits",
+    label: "Battery Magnet Gear",
+    windowLabel: "oyren / arena · circuits",
+    rootHz: 118.0,
+    skin: CIRCUITS_SKIN,
+    config: {
+      id: "swarm-circuits",
+      // Picked over 4001..4900 (51 seeds qualify): 11 lead changes, magnet drops to 1/180 (0.6%) at 25.2 s, wins at 36.0 s.
+      seed: 4769,
+      count: 180,
+      types: 3,
+      rules: WEAPONS_RULES, // 0(battery) beats 1(magnet), 1(magnet) beats 2(gear), 2(gear) beats 0(battery)
+      radius: 25.5,
+      arena: SWARM_ARENA,
+      physics: { ...DEFAULT_SWARM_PHYSICS, speed: 69, chaseBoost: 0.17 },
+      maxPlayFrames: 52 * 60,
+      holdFrames: SWARM_HOLD_FRAMES,
+    },
+    arc: {
+      minWinSeconds: 32,
+      maxWinSeconds: 38,
+      targetWinSeconds: 35,
+      minLeadChanges: 4,
+      maxLeadChanges: 12,
+      maxComebackShare: 0.15,
+    },
+  },
+  {
+    slug: "swarm-meadow",
+    id: "SwarmMeadow",
+    label: "Meadow Rivals",
+    windowLabel: "oyren / arena · meadow",
+    rootHz: 130.81,
+    skin: MEADOW_SKIN,
+    config: {
+      id: "swarm-meadow",
+      // Picked over 4001..4900 (96 seeds qualify): 9 lead changes, bird drops to 1/160 (0.6%) at 25.1 s, wins at 34.6 s.
+      seed: 4334,
+      count: 160,
+      types: 5,
+      rules: cyclicRules(5, 2),
+      radius: 24.0,
+      arena: SWARM_ARENA,
+      physics: { ...DEFAULT_SWARM_PHYSICS, speed: 78, chaseBoost: 0.18, sight: 149 },
       maxPlayFrames: 52 * 60,
       holdFrames: SWARM_HOLD_FRAMES,
     },

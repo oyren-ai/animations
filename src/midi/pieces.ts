@@ -2450,6 +2450,186 @@ export function springConcertHarp(): MidiPiece {
   };
 }
 
+/**
+ * Johann Sebastian Bach, Toccata in D Minor, BWV 565 — Opening (Bars 1-12a only).
+ * Ends cleanly on Bach's authentic Bar 12 D-minor fermata pause (~24.6 s of music),
+ * transcribed directly from Mutopia Project Bach-Gesellschaft Ausgabe 1867 (ToccataFugue.ly).
+ */
+export function toccataOpeningOrgan(): MidiPiece {
+  const great: MidiWriteNote[] = [];
+  const choir: MidiWriteNote[] = [];
+  const pedal: MidiWriteNote[] = [];
+
+  const pushTriplet = (b: number, p1: number, p2: number, p3: number, vel: number, doubleOctDown = true) => {
+    const step = 1 / 6;
+    const seq = [p1, p2, p3];
+    for (let i = 0; i < 3; i++) {
+      const p = seq[i];
+      great.push(note(b + i * step, step * 0.92, p, vel + (i === 0 ? 4 : -2)));
+      if (doubleOctDown && p - 12 >= 38) {
+        choir.push(note(b + i * step, step * 0.92, p - 12, vel - 8));
+      }
+    }
+  };
+
+  let b = 0;
+  const pushFl1 = (start: number, hi: number, doubleOct: boolean, vel: number): number => {
+    const evs: readonly [number, number, number][] = [
+      [0.0, 0.14, hi],
+      [0.16, 0.14, hi - 2],
+      [0.32, 0.92, hi],
+      [1.36, 0.2, hi - 2],
+      [1.58, 0.2, hi - 4],
+      [1.8, 0.2, hi - 5],
+      [2.02, 0.2, hi - 7],
+      [2.24, 0.3, hi - 8],
+      [2.58, 1.05, hi - 7],
+    ];
+    for (const [off, dur, p] of evs) {
+      (hi >= 69 ? great : choir).push(note(start + off, dur, p, vel));
+      if (doubleOct && p - 12 >= 38) {
+        (p - 12 >= 50 ? choir : pedal).push(note(start + off, dur, p - 12, vel - 6));
+      }
+    }
+    return start + 3.85;
+  };
+  b = pushFl1(b, 81, true, 108);
+
+  const fl2: readonly [number, number, number][] = [
+    [0.0, 0.14, 69],
+    [0.16, 0.14, 67],
+    [0.32, 0.85, 69],
+    [1.28, 0.2, 64],
+    [1.5, 0.2, 65],
+    [1.72, 0.3, 61],
+    [2.06, 1.05, 62],
+  ];
+  for (const [off, dur, p] of fl2) {
+    great.push(note(b + off, dur, p, 104));
+    choir.push(note(b + off, dur, p - 12, 98));
+  }
+  b += 3.35;
+
+  b = pushFl1(b, 57, false, 100);
+
+  const bPedal = b;
+  pedal.push(note(bPedal, 5.4, 38, 108));
+  const dimChord: readonly [number, number, number][] = [
+    [0.15, 2.35, 49],
+    [0.45, 2.05, 52],
+    [0.75, 1.75, 55],
+    [1.05, 1.45, 58],
+    [1.35, 1.15, 61],
+    [1.65, 0.85, 64],
+  ];
+  for (const [off, dur, p] of dimChord) {
+    (p >= 58 ? great : choir).push(note(bPedal + off, dur, p, 96));
+  }
+  const bRes = bPedal + 2.6;
+  choir.push(note(bRes, 2.6, 50, 96));
+  choir.push(note(bRes, 2.6, 57, 94));
+  great.push(note(bRes, 2.6, 62, 100));
+  great.push(note(bRes, 2.6, 69, 98));
+  great.push(note(bRes, 2.6, 74, 104));
+  choir.push(note(bRes, 0.28, 67, 96));
+  choir.push(note(bRes + 0.3, 0.28, 64, 94));
+  choir.push(note(bRes + 0.6, 2.0, 66, 100));
+
+  b = bRes + 3.0;
+  const bPrestissimo = b;
+  great.push(note(b, 0.22, 61, 96));
+  choir.push(note(b, 0.22, 49, 88));
+  b += 0.25;
+
+  for (let k = 0; k < 3; k++) { pushTriplet(b, 62, 64, 61, 96); b += 0.5; }
+  great.push(note(b, 0.23, 62, 96), note(b + 0.25, 0.23, 64, 96));
+  choir.push(note(b, 0.23, 50, 88), note(b + 0.25, 0.23, 52, 88));
+  b += 0.5;
+  for (let k = 0; k < 3; k++) { pushTriplet(b, 65, 67, 64, 98); b += 0.5; }
+  great.push(note(b, 0.23, 65, 98), note(b + 0.25, 0.23, 67, 98));
+  choir.push(note(b, 0.23, 53, 90), note(b + 0.25, 0.23, 55, 90));
+  b += 0.5;
+
+  for (let k = 0; k < 3; k++) { pushTriplet(b, 69, 70, 67, 100); b += 0.5; }
+  great.push(note(b, 0.65, 69, 104));
+  choir.push(note(b, 0.65, 57, 96));
+  b += 1.25;
+  great.push(note(b, 0.22, 73, 98));
+  choir.push(note(b, 0.22, 61, 90));
+  b += 0.25;
+
+  for (let k = 0; k < 3; k++) { pushTriplet(b, 74, 76, 73, 100); b += 0.5; }
+  great.push(note(b, 0.23, 74, 100), note(b + 0.25, 0.23, 76, 100));
+  choir.push(note(b, 0.23, 62, 92), note(b + 0.25, 0.23, 64, 92));
+  b += 0.5;
+  for (let k = 0; k < 3; k++) { pushTriplet(b, 77, 79, 76, 102); b += 0.5; }
+  great.push(note(b, 0.23, 77, 102), note(b + 0.25, 0.23, 79, 102));
+  choir.push(note(b, 0.23, 65, 94), note(b + 0.25, 0.23, 67, 94));
+  b += 0.5;
+
+  for (let k = 0; k < 3; k++) { pushTriplet(b, 81, 82, 79, 104); b += 0.5; }
+  great.push(note(b, 0.65, 81, 108));
+  choir.push(note(b, 0.65, 69, 98));
+  b += 1.25;
+  great.push(note(b, 0.22, 81, 102));
+  choir.push(note(b, 0.22, 69, 94));
+  b += 0.25;
+
+  const fallChain: readonly [number, number, number][] = [
+    [79, 82, 76], [77, 81, 74], [76, 79, 72], [74, 77, 70], [72, 76, 69],
+    [70, 74, 67], [69, 72, 65], [67, 70, 64], [65, 69, 62], [64, 67, 61],
+  ];
+  for (const [p1, p2, p3] of fallChain) {
+    pushTriplet(b, p1, p2, p3, 100); b += 0.5;
+    pushTriplet(b, p1, p2, p3, 96); b += 0.5;
+  }
+
+  b += 0.5;
+  pedal.push(note(b, 4.4, 38, 108));
+  choir.push(note(b, 3.0, 49, 92), note(b, 3.0, 52, 92), note(b, 3.0, 55, 92), note(b, 3.0, 58, 92));
+  great.push(note(b, 1.4, 61, 94), note(b, 1.4, 64, 94), note(b, 1.4, 67, 94), note(b, 1.4, 70, 98));
+  b += 1.5;
+  const bar11Run: readonly [number, number][] = [
+    [70, 0.2], [69, 0.16], [67, 0.16], [65, 0.16], [64, 0.16], [62, 0.16], [61, 0.16], [59, 0.16],
+    [61, 0.2], [57, 0.2], [61, 0.2], [64, 0.16], [67, 0.16], [65, 0.35], [64, 0.22],
+  ];
+  for (const [p, d] of bar11Run) {
+    great.push(note(b, d * 0.92, p, 98));
+    b += d;
+  }
+
+  // Bar 12 beat 0: Authentic D MINOR fermata pause — clean ending cadence!
+  const bCadence = b;
+  pedal.push(note(bCadence, 2.2, 38, 108)); // D2
+  choir.push(note(bCadence, 2.2, 50, 96), note(bCadence, 2.2, 57, 94)); // D3 + A3
+  great.push(note(bCadence, 2.2, 62, 102), note(bCadence, 2.2, 65, 106)); // D4 + F4 (D minor!)
+
+  const tracks: MidiWriteTrack[] = [
+    { name: "Great Manual Pipes", channel: 0, program: 19, notes: cleanTrackNotes(great) },
+    { name: "Choir Manual Pipes", channel: 1, program: 19, notes: cleanTrackNotes(choir) },
+    { name: "Pedal Tower Pipes", channel: 2, program: 19, notes: cleanTrackNotes(pedal) },
+  ];
+
+  return {
+    file: "toccata-opening-organ.mid",
+    title: "Toccata in D Minor",
+    composer: "Johann Sebastian Bach",
+    credit: "J. S. Bach, Toccata in D Minor BWV 565, mm. 1-12a (Mutopia / Bach-Gesellschaft 1867, public domain); tracker organ arrangement MIT",
+    options: {
+      format: 1,
+      ticksPerQuarter: 480,
+      tempos: [
+        { beat: 0, bpm: 86 },
+        { beat: bPrestissimo, bpm: 138 },
+        { beat: bCadence, bpm: 92 },
+      ],
+      tracks,
+      title: "Toccata in D Minor",
+      timeSignature: [4, 4],
+    },
+  };
+}
+
 /** Built-in pieces for public/midi/ and WAV generation. */
 export function builtInPieces(): MidiPiece[] {
   return [
@@ -2462,6 +2642,7 @@ export function builtInPieces(): MidiPiece[] {
     minuetInGMarimba(),
     odeToJoyCarillon(),
     toccataInDMinorOrgan(),
+    toccataOpeningOrgan(),
     sugarPlumKalimba(),
     turkishMarchHarpsichord(),
     springConcertHarp(),

@@ -15,6 +15,8 @@ import { DROP_STYLES } from "./drop-arenas/sim.ts";
 import { GPU_AUDIO_COMPOSITIONS } from "./gpu-scenes/index.ts";
 import { HitShell } from "./components/HitShell.tsx";
 import { HIT_COMPOSITIONS } from "./hits/index.ts";
+import { SetPieceShell } from "./components/SetPieceShell.tsx";
+import { SETPIECE_COMPOSITIONS } from "./setpieces/index.ts";
 import { PATATE_COMPOSITIONS, PATATE_TOTAL_FRAMES } from "./patate/themes.ts";
 import { SHOWCASE_TOTAL_FRAMES } from "./repo-showcase/timing.ts";
 import { STRING_ROUNDS } from "./string-arena/sim.ts";
@@ -191,6 +193,18 @@ export function Root() {
         fps={VIDEO.fps}
         durationInFrames={hit.spec.totalFrames}
         defaultProps={{ slug: hit.spec.slug }}
+      />
+    ))}
+    {SETPIECE_COMPOSITIONS.map((sp) => (
+      <Composition
+        key={sp.spec.id}
+        id={sp.spec.id}
+        component={SetPieceShell}
+        width={VIDEO.width}
+        height={VIDEO.height}
+        fps={VIDEO.fps}
+        durationInFrames={sp.spec.totalFrames}
+        defaultProps={{ slug: sp.spec.slug }}
       />
     ))}
   </>;

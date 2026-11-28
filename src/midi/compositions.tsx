@@ -27,6 +27,7 @@ export const MIDI_COMPOSITION_DEFS: MidiCompositionDef[] = [
   { id: "MidiMinuetMarimba", spec: MIDI_MINUET_MARIMBA, defaultMidi: "minuet-in-g-marimba.mid" },
   { id: "MidiOdeToJoyCarillon", spec: MIDI_ODE_TO_JOY_CARILLON, defaultMidi: "ode-to-joy-carillon.mid" },
   { id: "MidiToccataOrgan", spec: MIDI_TOCCATA_ORGAN, defaultMidi: "toccata-in-d-minor-organ.mid" },
+  { id: "MidiToccataOpeningOrgan", spec: MIDI_TOCCATA_ORGAN, defaultMidi: "toccata-opening-organ.mid" },
   { id: "MidiSugarPlumKalimba", spec: MIDI_SUGAR_PLUM_KALIMBA, defaultMidi: "sugar-plum-kalimba.mid" },
   { id: "MidiTurkishMarchHarpsichord", spec: MIDI_TURKISH_MARCH_HARPSICHORD, defaultMidi: "turkish-march-harpsichord.mid" },
   { id: "MidiSpringHarp", spec: MIDI_SPRING_HARP, defaultMidi: "spring-concert-harp.mid" },

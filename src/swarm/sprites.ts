@@ -1571,6 +1571,267 @@ function drawOceanSprite(
   ctx.fill();
 }
 
+/** Non-violent engineering cycle sprites: charged battery, horseshoe magnet, and 8-tooth gear. */
+function drawCircuitsSprite(
+  ctx: CanvasRenderingContext2D,
+  kind: "battery" | "magnet" | "gear",
+  u: number,
+  color: string,
+) {
+  contactShadow(ctx, u, 0.78);
+  const strokeW = Math.max(2.6, u * 0.22);
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  const strokeAndFill = (path: () => void, fill: string) => {
+    path();
+    ctx.lineWidth = strokeW;
+    ctx.strokeStyle = OUTLINE;
+    ctx.stroke();
+    ctx.fillStyle = fill;
+    ctx.fill();
+  };
+
+  if (kind === "battery") {
+    // Positive cap nub on top
+    strokeAndFill(() => {
+      ctx.beginPath();
+      ctx.roundRect(-0.24 * u, -0.92 * u, 0.48 * u, 0.22 * u, 0.06 * u);
+    }, "#eef6fc");
+    // Rounded cell body
+    strokeAndFill(() => {
+      ctx.beginPath();
+      ctx.roundRect(-0.56 * u, -0.72 * u, 1.12 * u, 1.56 * u, 0.18 * u);
+    }, color);
+    // Subtle dark charge casing window
+    ctx.fillStyle = "rgba(4, 10, 16, 0.22)";
+    ctx.beginPath();
+    ctx.roundRect(-0.4 * u, -0.54 * u, 0.8 * u, 1.2 * u, 0.1 * u);
+    ctx.fill();
+    // Crisp dark lightning bolt in center
+    ctx.fillStyle = OUTLINE;
+    ctx.beginPath();
+    ctx.moveTo(0.08 * u, -0.44 * u);
+    ctx.lineTo(-0.26 * u, 0.06 * u);
+    ctx.lineTo(0.0 * u, 0.06 * u);
+    ctx.lineTo(-0.12 * u, 0.54 * u);
+    ctx.lineTo(0.28 * u, -0.04 * u);
+    ctx.lineTo(0.02 * u, -0.04 * u);
+    ctx.closePath();
+    ctx.fill();
+    return;
+  }
+
+  if (kind === "magnet") {
+    // Classic bold U-shaped horseshoe magnet
+    const horseshoe = () => {
+      ctx.beginPath();
+      ctx.moveTo(-0.74 * u, -0.78 * u);
+      ctx.lineTo(-0.74 * u, 0.14 * u);
+      ctx.arc(0, 0.14 * u, 0.74 * u, Math.PI, 0, true);
+      ctx.lineTo(0.74 * u, -0.78 * u);
+      ctx.lineTo(0.32 * u, -0.78 * u);
+      ctx.lineTo(0.32 * u, 0.14 * u);
+      ctx.arc(0, 0.14 * u, 0.32 * u, 0, Math.PI, false);
+      ctx.lineTo(-0.32 * u, -0.78 * u);
+      ctx.closePath();
+    };
+    strokeAndFill(horseshoe, color);
+    // Bright metallic north/south pole tips
+    strokeAndFill(() => {
+      ctx.beginPath();
+      ctx.rect(-0.74 * u, -0.78 * u, 0.42 * u, 0.34 * u);
+    }, "#eef6fc");
+    strokeAndFill(() => {
+      ctx.beginPath();
+      ctx.rect(0.32 * u, -0.78 * u, 0.42 * u, 0.34 * u);
+    }, "#eef6fc");
+    return;
+  }
+
+  // 8-tooth precision cogwheel gear
+  const teeth = 8;
+  const gearPath = () => {
+    ctx.beginPath();
+    const outerR = 0.88 * u;
+    const innerR = 0.64 * u;
+    for (let k = 0; k < teeth; k++) {
+      const base = (k / teeth) * TAU;
+      const a0 = base - 0.18;
+      const a1 = base - 0.12;
+      const a2 = base + 0.12;
+      const a3 = base + 0.18;
+      const p0x = Math.cos(a0) * innerR;
+      const p0y = Math.sin(a0) * innerR;
+      if (k === 0) ctx.moveTo(p0x, p0y);
+      else ctx.lineTo(p0x, p0y);
+      ctx.lineTo(Math.cos(a1) * outerR, Math.sin(a1) * outerR);
+      ctx.lineTo(Math.cos(a2) * outerR, Math.sin(a2) * outerR);
+      ctx.lineTo(Math.cos(a3) * innerR, Math.sin(a3) * innerR);
+    }
+    ctx.closePath();
+  };
+  strokeAndFill(gearPath, color);
+  // Recessed inner hub ring + dark axle bore
+  ctx.fillStyle = lighten(color, 0.32);
+  ctx.beginPath();
+  ctx.arc(0, 0, 0.42 * u, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = OUTLINE;
+  ctx.beginPath();
+  ctx.arc(0, 0, 0.24 * u, 0, TAU);
+  ctx.fill();
+}
+
+/** Peaceful spring-meadow sprites: bee, butterfly, daisy flower, 4-leaf clover, and songbird. */
+function drawMeadowSprite(
+  ctx: CanvasRenderingContext2D,
+  kind: "bee" | "butterfly" | "flower" | "clover" | "bird",
+  u: number,
+  color: string,
+) {
+  contactShadow(ctx, u, 0.78);
+  const strokeW = Math.max(2.6, u * 0.22);
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  const strokeAndFill = (path: () => void, fill: string) => {
+    path();
+    ctx.lineWidth = strokeW;
+    ctx.strokeStyle = OUTLINE;
+    ctx.stroke();
+    ctx.fillStyle = fill;
+    ctx.fill();
+  };
+
+  if (kind === "bee") {
+    // Translucent bright upper wings behind body
+    strokeAndFill(() => {
+      ctx.beginPath();
+      ctx.ellipse(-0.18 * u, -0.46 * u, 0.32 * u, 0.44 * u, -0.35, 0, TAU);
+    }, "#e0f2fe");
+    strokeAndFill(() => {
+      ctx.beginPath();
+      ctx.ellipse(0.2 * u, -0.44 * u, 0.28 * u, 0.4 * u, 0.35, 0, TAU);
+    }, "#e0f2fe");
+    // Plump oval bee body
+    strokeAndFill(() => {
+      ctx.beginPath();
+      ctx.ellipse(0, 0.08 * u, 0.74 * u, 0.52 * u, 0, 0, TAU);
+    }, color);
+    // Bold dark stripes clipped visually inside oval
+    ctx.fillStyle = OUTLINE;
+    ctx.fillRect(-0.34 * u, -0.38 * u, 0.16 * u, 0.92 * u);
+    ctx.fillRect(0.0 * u, -0.42 * u, 0.16 * u, 1.0 * u);
+    // Eye on right head
+    ctx.beginPath();
+    ctx.arc(0.46 * u, -0.02 * u, 0.095 * u, 0, TAU);
+    ctx.fill();
+    return;
+  }
+
+  if (kind === "butterfly") {
+    // Four symmetrical spread wings
+    const drawWing = (sx: number) => {
+      strokeAndFill(() => {
+        ctx.beginPath();
+        ctx.ellipse(sx * 0.46 * u, -0.26 * u, 0.48 * u, 0.4 * u, sx * -0.35, 0, TAU);
+      }, color);
+      strokeAndFill(() => {
+        ctx.beginPath();
+        ctx.ellipse(sx * 0.36 * u, 0.34 * u, 0.34 * u, 0.36 * u, sx * 0.25, 0, TAU);
+      }, lighten(color, 0.16));
+      // Bright gold wing spot
+      ctx.fillStyle = "#fde68a";
+      ctx.beginPath();
+      ctx.arc(sx * 0.5 * u, -0.26 * u, 0.14 * u, 0, TAU);
+      ctx.fill();
+    };
+    drawWing(-1);
+    drawWing(1);
+    // Central thorax body
+    strokeAndFill(() => {
+      ctx.beginPath();
+      ctx.ellipse(0, 0.04 * u, 0.14 * u, 0.62 * u, 0, 0, TAU);
+    }, "#eef6fc");
+    return;
+  }
+
+  if (kind === "flower") {
+    // Six bold rounded daisy petals around a golden center
+    const petals = 6;
+    for (let k = 0; k < petals; k++) {
+      const a = (k / petals) * TAU - Math.PI / 2;
+      const px = Math.cos(a) * 0.46 * u;
+      const py = Math.sin(a) * 0.46 * u;
+      strokeAndFill(() => {
+        ctx.beginPath();
+        ctx.arc(px, py, 0.36 * u, 0, TAU);
+      }, color);
+    }
+    strokeAndFill(() => {
+      ctx.beginPath();
+      ctx.arc(0, 0, 0.34 * u, 0, TAU);
+    }, "#fde047");
+    return;
+  }
+
+  if (kind === "clover") {
+    // Curved bottom stem
+    strokeAndFill(() => {
+      ctx.beginPath();
+      ctx.roundRect(-0.08 * u, 0.26 * u, 0.16 * u, 0.64 * u, 0.08 * u);
+    }, "#65a30d");
+    // Four diagonal bold heart/round clover leaves
+    const dirs = [
+      [-0.4, -0.4],
+      [0.4, -0.4],
+      [-0.4, 0.32],
+      [0.4, 0.32],
+    ];
+    for (const [dx, dy] of dirs) {
+      strokeAndFill(() => {
+        ctx.beginPath();
+        ctx.arc(dx * u, dy * u, 0.38 * u, 0, TAU);
+      }, color);
+    }
+    // Bright center knot
+    ctx.fillStyle = "#ecfccb";
+    ctx.beginPath();
+    ctx.arc(0, -0.04 * u, 0.16 * u, 0, TAU);
+    ctx.fill();
+    return;
+  }
+
+  // Sky-blue cheerful songbird silhouette
+  const birdBody = () => {
+    ctx.beginPath();
+    ctx.moveTo(0.84 * u, -0.24 * u); // beak tip
+    ctx.lineTo(0.56 * u, -0.36 * u);
+    ctx.bezierCurveTo(0.52 * u, -0.78 * u, -0.02 * u, -0.78 * u, -0.14 * u, -0.34 * u);
+    ctx.bezierCurveTo(-0.34 * u, -0.16 * u, -0.68 * u, -0.26 * u, -0.88 * u, -0.06 * u); // tail top
+    ctx.lineTo(-0.68 * u, 0.28 * u); // tail bottom
+    ctx.bezierCurveTo(-0.36 * u, 0.68 * u, 0.44 * u, 0.68 * u, 0.56 * u, -0.08 * u);
+    ctx.closePath();
+  };
+  strokeAndFill(birdBody, color);
+  // Swept wing highlight
+  strokeAndFill(() => {
+    ctx.beginPath();
+    ctx.ellipse(-0.08 * u, 0.06 * u, 0.36 * u, 0.22 * u, -0.25, 0, TAU);
+  }, lighten(color, 0.3));
+  // Golden beak tip & dark eye
+  ctx.fillStyle = "#fde047";
+  ctx.beginPath();
+  ctx.moveTo(0.58 * u, -0.34 * u);
+  ctx.lineTo(0.88 * u, -0.22 * u);
+  ctx.lineTo(0.56 * u, -0.1 * u);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = OUTLINE;
+  ctx.beginPath();
+  ctx.arc(0.32 * u, -0.38 * u, 0.095 * u, 0, TAU);
+  ctx.fill();
+}
+
 /**
  * Draw one sprite centred at (x, y). `size` is the diameter in px; `angle`
  * sets the heading for scissors; `variant` picks a rock or paper look;
@@ -1614,6 +1875,10 @@ export function drawSprite(
     drawVaultSprite(ctx, icon, u, color);
   } else if (icon === "whale" || icon === "octopus" || icon === "turtle" || icon === "shell" || icon === "seahorse") {
     drawOceanSprite(ctx, icon, u, color);
+  } else if (icon === "battery" || icon === "magnet" || icon === "gear") {
+    drawCircuitsSprite(ctx, icon, u, color);
+  } else if (icon === "bee" || icon === "butterfly" || icon === "flower" || icon === "clover" || icon === "bird") {
+    drawMeadowSprite(ctx, icon, u, color);
   } else {
     drawRivalShape(ctx, icon, u, color);
   }

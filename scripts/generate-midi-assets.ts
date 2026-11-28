@@ -19,6 +19,7 @@ const REPO_MIDI_EXPORT_NAME: Record<string, string> = {
   "minuet-in-g-marimba.mid": "minuet-in-g-marimba.mid",
   "ode-to-joy-carillon.mid": "ode-to-joy-carillon.mid",
   "toccata-in-d-minor-organ.mid": "toccata-in-d-minor-organ.mid",
+  "toccata-opening-organ.mid": "toccata-opening-organ.mid",
   "sugar-plum-kalimba.mid": "sugar-plum-kalimba.mid",
   "turkish-march-harpsichord.mid": "turkish-march-harpsichord.mid",
   "spring-concert-harp.mid": "spring-concert-harp.mid",
